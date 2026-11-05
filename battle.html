@@ -127,6 +127,12 @@
     .next-button[hidden], .start-button[hidden] { display:none; }
     .stats { display:flex; justify-content:center; gap:16px; color:#a9bad0; font-size:.77rem; }
     .progression { margin-top:5px; color:#93c5fd; font-size:.68rem; font-weight:750; }
+    .inventory-panel { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:8px; }
+    .inventory-row { display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; }
+    .inventory-label { display:block; color:#9eacc2; font-size:.63rem; }
+    .inventory-value { color:#f4f7ff; font-size:.72rem; font-weight:850; }
+    .inventory-row button { min-height:34px; padding:6px 8px; font-size:.67rem; white-space:nowrap; }
+
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
@@ -153,6 +159,12 @@
       .spelling { gap:4px; margin:3px 0; }
       .slot { width:27px; height:30px; font-size:.9rem; }
       .stats { gap:13px; font-size:.68rem; }
+      .inventory-panel { gap:6px; padding:6px 7px; }
+      .inventory-row { flex-direction:column; align-items:stretch; gap:4px; }
+      .inventory-label { font-size:.58rem; }
+      .inventory-value { font-size:.65rem; }
+      .inventory-row button { min-height:32px; padding:5px 6px; font-size:.62rem; }
+
       .arena-wrap { padding:6px; }
       .arena { height:clamp(210px, 34svh, 270px); min-height:210px; }
       .falling-letter { width:34px; height:34px; margin-left:-17px; font-size:1.05rem; }
@@ -179,7 +191,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 2–4 — 英単語を完成させて戦い、経験値で成長しよう！</p>
+    <p class="subtitle">STEP 2–5 — 英単語で戦い、アイテムと装備で強くなろう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -197,6 +209,23 @@
           <div class="vital-head"><span id="enemyName">🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
           <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
         </div>
+      </div>
+    </section>
+
+    <section class="panel inventory-panel" aria-label="アイテムと装備">
+      <div class="inventory-row">
+        <div>
+          <span class="inventory-label">🧪 回復薬</span>
+          <strong class="inventory-value" id="potionCount">×2</strong>
+        </div>
+        <button id="usePotionButton" disabled>使う（HP +2）</button>
+      </div>
+      <div class="inventory-row">
+        <div>
+          <span class="inventory-label">⚔️ 武器</span>
+          <strong class="inventory-value" id="weaponStatus">未装備</strong>
+        </div>
+        <button id="equipWeaponButton" disabled>木の剣を装備（攻撃 +1）</button>
       </div>
     </section>
 
@@ -234,7 +263,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 4 · LEVEL SYSTEM</p>
+    <p class="footer">WORD FALL QUEST · STEP 5 · ITEMS & EQUIPMENT</p>
   </main>
 
   <script type="module">
@@ -253,6 +282,7 @@
       GAME_PHASE,
     } from "./src/game-state.js";
     import { createEnemy } from "./src/enemies.js";
+    import { ITEM_DEFINITIONS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
 
     const $ = (id) => document.getElementById(id);
@@ -281,6 +311,10 @@
       $("statusMessage").className = "message " + tone;
     }
 
+    function activeBattle(state) {
+      return state.phase === GAME_PHASE.BATTLE;
+    }
+
     function setBar(barId, fillId, hp, maxHp) {
       const bar = $(barId);
       $(fillId).style.width = (maxHp > 0 ? (hp / maxHp) * 100 : 0) + "%";
@@ -296,6 +330,25 @@
       $("playerProgression").textContent =
         "LV." + state.player.level + " · EXP " +
         state.player.experience + " / " + state.player.nextLevelXp;
+
+      const potionCount = state.inventory.items["small-potion"] ?? 0;
+      $("potionCount").textContent = "×" + potionCount;
+      $("usePotionButton").disabled =
+        !activeBattle(state) || potionCount <= 0 ||
+        state.player.hp >= state.player.maxHp;
+
+      const weaponId = state.inventory.equipment.weapon;
+      const weapon = ITEM_DEFINITIONS[weaponId];
+      $("weaponStatus").textContent = weapon
+        ? weapon.name + "（攻撃 +" + weapon.attackBonus + "）"
+        : "未装備";
+      const woodenSwordCount = state.inventory.items["wooden-sword"] ?? 0;
+      const woodenSwordEquipped = weaponId === "wooden-sword";
+      $("equipWeaponButton").disabled =
+        !activeBattle(state) || woodenSwordEquipped || woodenSwordCount <= 0;
+      $("equipWeaponButton").textContent = woodenSwordEquipped
+        ? "装備中"
+        : "木の剣を装備（攻撃 +1）";
 
       const enemy = state.enemy;
       $("enemyName").textContent = enemy ? "🟢 " + enemy.name : "🟢 敵";
@@ -421,6 +474,44 @@
         }
       }
     }
+
+    $("usePotionButton").addEventListener("click", () => {
+      const before = store.getState();
+      const after = store.dispatch({
+        type: GAME_ACTION.USE_ITEM,
+        itemId: "small-potion",
+      });
+      if (after === before) {
+        setStatus(
+          before.player.hp >= before.player.maxHp
+            ? "HPは満タンだよ。回復薬はまだ使えないよ。"
+            : "回復薬を持っていないよ。",
+          "bad",
+        );
+        return;
+      }
+      setStatus(
+        "回復薬を使った！HP +" +
+        (after.player.hp - before.player.hp) + " 回復したよ。",
+        "good",
+      );
+    });
+
+    $("equipWeaponButton").addEventListener("click", () => {
+      const before = store.getState();
+      const after = store.dispatch({
+        type: GAME_ACTION.EQUIP_WEAPON,
+        itemId: "wooden-sword",
+      });
+      if (after === before) {
+        setStatus("木の剣を装備できない状態だよ。", "bad");
+        return;
+      }
+      setStatus(
+        "木の剣を装備！攻撃力が " + after.player.attackPower + " になったよ。",
+        "good",
+      );
+    });
 
     $("startButton").addEventListener("click", startGame);
     $("nextButton").addEventListener("click", () => {
