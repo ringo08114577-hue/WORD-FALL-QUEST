@@ -1,0 +1,10 @@
+{
+  "name": "word-fall-quest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "description": "WORD FALL QUEST game foundation"
+}
