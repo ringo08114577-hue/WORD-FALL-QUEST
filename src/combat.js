@@ -1,5 +1,5 @@
 /**
- * WORD FALL QUEST - Combat event resolver (Step 3)
+ * WORD FALL QUEST - Combat event resolver (Step 4)
  *
  * Word collection emits events. This module is the only place that converts
  * those events into HP actions, keeping game-state and word logic separate.
