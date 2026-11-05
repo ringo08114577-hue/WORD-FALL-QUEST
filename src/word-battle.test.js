@@ -208,3 +208,19 @@ test("同じフレームに取得ラインを越えた文字を複数拾わな�
   assert.equal(next.events.length, 0);
   assert.equal(next.state.mistakes, 1);
 });
+
+test("取得イベントには同じ文字を二重処理しないためのIDが付く", () => {
+  const base = createWordBattleState();
+  const state = addLetter(base, {
+    id: 77,
+    value: "Z",
+    lane: base.playerLane,
+    y: 260,
+    speed: 100,
+  });
+  const result = advanceFallingLetters(state, 200, {
+    boardHeight: 340,
+    catchLine: 274,
+  });
+  assert.equal(result.events[0].eventId, "challenge-0-letter-77");
+});
