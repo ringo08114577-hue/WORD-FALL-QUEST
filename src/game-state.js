@@ -1,9 +1,8 @@
 /**
- * WORD FALL QUEST - Game state core (Step 1)
+ * WORD FALL QUEST - Game state core
  *
- * This module owns only the overall game flow and combat HP state.
- * Letter spawning, word validation, collision detection, and RPG progression
- * will be added in later steps as separate systems.
+ * Owns the overall game flow, combat HP, and basic RPG progression.
+ * Letter spawning and word validation remain separate systems.
  */
 
 export const GAME_PHASE = Object.freeze({
@@ -25,7 +24,19 @@ export const GAME_ACTION = Object.freeze({
 });
 
 function isPositiveInteger(value) {
-  return Number.isInteger(value) && value > 0;
+  return Number.isSafeInteger(value) && value > 0;
+}
+
+function isNonNegativeInteger(value) {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
+/** Required EXP grows by 10 for each current level. */
+export function experienceRequiredForNextLevel(level) {
+  if (!isPositiveInteger(level)) {
+    throw new TypeError("levelは正の整数にしてください。");
+  }
+  return level * 10;
 }
 
 function normalizeEnemy(enemy) {
@@ -35,22 +46,35 @@ function normalizeEnemy(enemy) {
 
   const { id, name, maxHp } = enemy;
   const attackPower = enemy.attackPower === undefined ? 1 : enemy.attackPower;
+  const experienceReward =
+    enemy.experienceReward === undefined ? 0 : enemy.experienceReward;
+
   if (
     (typeof id !== "string" && typeof id !== "number") ||
     typeof name !== "string" ||
     name.trim() === "" ||
     !isPositiveInteger(maxHp) ||
-    !isPositiveInteger(attackPower)
+    !isPositiveInteger(attackPower) ||
+    !isNonNegativeInteger(experienceReward)
   ) {
-    throw new TypeError("敵データはid・name・正の整数maxHpとattackPowerを指定してください。");
+    throw new TypeError(
+      "敵データはid・name・正の整数maxHpとattackPower、0以上の整数experienceRewardを指定してください。",
+    );
   }
 
   const hp = enemy.hp === undefined ? maxHp : enemy.hp;
-  if (!Number.isInteger(hp) || hp < 1 || hp > maxHp) {
+  if (!Number.isSafeInteger(hp) || hp < 1 || hp > maxHp) {
     throw new TypeError("敵のhpは1以上maxHp以下の整数にしてください。");
   }
 
-  return { id, name: name.trim(), hp, maxHp, attackPower };
+  return {
+    id,
+    name: name.trim(),
+    hp,
+    maxHp,
+    attackPower,
+    experienceReward,
+  };
 }
 
 function normalizeAmount(amount) {
@@ -58,8 +82,42 @@ function normalizeAmount(amount) {
 }
 
 /**
+ * Add EXP and apply every level-up reached.
+ * Each level grants +1 max HP, +1 current HP, and +1 attack power.
+ */
+function addPlayerExperience(player, amount) {
+  if (amount === 0) return player;
+
+  let level = player.level;
+  let experience = player.experience + amount;
+  let nextLevelXp = player.nextLevelXp;
+  let maxHp = player.maxHp;
+  let hp = player.hp;
+  let attackPower = player.attackPower;
+
+  while (experience >= nextLevelXp) {
+    experience -= nextLevelXp;
+    level += 1;
+    maxHp += 1;
+    hp = Math.min(maxHp, hp + 1);
+    attackPower += 1;
+    nextLevelXp = experienceRequiredForNextLevel(level);
+  }
+
+  return {
+    ...player,
+    level,
+    experience,
+    nextLevelXp,
+    maxHp,
+    hp,
+    attackPower,
+  };
+}
+
+/**
  * Create a fresh game state.
- * The initial player HP remains 3 to match the current prototype baseline.
+ * Initial HP remains 3 to match the current prototype baseline.
  */
 export function createInitialGameState({
   playerMaxHp = 3,
@@ -76,6 +134,9 @@ export function createInitialGameState({
       hp: playerMaxHp,
       maxHp: playerMaxHp,
       attackPower: playerAttackPower,
+      level: 1,
+      experience: 0,
+      nextLevelXp: experienceRequiredForNextLevel(1),
     },
     enemy: null,
     battle: {
@@ -85,6 +146,7 @@ export function createInitialGameState({
     },
     stats: {
       enemiesDefeated: 0,
+      totalExperienceEarned: 0,
     },
     lastBattleResult: null,
   };
@@ -146,9 +208,15 @@ export function gameReducer(state, action) {
 
       const hp = Math.max(0, state.enemy.hp - amount);
       const defeated = hp === 0;
+      const experienceReward = defeated ? state.enemy.experienceReward : 0;
+      const player = defeated
+        ? addPlayerExperience(state.player, experienceReward)
+        : state.player;
+
       return {
         ...state,
         phase: defeated ? GAME_PHASE.VICTORY : GAME_PHASE.BATTLE,
+        player,
         enemy: { ...state.enemy, hp },
         battle: {
           ...state.battle,
@@ -157,6 +225,8 @@ export function gameReducer(state, action) {
         stats: {
           ...state.stats,
           enemiesDefeated: state.stats.enemiesDefeated + (defeated ? 1 : 0),
+          totalExperienceEarned:
+            state.stats.totalExperienceEarned + experienceReward,
         },
         lastBattleResult: defeated ? "victory" : null,
       };
@@ -191,7 +261,7 @@ export function gameReducer(state, action) {
     case GAME_ACTION.RESET_GAME:
       return createInitialGameState({
         playerMaxHp: state.player.maxHp,
-        playerAttackPower: state.player.attackPower ?? 1,
+        playerAttackPower: state.player.attackPower,
       });
 
     default:
