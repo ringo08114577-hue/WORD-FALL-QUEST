@@ -96,7 +96,8 @@ export function createCombatController(store) {
         return { ignored: true, duplicate: true, reason: "event-already-processed" };
       }
 
-      const resolution = resolveCombatEvent(store.getState(), event);
+      const previousState = store.getState();
+      const resolution = resolveCombatEvent(previousState, event);
       if (resolution.ignored) return resolution;
 
       processedEventIds.add(event.eventId);
@@ -107,8 +108,19 @@ export function createCombatController(store) {
       const state = store.getState();
       let message = resolution.message;
       let tone = resolution.tone;
-      if (state.phase === GAME_PHASE.VICTORY) {
-        message = state.enemy.name + "を倒した！";
+      let experienceGained = 0;
+      let levelUps = 0;
+      if (
+        previousState.phase === GAME_PHASE.BATTLE &&
+        state.phase === GAME_PHASE.VICTORY
+      ) {
+        experienceGained = state.enemy?.experienceReward ?? 0;
+        levelUps = state.player.level - previousState.player.level;
+        message =
+          state.enemy.name + "を倒した！ EXP +" + experienceGained + "！";
+        if (levelUps > 0) {
+          message += " レベルアップ！ LV." + state.player.level + "になった！";
+        }
         tone = "good";
       } else if (state.phase === GAME_PHASE.DEFEAT) {
         message = "HPがなくなった！冒険失敗……";
@@ -117,6 +129,8 @@ export function createCombatController(store) {
 
       return {
         ...resolution,
+        experienceGained,
+        levelUps,
         message,
         tone,
         state,
