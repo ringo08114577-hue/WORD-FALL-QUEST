@@ -1,0 +1,171 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
+import { createCombatController, resolveCombatEvent } from "./combat.js";
+import { createEnemy } from "./enemies.js";
+
+function startBattle({ playerMaxHp = 3, playerAttackPower = 1, enemy } = {}) {
+  const store = createGameStore({ playerMaxHp, playerAttackPower });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: enemy ?? createEnemy("slime"),
+  });
+  return store;
+}
+
+test("敵データはIDから作成され、呼び出し元で安全に変更できる", () => {
+  const slime = createEnemy("slime");
+  assert.deepEqual(slime, {
+    id: "slime",
+    name: "スライム",
+    maxHp: 3,
+    attackPower: 1,
+  });
+  slime.maxHp = 99;
+  assert.equal(createEnemy("slime").maxHp, 3);
+  assert.throws(() => createEnemy("dragon"), RangeError);
+});
+
+test("正しい文字ではHPを減らさず、メッセージだけを返す", () => {
+  const store = startBattle();
+  const result = resolveCombatEvent(store.getState(), {
+    type: "correct",
+    letter: "A",
+  });
+  assert.equal(result.action, null);
+  assert.equal(store.getState().player.hp, 3);
+  assert.equal(store.getState().enemy.hp, 3);
+  assert.match(result.message, /正解/);
+});
+
+test("間違った文字では敵のattackPowerぶんプレイヤーがダメージを受ける", () => {
+  const store = startBattle({
+    enemy: { ...createEnemy("slime"), attackPower: 2 },
+  });
+  const combat = createCombatController(store);
+  const result = combat.handle({
+    eventId: "challenge-0-letter-1",
+    type: "wrong",
+    letter: "Z",
+  });
+
+  assert.equal(result.damageTarget, "player");
+  assert.equal(result.damage, 2);
+  assert.equal(store.getState().player.hp, 1);
+  assert.match(result.message, /スライムの反撃/);
+});
+
+test("単語完成時はプレイヤーのattackPowerぶん敵にダメージを与える", () => {
+  const store = startBattle({ playerAttackPower: 2 });
+  const combat = createCombatController(store);
+  const result = combat.handle({
+    eventId: "challenge-0-letter-5",
+    type: "word-complete",
+  });
+
+  assert.equal(result.damageTarget, "enemy");
+  assert.equal(result.damage, 2);
+  assert.equal(store.getState().enemy.hp, 1);
+  assert.match(result.message, /2ダメージ/);
+});
+
+test("同じ戦闘イベントを2回処理してもダメージは1回だけ", () => {
+  const store = startBattle();
+  const combat = createCombatController(store);
+  const event = {
+    eventId: "challenge-0-letter-9",
+    type: "wrong",
+    letter: "X",
+  };
+
+  const first = combat.handle(event);
+  const second = combat.handle(event);
+
+  assert.equal(first.ignored, false);
+  assert.equal(second.ignored, true);
+  assert.equal(second.duplicate, true);
+  assert.equal(store.getState().player.hp, 2);
+});
+
+test("敵を倒すと勝利になり、その後のイベントは無視される", () => {
+  const store = startBattle({
+    playerAttackPower: 3,
+    enemy: { ...createEnemy("slime"), maxHp: 3 },
+  });
+  const combat = createCombatController(store);
+  const result = combat.handle({
+    eventId: "challenge-0-letter-20",
+    type: "word-complete",
+  });
+
+  assert.equal(store.getState().phase, GAME_PHASE.VICTORY);
+  assert.equal(store.getState().enemy.hp, 0);
+  assert.match(result.message, /倒した/);
+
+  const ignored = combat.handle({
+    eventId: "challenge-0-letter-21",
+    type: "wrong",
+    letter: "Z",
+  });
+  assert.equal(ignored.ignored, true);
+  assert.equal(store.getState().player.hp, 3);
+});
+
+test("プレイヤーHPが0になると敗北になり、同じイベントで二重に減らない", () => {
+  const store = startBattle({
+    playerMaxHp: 1,
+    enemy: { ...createEnemy("slime"), attackPower: 1 },
+  });
+  const combat = createCombatController(store);
+  const event = {
+    eventId: "challenge-0-letter-30",
+    type: "wrong",
+    letter: "Q",
+  };
+
+  const result = combat.handle(event);
+  const duplicate = combat.handle(event);
+
+  assert.equal(store.getState().phase, GAME_PHASE.DEFEAT);
+  assert.equal(store.getState().player.hp, 0);
+  assert.match(result.message, /失敗/);
+  assert.equal(duplicate.duplicate, true);
+});
+
+test("イベントIDのないイベントとバトル外のイベントは処理しない", () => {
+  const store = startBattle();
+  const combat = createCombatController(store);
+
+  assert.equal(combat.handle({ type: "wrong" }).ignored, true);
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 3 });
+  const ignored = combat.handle({
+    eventId: "challenge-0-letter-40",
+    type: "word-complete",
+  });
+  assert.equal(ignored.ignored, true);
+  assert.equal(store.getState().enemy.hp, 3);
+});
+
+test("同じ文字イベントをリセット後の新しい戦闘で再利用できる", () => {
+  const store = startBattle();
+  const combat = createCombatController(store);
+  const event = {
+    eventId: "challenge-0-letter-1",
+    type: "wrong",
+    letter: "Z",
+  };
+  combat.handle(event);
+  assert.equal(store.getState().player.hp, 2);
+
+  combat.reset();
+  store.dispatch({ type: GAME_ACTION.RESET_GAME });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: createEnemy("slime"),
+  });
+  const again = combat.handle(event);
+
+  assert.equal(again.ignored, false);
+  assert.equal(store.getState().player.hp, 2);
+});
