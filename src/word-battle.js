@@ -258,12 +258,23 @@ export function advanceFallingLetters(
   let nextState = state;
   const events = [];
   const updated = [];
+  let collectedThisFrame = false;
 
-  for (const letter of state.letters) {
+  // When several letters cross in one update, check the lowest one first.
+  // The player can collect only one letter per update frame.
+  const lettersByCatchPriority = [...state.letters].sort(
+    (a, b) => b.y - a.y,
+  );
+
+  for (const letter of lettersByCatchPriority) {
     const y = letter.y + letter.speed * (deltaMs / 1000);
     const crossedCatchLine = letter.y < catchLine && y >= catchLine;
 
-    if (crossedCatchLine && letter.lane === nextState.playerLane) {
+    if (
+      crossedCatchLine &&
+      letter.lane === nextState.playerLane &&
+      !collectedThisFrame
+    ) {
       const picked = collectLetter(nextState, letter.id);
       nextState = picked.state;
       if (picked.result !== "ignored") {
@@ -272,6 +283,7 @@ export function advanceFallingLetters(
           letter: picked.letter.value,
           expected: picked.expected ?? null,
         });
+        collectedThisFrame = true;
       }
       continue;
     }
