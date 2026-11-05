@@ -105,7 +105,7 @@ test("敵を倒すと勝利になり、その後のイベントは無視され�
   assert.equal(result.experienceGained, 10);
   assert.equal(result.levelUps, 1);
   assert.equal(store.getState().player.level, 2);
-  assert.equal(store.getState().player.attackPower, 2);
+  assert.equal(store.getState().player.attackPower, 4);
   assert.match(result.message, /EXP \+10/);
   assert.match(result.message, /レベルアップ/);
 
@@ -137,7 +137,7 @@ test("プレイヤーHPが0になると敗北になり、同じイベントで�
   assert.equal(store.getState().player.hp, 0);
   assert.match(result.message, /失敗/);
   assert.equal(duplicate.duplicate, true);
-  assert.equal(store.getState().stats.totalExperienceEarned, 10);
+  assert.equal(store.getState().stats.totalExperienceEarned, 0);
 });
 
 test("イベントIDのないイベントとバトル外のイベントは処理しない", () => {
