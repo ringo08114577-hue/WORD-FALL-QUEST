@@ -279,6 +279,7 @@ export function advanceFallingLetters(
       nextState = picked.state;
       if (picked.result !== "ignored") {
         events.push({
+          eventId: "challenge-" + state.challengeIndex + "-letter-" + picked.letter.id,
           type: picked.result,
           letter: picked.letter.value,
           expected: picked.expected ?? null,
