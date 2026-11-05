@@ -61,11 +61,9 @@
       border-radius:8px; background:#15243a; font-size:1.05rem; font-weight:900;
     }
     .slot.filled { color:#86efac; border-color:#277c5a; background:#123629; }
-    .hint { margin:3px 0 0; color:#9eacc2; font-size:.76rem; }
-    .hint strong { color:#fde68a; font-size:1rem; }
     .arena-wrap { padding:9px; }
     .arena {
-      position:relative; height:310px; overflow:hidden; border-radius:14px;
+      position:relative; height:clamp(220px, 35svh, 310px); overflow:hidden; border-radius:14px;
       border:1px solid #344963;
       background:
         linear-gradient(180deg, rgba(20,45,73,.75), rgba(13,25,43,.96)),
@@ -81,7 +79,7 @@
     .lane-lines span { border-right:1px solid rgba(148,173,202,.12); }
     .lane-lines span:last-child { border:0; }
     .catch-line {
-      position:absolute; left:0; right:0; top:262px; border-top:1px dashed rgba(250,204,21,.5);
+      position:absolute; left:0; right:0; top:calc(100% - 48px); border-top:1px dashed rgba(250,204,21,.5);
       color:#fde68a; font-size:.62rem; text-align:right; padding:3px 7px 0;
       pointer-events:none;
     }
@@ -127,13 +125,44 @@
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
     @media (max-width:480px) {
-      body { padding:10px 8px 18px; }
-      .panel { padding:10px; border-radius:14px; }
-      .arena { height:310px; }
-      .vitals { gap:8px; }
-      .vital { padding:8px; }
+      body { min-height:100svh; padding:5px 7px 8px; }
+      main { width:100%; }
+      .topline { gap:6px; }
+      .eyebrow { font-size:.58rem; letter-spacing:.1em; }
+      .back-link { font-size:.66rem; }
+      h1 { margin:2px 0 0; font-size:1.35rem; }
+      .subtitle { margin:0 0 5px; font-size:.72rem; line-height:1.25; }
+      .panel { padding:7px 8px; margin:5px 0; border-radius:12px; }
+      .panel-title h2 { font-size:.82rem; }
+      .phase { padding:3px 7px; font-size:.66rem; }
+      .message { margin:4px 0 6px; font-size:.72rem; line-height:1.3; }
+      .vitals { gap:6px; }
+      .vital { padding:6px 7px; }
+      .vital-head { margin-bottom:4px; font-size:.66rem; }
+      .hp-text { font-size:.66rem; }
+      .bar { height:6px; }
+      .question { padding:0 0 4px; }
+      .question-label { font-size:.64rem; }
+      .japanese { margin:1px 0 3px; font-size:1.35rem; }
+      .spelling { gap:4px; margin:3px 0; }
+      .slot { width:27px; height:30px; font-size:.9rem; }
+      .stats { gap:13px; font-size:.68rem; }
+      .arena-wrap { padding:6px; }
+      .arena { height:clamp(210px, 34svh, 270px); min-height:210px; }
+      .falling-letter { width:34px; height:34px; margin-left:-17px; font-size:1.05rem; }
+      .player { width:40px; height:40px; margin-left:-20px; font-size:1.55rem; }
+      .controls { gap:7px; margin-top:5px; }
+      button { min-height:35px; padding:7px 10px; font-size:.82rem; }
       .move-button { flex:1; min-width:0; }
-      .action-row button { flex:1; }
+      .howto { margin:4px 1px 0; font-size:.64rem; line-height:1.3; }
+      .action-row { gap:6px; margin-top:5px; }
+      .action-row button { flex:1; min-width:0; }
+      .footer { display:none; }
+    }
+    @media (max-height:700px) and (max-width:480px) {
+      .subtitle { display:none; }
+      .arena { height:clamp(190px, 31svh, 225px); min-height:190px; }
+      .howto { font-size:.6rem; }
     }
   </style>
 </head>
@@ -169,7 +198,6 @@
         <div class="question-label">この日本語の英単語を完成させよう</div>
         <div class="japanese" id="japanesePrompt">りんご</div>
         <div class="spelling" id="spellingProgress" aria-label="スペルの進み具合"></div>
-        <p class="hint" id="nextLetterHint">次に必要な文字：<strong>A</strong></p>
       </div>
       <div class="stats">
         <span>スコア <strong id="score">0</strong></span>
@@ -221,8 +249,6 @@
 
     const $ = (id) => document.getElementById(id);
     const store = createGameStore({ playerMaxHp: 3 });
-    const BOARD_HEIGHT = 310;
-    const CATCH_LINE = 262;
     const TICK_MS = 40;
     const SPAWN_INTERVAL_MS = 900;
 
@@ -304,10 +330,6 @@
         $("spellingProgress").append(slot);
       }
 
-      const expected = getExpectedLetter(wordState);
-      $("nextLetterHint").innerHTML = expected
-        ? "次に必要な文字：<strong>" + expected + "</strong>"
-        : "単語完成！";
       $("score").textContent = String(wordState.score);
       $("mistakes").textContent = String(wordState.mistakes);
 
@@ -341,7 +363,7 @@
       wordState = createWordBattleState();
       spawnElapsed = 0;
       $("arenaCover").hidden = true;
-      setStatus("りんごのスペルを集めよう！まずは A を探してね。");
+      setStatus("りんごのスペルを完成させよう！");
       render();
     }
 
@@ -359,7 +381,7 @@
           store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
           if (store.getState().phase === GAME_PHASE.BATTLE) {
             setStatus(
-              event.letter + " は違う文字！次に必要なのは " + event.expected + " だよ。",
+              event.letter + " は違う文字！もう一度挑戦しよう。",
               "bad",
             );
           }
@@ -404,9 +426,11 @@
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
       if (wordState.phase !== "active") return;
 
+      const boardHeight = $("arena").clientHeight;
+      const catchLine = boardHeight - 48;
       const moved = advanceFallingLetters(wordState, TICK_MS, {
-        boardHeight: BOARD_HEIGHT,
-        catchLine: CATCH_LINE,
+        boardHeight,
+        catchLine,
       });
       wordState = moved.state;
       handleWordEvents(moved.events);
