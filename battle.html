@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>WORD FALL QUEST | Step 2</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0b1220;
+      color: #eef4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 22px 14px 38px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(56, 117, 201, .24), transparent 38rem),
+        #0b1220;
+    }
+    main { width: min(100%, 760px); margin: 0 auto; }
+    .topline { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .eyebrow { color:#7dd3fc; font-size:.74rem; font-weight:850; letter-spacing:.15em; }
+    .back-link { color:#bfdbfe; text-decoration:none; font-size:.82rem; font-weight:750; }
+    h1 { margin:9px 0 4px; font-size:clamp(1.75rem,6vw,2.6rem); letter-spacing:.03em; }
+    .subtitle { color:#9eacc2; margin:0 0 18px; line-height:1.7; }
+    .panel {
+      border:1px solid #29384f; border-radius:19px;
+      background:rgba(18,29,47,.94); padding:17px; margin:13px 0;
+      box-shadow:0 16px 40px rgba(0,0,0,.16);
+    }
+    .panel-title { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    h2 { margin:0; font-size:1rem; }
+    .phase {
+      border-radius:999px; padding:6px 10px; background:#233a56;
+      color:#bae6fd; font-size:.78rem; font-weight:850; white-space:nowrap;
+    }
+    .phase[data-phase="victory"] { background:#164e3a; color:#bbf7d0; }
+    .phase[data-phase="defeat"] { background:#5a202b; color:#fecdd3; }
+    .phase[data-phase="paused"] { background:#58421c; color:#fde68a; }
+    .message { min-height:43px; margin:12px 0 0; color:#c5d2e5; line-height:1.65; }
+    .message.good { color:#86efac; }
+    .message.bad { color:#fda4af; }
+    .vitals { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .vital { background:#111d30; border-radius:13px; padding:12px; }
+    .vital-head { display:flex; justify-content:space-between; gap:8px; margin-bottom:8px; font-size:.83rem; font-weight:800; }
+    .hp-text { color:#d8e5f8; font-variant-numeric:tabular-nums; }
+    .bar { height:10px; background:#26354b; overflow:hidden; border-radius:99px; }
+    .bar-fill { height:100%; width:100%; border-radius:99px; background:linear-gradient(90deg,#34d399,#86efac); transition:width .18s ease; }
+    .bar-fill.enemy { background:linear-gradient(90deg,#f97316,#fbbf24); }
+    .question { text-align:center; padding:4px 0 14px; }
+    .question-label { color:#91a4be; font-size:.78rem; font-weight:750; }
+    .japanese { margin:5px 0 7px; font-size:clamp(1.8rem,7vw,2.6rem); font-weight:900; }
+    .spelling { display:flex; justify-content:center; flex-wrap:wrap; gap:7px; margin:9px 0; }
+    .slot {
+      display:grid; place-items:center; width:39px; height:45px;
+      border:1px solid #425a78; border-bottom:3px solid #55718f;
+      border-radius:9px; background:#15243a; font-size:1.25rem; font-weight:900;
+    }
+    .slot.filled { color:#86efac; border-color:#277c5a; background:#123629; }
+    .hint { margin:5px 0 0; color:#9eacc2; font-size:.83rem; }
+    .hint strong { color:#fde68a; font-size:1rem; }
+    .arena-wrap { padding:12px; }
+    .arena {
+      position:relative; height:350px; overflow:hidden; border-radius:14px;
+      border:1px solid #344963;
+      background:
+        linear-gradient(180deg, rgba(20,45,73,.75), rgba(13,25,43,.96)),
+        repeating-linear-gradient(90deg, transparent 0, transparent calc(20% - 1px), rgba(144,174,207,.12) calc(20% - 1px), rgba(144,174,207,.12) 20%);
+      isolation:isolate;
+    }
+    .arena::before {
+      content:""; position:absolute; inset:0 0 auto; height:42%;
+      background:radial-gradient(ellipse at 50% 0%, rgba(56,189,248,.12), transparent 75%);
+      pointer-events:none;
+    }
+    .lane-lines { position:absolute; inset:0; display:grid; grid-template-columns:repeat(5,1fr); pointer-events:none; }
+    .lane-lines span { border-right:1px solid rgba(148,173,202,.12); }
+    .lane-lines span:last-child { border:0; }
+    .catch-line {
+      position:absolute; left:0; right:0; top:274px; border-top:1px dashed rgba(250,204,21,.5);
+      color:#fde68a; font-size:.62rem; text-align:right; padding:3px 7px 0;
+      pointer-events:none;
+    }
+    .falling-letter {
+      position:absolute; z-index:2; display:grid; place-items:center;
+      width:42px; height:42px; margin-left:-21px; border-radius:11px;
+      border:1px solid #7dd3fc; border-bottom:4px solid #3386aa;
+      background:linear-gradient(145deg,#164e63,#15334a);
+      color:#f0f9ff; font-size:1.35rem; font-weight:950;
+      box-shadow:0 5px 15px rgba(0,0,0,.28);
+      pointer-events:none;
+    }
+    .player {
+      position:absolute; z-index:3; bottom:9px; width:48px; height:48px;
+      margin-left:-24px; display:grid; place-items:center;
+      border-radius:13px; background:rgba(37,99,235,.22);
+      border:1px solid #60a5fa; font-size:2rem;
+      transition:left .09s ease;
+      filter:drop-shadow(0 5px 5px rgba(0,0,0,.25));
+    }
+    .arena-cover {
+      position:absolute; z-index:4; inset:0; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:9px; padding:20px;
+      text-align:center; background:rgba(5,12,23,.78);
+    }
+    .arena-cover[hidden] { display:none; }
+    .cover-title { font-size:1.2rem; font-weight:900; }
+    .cover-note { color:#b7c7dc; font-size:.85rem; line-height:1.6; }
+    .controls { display:flex; justify-content:center; gap:12px; margin-top:13px; }
+    button {
+      border:1px solid #3b506e; color:#f2f6ff; background:#22334c;
+      border-radius:12px; padding:11px 18px; min-height:46px;
+      font:inherit; font-weight:800; cursor:pointer;
+    }
+    button.primary { background:#2563eb; border-color:#3b82f6; }
+    button:disabled { opacity:.35; cursor:not-allowed; }
+    .move-button { min-width:112px; font-size:1.05rem; }
+    .action-row { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:13px; }
+    .action-row button { min-width:145px; }
+    .next-button[hidden], .start-button[hidden] { display:none; }
+    .stats { display:flex; justify-content:center; gap:22px; color:#a9bad0; font-size:.83rem; }
+    .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
+    .howto { color:#9eacc2; font-size:.82rem; line-height:1.7; margin:10px 2px 0; }
+    .footer { color:#64748b; text-align:center; font-size:.74rem; margin-top:22px; }
+    @media (max-width:480px) {
+      body { padding:16px 10px 28px; }
+      .panel { padding:13px; border-radius:16px; }
+      .arena { height:350px; }
+      .vitals { gap:8px; }
+      .vital { padding:10px; }
+      .move-button { flex:1; min-width:0; }
+      .action-row button { flex:1; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topline">
+      <div class="eyebrow">WORD FALL QUEST · DEVELOPMENT BUILD</div>
+      <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
+    </div>
+    <h1>英単語バトル</h1>
+    <p class="subtitle">STEP 2 — 落ちてくる文字を集めて、正しいスペルを完成させよう！</p>
+
+    <section class="panel">
+      <div class="panel-title">
+        <h2>バトル状況</h2>
+        <span class="phase" id="phaseBadge" data-phase="title">開始前</span>
+      </div>
+      <p class="message" id="statusMessage" aria-live="polite">「冒険を始める」を押してゲームを開始しよう。</p>
+      <div class="vitals">
+        <div class="vital">
+          <div class="vital-head"><span>🧙 プレイヤー</span><span class="hp-text" id="playerHp">HP 3 / 3</span></div>
+          <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill" id="playerHpFill"></div></div>
+        </div>
+        <div class="vital">
+          <div class="vital-head"><span>🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
+          <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="question">
+        <div class="question-label">この日本語の英単語を完成させよう</div>
+        <div class="japanese" id="japanesePrompt">りんご</div>
+        <div class="spelling" id="spellingProgress" aria-label="スペルの進み具合"></div>
+        <p class="hint" id="nextLetterHint">次に必要な文字：<strong>A</strong></p>
+      </div>
+      <div class="stats">
+        <span>スコア <strong id="score">0</strong></span>
+        <span>ミス <strong id="mistakes">0</strong></span>
+      </div>
+    </section>
+
+    <section class="panel arena-wrap">
+      <div class="arena" id="arena" aria-label="アルファベットを集めるゲーム画面">
+        <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+        <div id="lettersLayer"></div>
+        <div class="catch-line" aria-hidden="true">キャッチライン</div>
+        <div class="player" id="playerSprite" aria-label="プレイヤー">🧙</div>
+        <div class="arena-cover" id="arenaCover">
+          <div class="cover-title" id="coverTitle">冒険の準備はできた？</div>
+          <div class="cover-note" id="coverNote">左右に移動して、必要なアルファベットを集めよう。</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="move-button" id="leftButton" aria-label="左へ移動" disabled>◀ 左へ</button>
+        <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
+      </div>
+      <p class="howto">操作：キーボードの ← → / A D、または左右ボタン。必要な文字を順番どおりに拾うと正解。違う文字を拾うとHPが1減るよ。</p>
+      <div class="action-row">
+        <button class="primary start-button" id="startButton">冒険を始める</button>
+        <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
+      </div>
+    </section>
+
+    <p class="footer">WORD FALL QUEST · STEP 2 · WORD BATTLE ENGINE</p>
+  </main>
+
+  <script type="module">
+    import {
+      createWordBattleState,
+      getCurrentChallenge,
+      getExpectedLetter,
+      getSpellingProgress,
+      spawnFallingLetter,
+      movePlayer,
+      advanceFallingLetters,
+      advanceToNextChallenge,
+    } from "./src/word-battle.js";
+    import {
+      createGameStore,
+      GAME_ACTION,
+      GAME_PHASE,
+    } from "./src/game-state.js";
+
+    const $ = (id) => document.getElementById(id);
+    const store = createGameStore({ playerMaxHp: 3 });
+    const BOARD_HEIGHT = 350;
+    const CATCH_LINE = 274;
+    const TICK_MS = 40;
+    const SPAWN_INTERVAL_MS = 900;
+
+    let wordState = createWordBattleState();
+    let spawnElapsed = 0;
+    let statusText = "「冒険を始める」を押してゲームを開始しよう。";
+    let statusTone = "";
+
+    const phaseLabels = {
+      [GAME_PHASE.TITLE]: "開始前",
+      [GAME_PHASE.BATTLE]: "バトル中",
+      [GAME_PHASE.VICTORY]: "勝利",
+      [GAME_PHASE.DEFEAT]: "敗北",
+      [GAME_PHASE.PAUSED]: "一時停止",
+    };
+
+    function setStatus(message, tone = "") {
+      statusText = message;
+      statusTone = tone;
+      $("statusMessage").textContent = message;
+      $("statusMessage").className = "message " + tone;
+    }
+
+    function setBar(barId, fillId, hp, maxHp) {
+      const bar = $(barId);
+      $(fillId).style.width = (maxHp > 0 ? (hp / maxHp) * 100 : 0) + "%";
+      bar.setAttribute("aria-valuemax", String(maxHp));
+      bar.setAttribute("aria-valuenow", String(hp));
+    }
+
+    function renderStore(state) {
+      $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
+      $("phaseBadge").dataset.phase = state.phase;
+      $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
+      setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
+
+      const enemy = state.enemy;
+      const enemyHp = enemy ? enemy.hp : 3;
+      const enemyMaxHp = enemy ? enemy.maxHp : 3;
+      $("enemyHp").textContent = "HP " + enemyHp + " / " + enemyMaxHp;
+      setBar("enemyHpBar", "enemyHpFill", enemyHp, enemyMaxHp);
+
+      const active = state.phase === GAME_PHASE.BATTLE;
+      const finished = state.phase === GAME_PHASE.VICTORY || state.phase === GAME_PHASE.DEFEAT;
+      $("leftButton").disabled = !active || wordState.phase !== "active";
+      $("rightButton").disabled = !active || wordState.phase !== "active";
+      $("startButton").hidden = active;
+      $("startButton").textContent = finished ? "もう一度冒険する" : "冒険を始める";
+      $("nextButton").hidden = !(
+        active && wordState.phase === "word-complete"
+      );
+      $("arenaCover").hidden = active && wordState.phase === "active";
+
+      if (state.phase === GAME_PHASE.VICTORY) {
+        $("coverTitle").textContent = "スライムを倒した！";
+        $("coverNote").textContent = "単語を完成させて攻撃成功。冒険クリア！";
+        $("startButton").hidden = false;
+        setStatus("勝利！スライムを倒したよ。もう一度挑戦できるよ。", "good");
+      } else if (state.phase === GAME_PHASE.DEFEAT) {
+        $("coverTitle").textContent = "冒険失敗";
+        $("coverNote").textContent = "HPがなくなったよ。もう一度挑戦してみよう。";
+        $("startButton").hidden = false;
+        setStatus("プレイヤーのHPが0になったよ。もう一度挑戦しよう。", "bad");
+      } else if (state.phase === GAME_PHASE.TITLE) {
+        $("coverTitle").textContent = "冒険の準備はできた？";
+        $("coverNote").textContent = "左右に移動して、必要なアルファベットを集めよう。";
+      }
+    }
+
+    function renderWordState() {
+      const challenge = getCurrentChallenge(wordState);
+      $("japanesePrompt").textContent = challenge.japanese;
+      $("spellingProgress").replaceChildren();
+      const parts = getSpellingProgress(wordState).split(" ");
+      for (const character of parts) {
+        const slot = document.createElement("span");
+        slot.className = "slot" + (character === "_" ? "" : " filled");
+        slot.textContent = character;
+        $("spellingProgress").append(slot);
+      }
+
+      const expected = getExpectedLetter(wordState);
+      $("nextLetterHint").innerHTML = expected
+        ? "次に必要な文字：<strong>" + expected + "</strong>"
+        : "単語完成！";
+      $("score").textContent = String(wordState.score);
+      $("mistakes").textContent = String(wordState.mistakes);
+
+      $("playerSprite").style.left =
+        (((wordState.playerLane + 0.5) / wordState.laneCount) * 100) + "%";
+
+      const layer = $("lettersLayer");
+      layer.replaceChildren();
+      for (const letter of wordState.letters) {
+        const node = document.createElement("div");
+        node.className = "falling-letter";
+        node.textContent = letter.value;
+        node.style.left = (((letter.lane + 0.5) / wordState.laneCount) * 100) + "%";
+        node.style.top = letter.y + "px";
+        node.setAttribute("aria-hidden", "true");
+        layer.append(node);
+      }
+    }
+
+    function render() {
+      renderStore(store.getState());
+      renderWordState();
+    }
+
+    function startGame() {
+      store.dispatch({ type: GAME_ACTION.RESET_GAME });
+      store.dispatch({
+        type: GAME_ACTION.START_BATTLE,
+        enemy: { id: "slime", name: "スライム", maxHp: 3 },
+      });
+      wordState = createWordBattleState();
+      spawnElapsed = 0;
+      $("arenaCover").hidden = true;
+      setStatus("りんごのスペルを集めよう！まずは A を探してね。");
+      render();
+    }
+
+    function move(direction) {
+      if (store.getState().phase !== GAME_PHASE.BATTLE) return;
+      wordState = movePlayer(wordState, direction);
+      renderWordState();
+    }
+
+    function handleWordEvents(events) {
+      for (const event of events) {
+        if (event.type === "correct") {
+          setStatus(event.letter + " は正解！次の文字を探そう。", "good");
+        } else if (event.type === "wrong") {
+          store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+          if (store.getState().phase === GAME_PHASE.BATTLE) {
+            setStatus(
+              event.letter + " は違う文字！次に必要なのは " + event.expected + " だよ。",
+              "bad",
+            );
+          }
+        } else if (event.type === "word-complete") {
+          store.dispatch({ type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
+          if (store.getState().phase === GAME_PHASE.BATTLE) {
+            setStatus(getCurrentChallenge(wordState).word + " 完成！スライムに1ダメージ！", "good");
+            $("coverTitle").textContent = "単語完成！";
+            $("coverNote").textContent = "次のお題へ進んで、もう一度攻撃しよう。";
+            $("arenaCover").hidden = false;
+            $("nextButton").hidden = false;
+          }
+        }
+      }
+    }
+
+    $("startButton").addEventListener("click", startGame);
+    $("nextButton").addEventListener("click", () => {
+      if (store.getState().phase !== GAME_PHASE.BATTLE) return;
+      wordState = advanceToNextChallenge(wordState);
+      spawnElapsed = 0;
+      $("arenaCover").hidden = true;
+      $("nextButton").hidden = true;
+      setStatus("次のお題は「" + getCurrentChallenge(wordState).japanese + "」だよ。");
+      render();
+    });
+    $("leftButton").addEventListener("click", () => move(-1));
+    $("rightButton").addEventListener("click", () => move(1));
+
+    window.addEventListener("keydown", (event) => {
+      if (["ArrowLeft", "ArrowRight", "a", "A", "d", "D"].includes(event.key)) {
+        event.preventDefault();
+      }
+      if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") move(-1);
+      if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") move(1);
+    });
+
+    store.subscribe(renderStore);
+    render();
+
+    setInterval(() => {
+      if (store.getState().phase !== GAME_PHASE.BATTLE) return;
+      if (wordState.phase !== "active") return;
+
+      const moved = advanceFallingLetters(wordState, TICK_MS, {
+        boardHeight: BOARD_HEIGHT,
+        catchLine: CATCH_LINE,
+      });
+      wordState = moved.state;
+      handleWordEvents(moved.events);
+
+      if (
+        store.getState().phase === GAME_PHASE.BATTLE &&
+        wordState.phase === "active"
+      ) {
+        spawnElapsed += TICK_MS;
+        if (spawnElapsed >= SPAWN_INTERVAL_MS) {
+          wordState = spawnFallingLetter(wordState);
+          spawnElapsed = 0;
+        }
+      }
+      render();
+    }, TICK_MS);
+  </script>
+</body>
+</html>
