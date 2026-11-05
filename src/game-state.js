@@ -134,6 +134,8 @@ export function createInitialGameState({
       hp: playerMaxHp,
       maxHp: playerMaxHp,
       attackPower: playerAttackPower,
+      baseMaxHp: playerMaxHp,
+      baseAttackPower: playerAttackPower,
       level: 1,
       experience: 0,
       nextLevelXp: experienceRequiredForNextLevel(1),
@@ -260,8 +262,8 @@ export function gameReducer(state, action) {
 
     case GAME_ACTION.RESET_GAME:
       return createInitialGameState({
-        playerMaxHp: state.player.maxHp,
-        playerAttackPower: state.player.attackPower,
+        playerMaxHp: state.player.baseMaxHp ?? state.player.maxHp,
+        playerAttackPower: state.player.baseAttackPower ?? state.player.attackPower,
       });
 
     default:
