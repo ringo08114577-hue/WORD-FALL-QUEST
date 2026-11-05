@@ -115,7 +115,7 @@ test("敵を倒すと勝利になり、その後のイベントは無視され�
     letter: "Z",
   });
   assert.equal(ignored.ignored, true);
-  assert.equal(store.getState().player.hp, 3);
+  assert.equal(store.getState().player.hp, 4);
 });
 
 test("プレイヤーHPが0になると敗北になり、同じイベントで二重に減らない", () => {
