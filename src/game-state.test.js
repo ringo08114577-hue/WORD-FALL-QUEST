@@ -172,6 +172,8 @@ test("初期プレイヤーはレベル1で、次のレベルまで10EXP", () =>
   assert.equal(state.player.level, 1);
   assert.equal(state.player.experience, 0);
   assert.equal(state.player.nextLevelXp, 10);
+  assert.equal(state.player.maxHp, 3);
+  assert.equal(state.player.attackPower, 1);
   assert.equal(state.stats.totalExperienceEarned, 0);
 });
 
