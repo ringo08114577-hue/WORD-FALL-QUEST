@@ -51,6 +51,11 @@
     .bar { height:8px; background:#26354b; overflow:hidden; border-radius:99px; }
     .bar-fill { height:100%; width:100%; border-radius:99px; background:linear-gradient(90deg,#34d399,#86efac); transition:width .18s ease; }
     .bar-fill.enemy { background:linear-gradient(90deg,#f97316,#fbbf24); }
+    @keyframes hpHit {
+      0%, 100% { filter:brightness(1); }
+      35% { filter:brightness(2.2) saturate(1.7); }
+    }
+    .bar-fill.damage-hit { animation:hpHit .34s ease; }
     .question { text-align:center; padding:0 0 8px; }
     .question-label { color:#91a4be; font-size:.72rem; font-weight:750; }
     .japanese { margin:3px 0 5px; font-size:clamp(1.5rem,5.5vw,2.1rem); font-weight:900; }
@@ -187,7 +192,7 @@
           <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill" id="playerHpFill"></div></div>
         </div>
         <div class="vital">
-          <div class="vital-head"><span>🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
+          <div class="vital-head"><span id="enemyName">🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
           <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
         </div>
       </div>
@@ -245,9 +250,12 @@
       GAME_ACTION,
       GAME_PHASE,
     } from "./src/game-state.js";
+    import { createEnemy } from "./src/enemies.js";
+    import { createCombatController } from "./src/combat.js";
 
     const $ = (id) => document.getElementById(id);
-    const store = createGameStore({ playerMaxHp: 3 });
+    const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
+    const combat = createCombatController(store);
     const TICK_MS = 40;
     const SPAWN_INTERVAL_MS = 900;
 
@@ -285,6 +293,7 @@
       setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
 
       const enemy = state.enemy;
+      $("enemyName").textContent = enemy ? "🟢 " + enemy.name : "🟢 敵";
       const enemyHp = enemy ? enemy.hp : 3;
       const enemyMaxHp = enemy ? enemy.maxHp : 3;
       $("enemyHp").textContent = "HP " + enemyHp + " / " + enemyMaxHp;
@@ -354,10 +363,11 @@
     }
 
     function startGame() {
+      combat.reset();
       store.dispatch({ type: GAME_ACTION.RESET_GAME });
       store.dispatch({
         type: GAME_ACTION.START_BATTLE,
-        enemy: { id: "slime", name: "スライム", maxHp: 3 },
+        enemy: createEnemy("slime"),
       });
       wordState = createWordBattleState();
       spawnElapsed = 0;
@@ -372,27 +382,31 @@
       renderWordState();
     }
 
+    function flashDamage(target) {
+      const element = $(target === "player" ? "playerHpFill" : "enemyHpFill");
+      if (!element) return;
+      element.classList.remove("damage-hit");
+      void element.offsetWidth;
+      element.classList.add("damage-hit");
+      window.setTimeout(() => element.classList.remove("damage-hit"), 360);
+    }
+
     function handleWordEvents(events) {
       for (const event of events) {
-        if (event.type === "correct") {
-          setStatus(event.letter + " は正解！次の文字を探そう。", "good");
-        } else if (event.type === "wrong") {
-          store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
-          if (store.getState().phase === GAME_PHASE.BATTLE) {
-            setStatus(
-              event.letter + " は違う文字！もう一度挑戦しよう。",
-              "bad",
-            );
-          }
-        } else if (event.type === "word-complete") {
-          store.dispatch({ type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
-          if (store.getState().phase === GAME_PHASE.BATTLE) {
-            setStatus(getCurrentChallenge(wordState).word + " 完成！スライムに1ダメージ！", "good");
-            $("coverTitle").textContent = "単語完成！";
-            $("coverNote").textContent = "次のお題へ進んで、もう一度攻撃しよう。";
-            $("arenaCover").hidden = false;
-            $("nextButton").hidden = false;
-          }
+        const result = combat.handle(event);
+        if (result.ignored) continue;
+
+        if (result.damageTarget) flashDamage(result.damageTarget);
+        setStatus(result.message, result.tone);
+
+        if (
+          event.type === "word-complete" &&
+          store.getState().phase === GAME_PHASE.BATTLE
+        ) {
+          $("coverTitle").textContent = "単語完成！";
+          $("coverNote").textContent = "次のお題へ進んで、もう一度攻撃しよう。";
+          $("arenaCover").hidden = false;
+          $("nextButton").hidden = false;
         }
       }
     }
