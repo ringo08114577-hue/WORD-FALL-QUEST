@@ -169,3 +169,42 @@ test("時間とレーンの不正な値を拒否する", () => {
   assert.throws(() => advanceFallingLetters(state, -1), RangeError);
   assert.throws(() => spawnFallingLetter(state, { random: () => 1 }), RangeError);
 });
+
+test("同じフレームに取得ラインを越えた文字を複数拾わない", () => {
+  const base = createWordBattleState();
+  const lane = base.playerLane;
+  let state = addLetter(base, {
+    id: 1,
+    value: "Z",
+    lane,
+    y: 260,
+    speed: 100,
+  });
+  state = addLetter(state, {
+    id: 2,
+    value: "Y",
+    lane,
+    y: 265,
+    speed: 100,
+  });
+
+  const result = advanceFallingLetters(state, 200, {
+    boardHeight: 340,
+    catchLine: 274,
+  });
+
+  assert.equal(result.events.length, 1);
+  assert.equal(result.events[0].type, "wrong");
+  assert.equal(result.events[0].letter, "Y");
+  assert.equal(result.state.mistakes, 1);
+  assert.equal(result.state.letters.length, 1);
+  assert.equal(result.state.letters[0].value, "Z");
+
+  // Once a letter has passed the catch line, later frames cannot pick it up.
+  const next = advanceFallingLetters(result.state, 200, {
+    boardHeight: 340,
+    catchLine: 274,
+  });
+  assert.equal(next.events.length, 0);
+  assert.equal(next.state.mistakes, 1);
+});
