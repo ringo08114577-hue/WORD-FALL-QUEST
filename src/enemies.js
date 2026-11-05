@@ -8,6 +8,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
     name: "スライム",
     maxHp: 3,
     attackPower: 1,
+    experienceReward: 10,
   }),
 });
 
