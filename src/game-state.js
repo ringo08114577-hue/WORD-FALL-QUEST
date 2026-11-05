@@ -34,13 +34,15 @@ function normalizeEnemy(enemy) {
   }
 
   const { id, name, maxHp } = enemy;
+  const attackPower = enemy.attackPower === undefined ? 1 : enemy.attackPower;
   if (
     (typeof id !== "string" && typeof id !== "number") ||
     typeof name !== "string" ||
     name.trim() === "" ||
-    !isPositiveInteger(maxHp)
+    !isPositiveInteger(maxHp) ||
+    !isPositiveInteger(attackPower)
   ) {
-    throw new TypeError("敵データはid・name・正の整数maxHpを指定してください。");
+    throw new TypeError("敵データはid・name・正の整数maxHpとattackPowerを指定してください。");
   }
 
   const hp = enemy.hp === undefined ? maxHp : enemy.hp;
@@ -48,7 +50,7 @@ function normalizeEnemy(enemy) {
     throw new TypeError("敵のhpは1以上maxHp以下の整数にしてください。");
   }
 
-  return { id, name: name.trim(), hp, maxHp };
+  return { id, name: name.trim(), hp, maxHp, attackPower };
 }
 
 function normalizeAmount(amount) {
@@ -59,9 +61,12 @@ function normalizeAmount(amount) {
  * Create a fresh game state.
  * The initial player HP remains 3 to match the current prototype baseline.
  */
-export function createInitialGameState({ playerMaxHp = 3 } = {}) {
-  if (!isPositiveInteger(playerMaxHp)) {
-    throw new TypeError("playerMaxHpは正の整数にしてください。");
+export function createInitialGameState({
+  playerMaxHp = 3,
+  playerAttackPower = 1,
+} = {}) {
+  if (!isPositiveInteger(playerMaxHp) || !isPositiveInteger(playerAttackPower)) {
+    throw new TypeError("playerMaxHpとplayerAttackPowerは正の整数にしてください。");
   }
 
   return {
@@ -70,6 +75,7 @@ export function createInitialGameState({ playerMaxHp = 3 } = {}) {
     player: {
       hp: playerMaxHp,
       maxHp: playerMaxHp,
+      attackPower: playerAttackPower,
     },
     enemy: null,
     battle: {
@@ -183,7 +189,10 @@ export function gameReducer(state, action) {
       };
 
     case GAME_ACTION.RESET_GAME:
-      return createInitialGameState({ playerMaxHp: state.player.maxHp });
+      return createInitialGameState({
+        playerMaxHp: state.player.maxHp,
+        playerAttackPower: state.player.attackPower ?? 1,
+      });
 
     default:
       return state;
