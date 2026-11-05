@@ -1,3 +1,5 @@
+import { ITEM_DEFINITIONS, createInitialInventory } from "./items.js";
+
 /**
  * WORD FALL QUEST - Game state core
  *
@@ -18,6 +20,8 @@ export const GAME_ACTION = Object.freeze({
   DAMAGE_PLAYER: "DAMAGE_PLAYER",
   DAMAGE_ENEMY: "DAMAGE_ENEMY",
   HEAL_PLAYER: "HEAL_PLAYER",
+  USE_ITEM: "USE_ITEM",
+  EQUIP_WEAPON: "EQUIP_WEAPON",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
   RESET_GAME: "RESET_GAME",
@@ -85,7 +89,12 @@ function normalizeAmount(amount) {
  * Add EXP and apply every level-up reached.
  * Each level grants +1 max HP, +1 current HP, and +1 attack power.
  */
-function addPlayerExperience(player, amount) {
+function getEquippedWeaponBonus(inventory) {
+  const weaponId = inventory?.equipment?.weapon;
+  return ITEM_DEFINITIONS[weaponId]?.attackBonus ?? 0;
+}
+
+function addPlayerExperience(player, amount, inventory) {
   if (amount === 0) return player;
 
   let level = player.level;
@@ -93,14 +102,14 @@ function addPlayerExperience(player, amount) {
   let nextLevelXp = player.nextLevelXp;
   let maxHp = player.maxHp;
   let hp = player.hp;
-  let attackPower = player.attackPower;
+  let baseAttackPower = player.baseAttackPower ?? player.attackPower;
 
   while (experience >= nextLevelXp) {
     experience -= nextLevelXp;
     level += 1;
     maxHp += 1;
     hp = Math.min(maxHp, hp + 1);
-    attackPower += 1;
+    baseAttackPower += 1;
     nextLevelXp = experienceRequiredForNextLevel(level);
   }
 
@@ -111,7 +120,8 @@ function addPlayerExperience(player, amount) {
     nextLevelXp,
     maxHp,
     hp,
-    attackPower,
+    baseAttackPower,
+    attackPower: baseAttackPower + getEquippedWeaponBonus(inventory),
   };
 }
 
@@ -136,11 +146,13 @@ export function createInitialGameState({
       attackPower: playerAttackPower,
       baseMaxHp: playerMaxHp,
       baseAttackPower: playerAttackPower,
+      startingAttackPower: playerAttackPower,
       level: 1,
       experience: 0,
       nextLevelXp: experienceRequiredForNextLevel(1),
     },
     enemy: null,
+    inventory: createInitialInventory(),
     battle: {
       number: 0,
       startedAt: null,
@@ -212,7 +224,7 @@ export function gameReducer(state, action) {
       const defeated = hp === 0;
       const experienceReward = defeated ? state.enemy.experienceReward : 0;
       const player = defeated
-        ? addPlayerExperience(state.player, experienceReward)
+        ? addPlayerExperience(state.player, experienceReward, state.inventory)
         : state.player;
 
       return {
@@ -244,6 +256,72 @@ export function gameReducer(state, action) {
       return { ...state, player: { ...state.player, hp } };
     }
 
+    case GAME_ACTION.USE_ITEM: {
+      if (state.phase !== GAME_PHASE.BATTLE) return state;
+      const item = ITEM_DEFINITIONS[action.itemId];
+      if (!item || item.type !== "consumable" || item.effect !== "heal") return state;
+
+      const quantity = state.inventory.items[action.itemId] ?? 0;
+      if (!isPositiveInteger(quantity) || state.player.hp >= state.player.maxHp) {
+        return state;
+      }
+
+      const healedHp = Math.min(
+        state.player.maxHp,
+        state.player.hp + item.healAmount,
+      );
+      return {
+        ...state,
+        player: { ...state.player, hp: healedHp },
+        inventory: {
+          ...state.inventory,
+          items: {
+            ...state.inventory.items,
+            [action.itemId]: quantity - 1,
+          },
+        },
+      };
+    }
+
+    case GAME_ACTION.EQUIP_WEAPON: {
+      if (state.phase !== GAME_PHASE.BATTLE) return state;
+      const item = ITEM_DEFINITIONS[action.itemId];
+      if (!item || item.type !== "weapon" || !isPositiveInteger(item.attackBonus)) {
+        return state;
+      }
+
+      const quantity = state.inventory.items[action.itemId] ?? 0;
+      if (!isPositiveInteger(quantity)) return state;
+      if (state.inventory.equipment.weapon === action.itemId) return state;
+
+      const previousWeaponId = state.inventory.equipment.weapon;
+      const previousWeapon = ITEM_DEFINITIONS[previousWeaponId];
+      const nextItems = {
+        ...state.inventory.items,
+        [action.itemId]: quantity - 1,
+      };
+      if (previousWeapon?.type === "weapon") {
+        nextItems[previousWeaponId] =
+          (nextItems[previousWeaponId] ?? 0) + 1;
+      }
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          attackPower: state.player.baseAttackPower + item.attackBonus,
+        },
+        inventory: {
+          ...state.inventory,
+          items: nextItems,
+          equipment: {
+            ...state.inventory.equipment,
+            weapon: action.itemId,
+          },
+        },
+      };
+    }
+
     case GAME_ACTION.PAUSE_BATTLE:
       if (state.phase !== GAME_PHASE.BATTLE) return state;
       return {
@@ -263,7 +341,7 @@ export function gameReducer(state, action) {
     case GAME_ACTION.RESET_GAME:
       return createInitialGameState({
         playerMaxHp: state.player.baseMaxHp ?? state.player.maxHp,
-        playerAttackPower: state.player.baseAttackPower ?? state.player.attackPower,
+        playerAttackPower: state.player.startingAttackPower ?? state.player.baseAttackPower ?? state.player.attackPower,
       });
 
     default:
