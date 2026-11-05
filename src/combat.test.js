@@ -21,6 +21,7 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
     name: "スライム",
     maxHp: 3,
     attackPower: 1,
+    experienceReward: 10,
   });
   slime.maxHp = 99;
   assert.equal(createEnemy("slime").maxHp, 3);
@@ -101,7 +102,12 @@ test("敵を倒すと勝利になり、その後のイベントは無視され�
 
   assert.equal(store.getState().phase, GAME_PHASE.VICTORY);
   assert.equal(store.getState().enemy.hp, 0);
-  assert.match(result.message, /倒した/);
+  assert.equal(result.experienceGained, 10);
+  assert.equal(result.levelUps, 1);
+  assert.equal(store.getState().player.level, 2);
+  assert.equal(store.getState().player.attackPower, 2);
+  assert.match(result.message, /EXP \+10/);
+  assert.match(result.message, /レベルアップ/);
 
   const ignored = combat.handle({
     eventId: "challenge-0-letter-21",
@@ -131,6 +137,7 @@ test("プレイヤーHPが0になると敗北になり、同じイベントで�
   assert.equal(store.getState().player.hp, 0);
   assert.match(result.message, /失敗/);
   assert.equal(duplicate.duplicate, true);
+  assert.equal(store.getState().stats.totalExperienceEarned, 10);
 });
 
 test("イベントIDのないイベントとバトル外のイベントは処理しない", () => {
