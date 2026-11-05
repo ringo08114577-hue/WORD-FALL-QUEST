@@ -138,3 +138,30 @@ test("storeは状態変更時に通知し、状態を直接変更できない", 
   store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
   assert.equal(notifications, 2);
 });
+
+test("プレイヤーと敵の攻撃力は正の整数で管理され、リセット後も維持される", () => {
+  const store = createGameStore({ playerMaxHp: 5, playerAttackPower: 2 });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, attackPower: 3 },
+  });
+
+  assert.equal(store.getState().player.attackPower, 2);
+  assert.equal(store.getState().enemy.attackPower, 3);
+
+  store.dispatch({ type: GAME_ACTION.RESET_GAME });
+  assert.equal(store.getState().player.maxHp, 5);
+  assert.equal(store.getState().player.attackPower, 2);
+
+  assert.throws(
+    () => gameReducer(createInitialGameState(), {
+      type: GAME_ACTION.START_BATTLE,
+      enemy: { ...slime, attackPower: 0 },
+    }),
+    TypeError,
+  );
+  assert.throws(
+    () => createGameStore({ playerAttackPower: 0 }),
+    TypeError,
+  );
+});
