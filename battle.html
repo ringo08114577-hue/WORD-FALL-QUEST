@@ -126,6 +126,7 @@
     .action-row button { min-width:130px; }
     .next-button[hidden], .start-button[hidden] { display:none; }
     .stats { display:flex; justify-content:center; gap:16px; color:#a9bad0; font-size:.77rem; }
+    .progression { margin-top:5px; color:#93c5fd; font-size:.68rem; font-weight:750; }
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
@@ -178,7 +179,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 2–3 — 正しいスペルを集めて、モンスターに攻撃しよう！</p>
+    <p class="subtitle">STEP 2–4 — 英単語を完成させて戦い、経験値で成長しよう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -190,6 +191,7 @@
         <div class="vital">
           <div class="vital-head"><span>🧙 プレイヤー</span><span class="hp-text" id="playerHp">HP 3 / 3</span></div>
           <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill" id="playerHpFill"></div></div>
+          <div class="progression" id="playerProgression">LV.1 · EXP 0 / 10</div>
         </div>
         <div class="vital">
           <div class="vital-head"><span id="enemyName">🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
@@ -232,7 +234,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 3 · COMBAT SYSTEM</p>
+    <p class="footer">WORD FALL QUEST · STEP 4 · LEVEL SYSTEM</p>
   </main>
 
   <script type="module">
@@ -291,6 +293,9 @@
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
       setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
+      $("playerProgression").textContent =
+        "LV." + state.player.level + " · EXP " +
+        state.player.experience + " / " + state.player.nextLevelXp;
 
       const enemy = state.enemy;
       $("enemyName").textContent = enemy ? "🟢 " + enemy.name : "🟢 敵";
@@ -304,7 +309,9 @@
       $("leftButton").disabled = !active || wordState.phase !== "active";
       $("rightButton").disabled = !active || wordState.phase !== "active";
       $("startButton").hidden = active;
-      $("startButton").textContent = finished ? "もう一度冒険する" : "冒険を始める";
+      $("startButton").textContent =
+        state.phase === GAME_PHASE.VICTORY ? "次のバトルへ" :
+        state.phase === GAME_PHASE.DEFEAT ? "最初からやり直す" : "冒険を始める";
       $("nextButton").hidden = !(
         active && wordState.phase === "word-complete"
       );
@@ -363,8 +370,12 @@
     }
 
     function startGame() {
+      const previousPhase = store.getState().phase;
       combat.reset();
-      store.dispatch({ type: GAME_ACTION.RESET_GAME });
+      // 勝利後は成長を引き継いで次の戦闘へ。敗北時は冒険を最初からやり直す。
+      if (previousPhase === GAME_PHASE.DEFEAT) {
+        store.dispatch({ type: GAME_ACTION.RESET_GAME });
+      }
       store.dispatch({
         type: GAME_ACTION.START_BATTLE,
         enemy: createEnemy("slime"),
