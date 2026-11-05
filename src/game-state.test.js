@@ -165,3 +165,87 @@ test("プレイヤーと敵の攻撃力は正の整数で管理され、リセ�
     TypeError,
   );
 });
+
+
+test("初期プレイヤーはレベル1で、次のレベルまで10EXP", () => {
+  const state = createInitialGameState();
+  assert.equal(state.player.level, 1);
+  assert.equal(state.player.experience, 0);
+  assert.equal(state.player.nextLevelXp, 10);
+  assert.equal(state.stats.totalExperienceEarned, 0);
+});
+
+test("敵を倒したときだけEXPを獲得し、レベルアップで能力が上がる", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, experienceReward: 10 },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 2 });
+
+  assert.equal(state.player.experience, 0);
+  assert.equal(state.player.level, 1);
+  assert.equal(state.stats.totalExperienceEarned, 0);
+  assert.equal(state.phase, GAME_PHASE.BATTLE);
+
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
+  assert.equal(state.phase, GAME_PHASE.VICTORY);
+  assert.equal(state.player.level, 2);
+  assert.equal(state.player.experience, 0);
+  assert.equal(state.player.nextLevelXp, 20);
+  assert.equal(state.player.maxHp, 4);
+  assert.equal(state.player.hp, 3);
+  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.stats.totalExperienceEarned, 10);
+
+  const afterVictory = gameReducer(state, {
+    type: GAME_ACTION.DAMAGE_ENEMY,
+    amount: 99,
+  });
+  assert.equal(afterVictory, state);
+  assert.equal(afterVictory.stats.totalExperienceEarned, 10);
+});
+
+test("余ったEXPを次のレベルに持ち越し、複数レベルも正しく上がる", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, experienceReward: 35 },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
+
+  assert.equal(state.player.level, 3);
+  assert.equal(state.player.experience, 5);
+  assert.equal(state.player.nextLevelXp, 30);
+  assert.equal(state.player.maxHp, 5);
+  assert.equal(state.player.hp, 5);
+  assert.equal(state.player.attackPower, 3);
+});
+
+test("経験値報酬は0以上の整数で、リセットすると成長状態も初期化される", () => {
+  assert.throws(
+    () => gameReducer(createInitialGameState(), {
+      type: GAME_ACTION.START_BATTLE,
+      enemy: { ...slime, experienceReward: -1 },
+    }),
+    TypeError,
+  );
+  assert.throws(
+    () => gameReducer(createInitialGameState(), {
+      type: GAME_ACTION.START_BATTLE,
+      enemy: { ...slime, experienceReward: 1.5 },
+    }),
+    TypeError,
+  );
+
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, experienceReward: 10 },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
+  state = gameReducer(state, { type: GAME_ACTION.RESET_GAME });
+
+  assert.equal(state.player.level, 1);
+  assert.equal(state.player.experience, 0);
+  assert.equal(state.player.nextLevelXp, 10);
+  assert.equal(state.stats.totalExperienceEarned, 0);
+});
