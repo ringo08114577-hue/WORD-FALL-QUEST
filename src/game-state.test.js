@@ -273,3 +273,121 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
   assert.equal(state.player.attackPower, 2);
   assert.equal(state.player.experience, 0);
 });
+
+
+test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", () => {
+  const state = createInitialGameState();
+  assert.deepEqual(state.inventory, {
+    items: { "small-potion": 2, "wooden-sword": 1 },
+    equipment: { weapon: null },
+  });
+});
+
+test("回復薬はHPが減っているときだけ消費し、最大HPを超えて回復しない", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+
+  const fullHpState = gameReducer(state, {
+    type: GAME_ACTION.USE_ITEM,
+    itemId: "small-potion",
+  });
+  assert.equal(fullHpState, state);
+  assert.equal(fullHpState.inventory.items["small-potion"], 2);
+
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+  state = gameReducer(state, {
+    type: GAME_ACTION.USE_ITEM,
+    itemId: "small-potion",
+  });
+  assert.equal(state.player.hp, 3);
+  assert.equal(state.inventory.items["small-potion"], 1);
+
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
+  state = gameReducer(state, {
+    type: GAME_ACTION.USE_ITEM,
+    itemId: "small-potion",
+  });
+  assert.equal(state.player.hp, 3);
+  assert.equal(state.inventory.items["small-potion"], 0);
+
+  const noPotionState = gameReducer(state, {
+    type: GAME_ACTION.USE_ITEM,
+    itemId: "small-potion",
+  });
+  assert.equal(noPotionState, state);
+});
+
+test("武器装備は攻撃力を上げ、レベルアップ分と別々に計算する", () => {
+  let state = gameReducer(createInitialGameState({ playerAttackPower: 2 }), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, experienceReward: 10 },
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_WEAPON,
+    itemId: "wooden-sword",
+  });
+
+  assert.equal(state.player.baseAttackPower, 2);
+  assert.equal(state.player.attackPower, 3);
+  assert.equal(state.inventory.items["wooden-sword"], 0);
+  assert.equal(state.inventory.equipment.weapon, "wooden-sword");
+
+  const duplicateEquip = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_WEAPON,
+    itemId: "wooden-sword",
+  });
+  assert.equal(duplicateEquip, state);
+
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
+  assert.equal(state.player.level, 2);
+  assert.equal(state.player.baseAttackPower, 3);
+  assert.equal(state.player.attackPower, 4);
+});
+
+test("アイテムはバトル中以外には使えず、敗北時のリセットで所持品と装備も戻る", () => {
+  let state = createInitialGameState({ playerMaxHp: 4, playerAttackPower: 2 });
+  const beforeBattle = state;
+  state = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_WEAPON,
+    itemId: "wooden-sword",
+  });
+  assert.equal(state, beforeBattle);
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_WEAPON,
+    itemId: "wooden-sword",
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 4 });
+  state = gameReducer(state, { type: GAME_ACTION.RESET_GAME });
+
+  assert.equal(state.player.maxHp, 4);
+  assert.equal(state.player.attackPower, 2);
+  assert.deepEqual(state.inventory, {
+    items: { "small-potion": 2, "wooden-sword": 1 },
+    equipment: { weapon: null },
+  });
+});
+
+test("未登録アイテムや装備できない種類は無視される", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+
+  const unknownItem = gameReducer(state, {
+    type: GAME_ACTION.USE_ITEM,
+    itemId: "unknown",
+  });
+  const invalidWeapon = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_WEAPON,
+    itemId: "small-potion",
+  });
+  assert.equal(unknownItem, state);
+  assert.equal(invalidWeapon, state);
+});
