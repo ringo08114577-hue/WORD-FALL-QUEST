@@ -249,5 +249,27 @@ test("経験値報酬は0以上の整数で、リセットすると成長状態�
   assert.equal(state.player.level, 1);
   assert.equal(state.player.experience, 0);
   assert.equal(state.player.nextLevelXp, 10);
+  assert.equal(state.player.hp, 3);
+  assert.equal(state.player.maxHp, 3);
+  assert.equal(state.player.attackPower, 1);
   assert.equal(state.stats.totalExperienceEarned, 0);
+});
+
+
+test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継ぐ", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, experienceReward: 10 },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+
+  assert.equal(state.phase, GAME_PHASE.BATTLE);
+  assert.equal(state.player.level, 2);
+  assert.equal(state.player.maxHp, 4);
+  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.player.experience, 0);
 });
