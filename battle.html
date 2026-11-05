@@ -178,7 +178,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 2 — 落ちてくる文字を集めて、正しいスペルを完成させよう！</p>
+    <p class="subtitle">STEP 2–3 — 正しいスペルを集めて、モンスターに攻撃しよう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -232,7 +232,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 2 · WORD BATTLE ENGINE</p>
+    <p class="footer">WORD FALL QUEST · STEP 3 · COMBAT SYSTEM</p>
   </main>
 
   <script type="module">
@@ -311,10 +311,10 @@
       $("arenaCover").hidden = active && wordState.phase === "active";
 
       if (state.phase === GAME_PHASE.VICTORY) {
-        $("coverTitle").textContent = "スライムを倒した！";
+        $("coverTitle").textContent = (state.enemy?.name ?? "敵") + "を倒した！";
         $("coverNote").textContent = "単語を完成させて攻撃成功。冒険クリア！";
         $("startButton").hidden = false;
-        setStatus("勝利！スライムを倒したよ。もう一度挑戦できるよ。", "good");
+        setStatus("勝利！" + (state.enemy?.name ?? "敵") + "を倒したよ。もう一度挑戦できるよ。", "good");
       } else if (state.phase === GAME_PHASE.DEFEAT) {
         $("coverTitle").textContent = "冒険失敗";
         $("coverNote").textContent = "HPがなくなったよ。もう一度挑戦してみよう。";
