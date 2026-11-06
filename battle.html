@@ -356,6 +356,7 @@
       },
     });
     const initialSave = saveController.load();
+    let saveEnabled = true;
     let statusText = "「冒険を始める」を押してゲームを開始しよう。";
     let statusTone = "";
 
@@ -518,6 +519,10 @@
     }
 
     function saveProgress(showMessage = false) {
+      if (!saveEnabled) {
+        if (showMessage) updateSaveMessage("自動保存は停止中だよ。「今すぐ保存」で再開できるよ。");
+        return { saved: false, reason: "saving-disabled" };
+      }
       const result = saveController.save();
       if (showMessage) {
         updateSaveMessage(
@@ -724,7 +729,10 @@
       updateSaveMessage("保存データを読み込めなかったよ。新しく冒険を始めてね。");
     }
 
-    $("saveNowButton").addEventListener("click", () => saveProgress(true));
+    $("saveNowButton").addEventListener("click", () => {
+      saveEnabled = true;
+      saveProgress(true);
+    });
     $("loadSaveButton").addEventListener("click", () => {
       const result = saveController.load();
       if (!result.loaded) {
@@ -737,8 +745,9 @@
     });
     $("clearSaveButton").addEventListener("click", () => {
       const result = saveController.clear();
+      if (result.cleared) saveEnabled = false;
       updateSaveMessage(result.cleared
-        ? "保存データを削除したよ。今のゲームは続けられるよ。"
+        ? "保存データを削除したよ。自動保存は停止中。「今すぐ保存」で再開できるよ。"
         : "保存データを削除できなかったよ。");
     });
     window.addEventListener("pagehide", () => saveProgress());
