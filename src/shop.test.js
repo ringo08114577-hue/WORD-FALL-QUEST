@@ -70,3 +70,19 @@ test("木の盾を30Gで購入でき、所持品に追加される", () => {
   assert.equal(result.gold, 0);
   assert.equal(store.getState().inventory.items["wooden-shield"], 1);
 });
+
+
+test("ショップは追加された装備もカタログ定義から購入できる", () => {
+  const store = createGameStore();
+  const dungeon = createDungeonController(store);
+  const shop = createShopController(store, dungeon);
+  clearFloor(store, dungeon);
+  dungeon.claimFloorReward();
+  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 65 });
+
+  const result = shop.buy("iron-sword");
+  assert.equal(result.purchased, true);
+  assert.equal(result.cost, 80);
+  assert.equal(store.getState().inventory.items["iron-sword"], 1);
+  assert.equal(store.getState().inventory.gold, 0);
+});
