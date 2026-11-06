@@ -525,3 +525,24 @@ test("所持していない盾や防具以外は装備できない", () => {
   assert.equal(noShield, state);
   assert.equal(potionAsShield, state);
 });
+
+
+test("盾を装備したままレベルアップしても防御力を維持する", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "wooden-shield",
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, maxHp: 1, experienceReward: 10 },
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "wooden-shield",
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
+  assert.equal(state.player.level, 2);
+  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.player.defensePower, 1);
+});
