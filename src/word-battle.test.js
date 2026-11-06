@@ -237,3 +237,16 @@ test("乱数関数がNaNや無限大を返した場合は拒否する", () => {
     RangeError,
   );
 });
+
+
+test("セーブした英単語進行を検証して正しく復元できる", async () => {
+  const { isValidSavedWordBattleState, restoreWordBattleState } =
+    await import("./word-battle.js");
+  const state = createWordBattleState();
+  assert.equal(isValidSavedWordBattleState(state), true);
+  assert.deepEqual(restoreWordBattleState(state), state);
+
+  const invalid = { ...state, playerLane: 99 };
+  assert.equal(isValidSavedWordBattleState(invalid), false);
+  assert.equal(restoreWordBattleState(invalid), null);
+});
