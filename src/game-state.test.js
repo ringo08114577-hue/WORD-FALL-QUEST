@@ -437,3 +437,37 @@ test("大きな回復薬は定義された回復量だけHPを回復する", () 
   assert.equal(state.player.hp, 3);
   assert.equal(state.inventory.items["large-potion"], 0);
 });
+
+
+test("ショップ価格はゲーム状態側でも固定され、不正な商品キーを追加できない", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 30 });
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, maxHp: 1 },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
+  const victoryState = state;
+
+  const underpriced = gameReducer(state, {
+    type: GAME_ACTION.BUY_ITEM,
+    itemId: "large-potion",
+    cost: 1,
+  });
+  assert.equal(underpriced, victoryState);
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.BUY_ITEM,
+    itemId: "large-potion",
+    cost: 30,
+  });
+  assert.equal(state.inventory.gold, 0);
+  assert.equal(state.inventory.items["large-potion"], 1);
+
+  const invalidKey = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "toString",
+    quantity: 1,
+  });
+  assert.equal(invalidKey, state);
+});
