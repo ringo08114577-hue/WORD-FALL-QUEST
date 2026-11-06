@@ -280,8 +280,8 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
 test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", () => {
   const state = createInitialGameState();
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0 },
-    equipment: { weapon: null, shield: null },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0 },
+    equipment: { weapon: null, shield: null, armor: null, accessory: null },
     gold: 0,
   });
 });
@@ -372,8 +372,8 @@ test("アイテムはバトル中以外には使えず、敗北時のリセッ�
   assert.equal(state.player.maxHp, 4);
   assert.equal(state.player.attackPower, 2);
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0 },
-    equipment: { weapon: null, shield: null },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0 },
+    equipment: { weapon: null, shield: null, armor: null, accessory: null },
     gold: 0,
   });
 });
@@ -545,4 +545,61 @@ test("盾を装備したままレベルアップしても防御力を維持す�
   assert.equal(state.player.level, 2);
   assert.equal(state.player.attackPower, 2);
   assert.equal(state.player.defensePower, 1);
+});
+
+
+test("汎用装備アクションで複数スロットの能力ボーナスを合算できる", () => {
+  let state = createInitialGameState();
+  for (const itemId of ["iron-sword", "leather-armor", "copper-charm"]) {
+    state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId });
+  }
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_ITEM, itemId: "iron-sword" });
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_ITEM, itemId: "leather-armor" });
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_ITEM, itemId: "copper-charm" });
+
+  assert.deepEqual(state.inventory.equipment, {
+    weapon: "iron-sword",
+    shield: null,
+    armor: "leather-armor",
+    accessory: "copper-charm",
+  });
+  assert.equal(state.player.attackPower, 4);
+  assert.equal(state.player.defensePower, 2);
+  assert.equal(state.inventory.items["iron-sword"], 0);
+  assert.equal(state.inventory.items["leather-armor"], 0);
+  assert.equal(state.inventory.items["copper-charm"], 0);
+});
+
+test("同じ装備スロットの付け替えで旧装備が戻り、能力値を再計算する", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "iron-sword" });
+  state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_ITEM, itemId: "iron-sword" });
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_ITEM, itemId: "wooden-sword" });
+
+  assert.equal(state.inventory.equipment.weapon, "wooden-sword");
+  assert.equal(state.inventory.items["iron-sword"], 1);
+  assert.equal(state.inventory.items["wooden-sword"], 0);
+  assert.equal(state.player.attackPower, 2);
+});
+
+test("未所持・戦闘外の汎用装備アクションは状態を変更しない", () => {
+  const titleState = createInitialGameState();
+  assert.equal(
+    gameReducer(titleState, { type: GAME_ACTION.EQUIP_ITEM, itemId: "iron-sword" }),
+    titleState,
+  );
+  let battleState = gameReducer(titleState, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+  assert.equal(
+    gameReducer(battleState, { type: GAME_ACTION.EQUIP_ITEM, itemId: "iron-sword" }),
+    battleState,
+  );
 });
