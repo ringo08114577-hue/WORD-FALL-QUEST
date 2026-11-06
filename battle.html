@@ -371,10 +371,18 @@
       $("arenaCover").hidden = active && wordState.phase === "active";
 
       if (state.phase === GAME_PHASE.VICTORY) {
+        const floorCleared = dungeonProgress.floorCleared;
         $("coverTitle").textContent = (state.enemy?.name ?? "敵") + "を倒した！";
-        $("coverNote").textContent = "単語を完成させて攻撃成功。冒険クリア！";
+        $("coverNote").textContent = floorCleared
+          ? "この階の敵をすべて倒した！次の階へ進もう。"
+          : "次の敵が待っている。準備ができたら進もう。";
         $("startButton").hidden = false;
-        setStatus("勝利！" + (state.enemy?.name ?? "敵") + "を倒したよ。もう一度挑戦できるよ。", "good");
+        setStatus(
+          floorCleared
+            ? dungeonProgress.floor + "階クリア！次の階へ進もう。"
+            : (state.enemy?.name ?? "敵") + "を倒した！次の敵へ進もう。",
+          "good",
+        );
       } else if (state.phase === GAME_PHASE.DEFEAT) {
         $("coverTitle").textContent = "冒険失敗";
         $("coverNote").textContent = "HPがなくなったよ。冒険は1階からやり直しだよ。";
