@@ -24,6 +24,7 @@ export const GAME_ACTION = Object.freeze({
   EQUIP_WEAPON: "EQUIP_WEAPON",
   ADD_ITEM: "ADD_ITEM",
   ADD_GOLD: "ADD_GOLD",
+  BUY_ITEM: "BUY_ITEM",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
   RESET_GAME: "RESET_GAME",
@@ -346,6 +347,26 @@ export function gameReducer(state, action) {
       return {
         ...state,
         inventory: { ...state.inventory, gold: state.inventory.gold + amount },
+      };
+    }
+
+    case GAME_ACTION.BUY_ITEM: {
+      if (state.phase !== GAME_PHASE.VICTORY) return state;
+      const item = ITEM_DEFINITIONS[action.itemId];
+      const cost = action.cost;
+      if (!item || !isPositiveInteger(cost) || state.inventory.gold < cost) {
+        return state;
+      }
+      return {
+        ...state,
+        inventory: {
+          ...state.inventory,
+          gold: state.inventory.gold - cost,
+          items: {
+            ...state.inventory.items,
+            [action.itemId]: (state.inventory.items[action.itemId] ?? 0) + 1,
+          },
+        },
       };
     }
 
