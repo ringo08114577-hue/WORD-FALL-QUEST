@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 2</title>
+  <title>WORD FALL QUEST | Step 6</title>
   <style>
     :root {
       color-scheme: dark;
@@ -191,7 +191,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 2–5 — 英単語で戦い、アイテムと装備で強くなろう！</p>
+    <p class="subtitle">STEP 6 — 敵を倒してダンジョンの階層を進もう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -199,7 +199,7 @@
         <span class="phase" id="phaseBadge" data-phase="title">開始前</span>
       </div>
       <p class="message" id="statusMessage" aria-live="polite">「冒険を始める」を押してゲームを開始しよう。</p>
-      <div class="vitals">
+      <div class="progression" id="dungeonProgress">ダンジョン 1階 · 1 / 3体目</div>\n      <div class="vitals">
         <div class="vital">
           <div class="vital-head"><span>🧙 プレイヤー</span><span class="hp-text" id="playerHp">HP 3 / 3</span></div>
           <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill" id="playerHpFill"></div></div>
@@ -263,7 +263,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 5 · ITEMS & EQUIPMENT</p>
+    <p class="footer">WORD FALL QUEST · STEP 6 · DUNGEON PROGRESSION</p>
   </main>
 
   <script type="module">
@@ -281,13 +281,13 @@
       GAME_ACTION,
       GAME_PHASE,
     } from "./src/game-state.js";
-    import { createEnemy } from "./src/enemies.js";
+    import { createDungeonController } from "./src/dungeon.js";
     import { ITEM_DEFINITIONS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
 
     const $ = (id) => document.getElementById(id);
     const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
-    const combat = createCombatController(store);
+    const combat = createCombatController(store);\n    const dungeon = createDungeonController(store);
     const TICK_MS = 40;
     const SPAWN_INTERVAL_MS = 900;
 
@@ -323,7 +323,7 @@
     }
 
     function renderStore(state) {
-      $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
+      const dungeonProgress = dungeon.getProgress();\n      $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目";\n      $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
       setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
@@ -377,7 +377,7 @@
         setStatus("勝利！" + (state.enemy?.name ?? "敵") + "を倒したよ。もう一度挑戦できるよ。", "good");
       } else if (state.phase === GAME_PHASE.DEFEAT) {
         $("coverTitle").textContent = "冒険失敗";
-        $("coverNote").textContent = "HPがなくなったよ。もう一度挑戦してみよう。";
+        $("coverNote").textContent = "HPがなくなったよ。冒険は1階からやり直しだよ。";
         $("startButton").hidden = false;
         setStatus("プレイヤーのHPが0になったよ。もう一度挑戦しよう。", "bad");
       } else if (state.phase === GAME_PHASE.TITLE) {
