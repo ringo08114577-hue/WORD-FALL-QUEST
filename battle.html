@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 6</title>
+  <title>WORD FALL QUEST | Step 8</title>
   <style>
     :root {
       color-scheme: dark;
@@ -128,6 +128,10 @@
     .next-button[hidden], .start-button[hidden] { display:none; }
     .stats { display:flex; justify-content:center; gap:16px; color:#a9bad0; font-size:.77rem; }
     .progression { margin-top:5px; color:#93c5fd; font-size:.68rem; font-weight:750; }
+    .shop-panel[hidden] { display:none; }
+    .shop-panel { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .shop-panel button { width:100%; }
+    .shop-note { grid-column:1 / -1; color:#9eacc2; font-size:.72rem; margin:0; }
     .inventory-panel { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:8px; }
     .inventory-row { display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; }
     .inventory-label { display:block; color:#9eacc2; font-size:.63rem; }
@@ -192,7 +196,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 6 — 敵を倒してダンジョンの階層を進もう！</p>
+    <p class="subtitle">STEP 8 — ゴールドを使って冒険の準備を整えよう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -236,6 +240,16 @@
         </div>
         <button id="equipWeaponButton" disabled>木の剣を装備（攻撃 +1）</button>
       </div>
+    </section>
+
+    <section class="panel shop-panel" id="shopPanel" hidden aria-label="ショップ">
+      <div class="panel-title" style="grid-column:1 / -1">
+        <h2>🏪 フロア間ショップ</h2>
+        <strong id="shopGold">0G</strong>
+      </div>
+      <p class="shop-note">宝箱を開けたあと、次の階へ進む前に買い物できるよ。</p>
+      <button id="buyPotionButton">回復薬 ×1（15G）</button>
+      <button id="buyLargePotionButton">大きな回復薬 ×1（30G）</button>
     </section>
 
     <section class="panel">
@@ -335,6 +349,12 @@
     function renderStore(state) {
       const dungeonProgress = dungeon.getProgress();
       $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目 · 🪙 " + state.inventory.gold + "G";
+      const shopOpen = state.phase === GAME_PHASE.VICTORY &&
+        dungeonProgress.floorCleared && dungeonProgress.rewardClaimed;
+      $("shopPanel").hidden = !shopOpen;
+      $("shopGold").textContent = state.inventory.gold + "G";
+      $("buyPotionButton").disabled = !shopOpen || state.inventory.gold < 15;
+      $("buyLargePotionButton").disabled = !shopOpen || state.inventory.gold < 30;
       $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
@@ -595,6 +615,27 @@
       }
       startGame();
     });
+    function buyShopItem(itemId, cost, itemName) {
+      const before = store.getState();
+      const after = store.dispatch({
+        type: GAME_ACTION.BUY_ITEM,
+        itemId,
+        cost,
+      });
+      if (after === before) {
+        setStatus("ゴールドが足りないか、今は買い物できないよ。", "bad");
+        return;
+      }
+      setStatus(itemName + "を購入した！残り " + after.inventory.gold + "G。", "good");
+      render();
+    }
+    $("buyPotionButton").addEventListener("click", () =>
+      buyShopItem("small-potion", 15, "回復薬")
+    );
+    $("buyLargePotionButton").addEventListener("click", () =>
+      buyShopItem("large-potion", 30, "大きな回復薬")
+    );
+
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
       wordState = advanceToNextChallenge(wordState);
