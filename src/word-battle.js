@@ -43,6 +43,58 @@ function randomUnit(random) {
   return value;
 }
 
+
+/** Validate saved spelling progress and falling letters before restoring it. */
+export function isValidSavedWordBattleState(saved) {
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) return false;
+  if (
+    !Number.isInteger(saved.challengeIndex) ||
+    saved.challengeIndex < 0 || saved.challengeIndex >= WORD_CHALLENGES.length ||
+    !Number.isInteger(saved.laneCount) || saved.laneCount < 3 || saved.laneCount > 9 ||
+    !Number.isInteger(saved.playerLane) || saved.playerLane < 0 || saved.playerLane >= saved.laneCount ||
+    !Number.isInteger(saved.progressIndex) || saved.progressIndex < 0
+  ) return false;
+  const challenge = WORD_CHALLENGES[saved.challengeIndex];
+  if (saved.progressIndex > challenge.word.length) return false;
+  if (
+    (saved.phase === WORD_BATTLE_PHASE.ACTIVE && saved.progressIndex >= challenge.word.length) ||
+    (saved.phase === WORD_BATTLE_PHASE.WORD_COMPLETE && saved.progressIndex !== challenge.word.length) ||
+    ![WORD_BATTLE_PHASE.ACTIVE, WORD_BATTLE_PHASE.WORD_COMPLETE].includes(saved.phase)
+  ) return false;
+  if (
+    !Number.isSafeInteger(saved.nextLetterId) || saved.nextLetterId < 1 ||
+    !Number.isSafeInteger(saved.score) || saved.score < 0 ||
+    !Number.isSafeInteger(saved.mistakes) || saved.mistakes < 0 ||
+    !Array.isArray(saved.letters)
+  ) return false;
+  const ids = new Set();
+  for (const letter of saved.letters) {
+    if (
+      !letter || !Number.isSafeInteger(letter.id) || letter.id < 1 ||
+      ids.has(letter.id) ||
+      typeof letter.value !== "string" || !/^[A-Z]$/.test(letter.value) ||
+      !Number.isInteger(letter.lane) || letter.lane < 0 || letter.lane >= saved.laneCount ||
+      typeof letter.y !== "number" || !Number.isFinite(letter.y) ||
+      typeof letter.speed !== "number" || !Number.isFinite(letter.speed) || letter.speed <= 0 ||
+      (letter.role !== undefined && typeof letter.role !== "string")
+    ) return false;
+    ids.add(letter.id);
+  }
+  if (saved.letters.some((letter) => letter.id >= saved.nextLetterId)) return false;
+  if (saved.phase === WORD_BATTLE_PHASE.WORD_COMPLETE &&
+      (saved.letters.length !== 0 || saved.lastResult !== "word-complete")) return false;
+  return saved.lastResult === null ||
+    ["correct", "wrong", "word-complete"].includes(saved.lastResult);
+}
+
+export function restoreWordBattleState(saved) {
+  if (!isValidSavedWordBattleState(saved)) return null;
+  return {
+    ...saved,
+    letters: saved.letters.map((letter) => ({ ...letter })),
+  };
+}
+
 export function createWordBattleState({ laneCount = DEFAULT_LANES } = {}) {
   if (!Number.isInteger(laneCount) || laneCount < 3 || laneCount > 9) {
     throw new RangeError("laneCountは3以上9以下の整数にしてください。");
