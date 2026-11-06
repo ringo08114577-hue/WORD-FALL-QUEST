@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 10</title>
+  <title>WORD FALL QUEST | Step 11</title>
   <style>
     :root {
       color-scheme: dark;
@@ -135,11 +135,14 @@
     .save-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
     .save-actions button { flex:1; min-width:90px; }
     .save-message { color:#9eacc2; font-size:.68rem; margin:7px 0 0; }
-    .inventory-panel { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:8px; }
-    .inventory-row { display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; }
+    .inventory-items { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:8px; }
+    .inventory-row { display:flex; align-items:center; justify-content:space-between; gap:7px; min-width:0; padding:7px; border-radius:10px; background:#111d30; }
+    .inventory-copy { min-width:0; }
     .inventory-label { display:block; color:#9eacc2; font-size:.63rem; }
     .inventory-value { color:#f4f7ff; font-size:.72rem; font-weight:850; }
     .inventory-row button { min-height:34px; padding:6px 8px; font-size:.67rem; white-space:nowrap; }
+    .shop-items { grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+    .shop-items button { width:100%; min-width:0; white-space:normal; font-size:.76rem; }
 
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
@@ -167,11 +170,13 @@
       .spelling { gap:4px; margin:3px 0; }
       .slot { width:27px; height:30px; font-size:.9rem; }
       .stats { gap:13px; font-size:.68rem; }
-      .inventory-panel { gap:6px; padding:6px 7px; }
-      .inventory-row { flex-direction:column; align-items:stretch; gap:4px; }
+      .inventory-items { gap:5px; }
+      .inventory-row { flex-direction:column; align-items:stretch; gap:4px; padding:6px; }
       .inventory-label { font-size:.58rem; }
       .inventory-value { font-size:.65rem; }
       .inventory-row button { min-height:32px; padding:5px 6px; font-size:.62rem; }
+      .shop-items { gap:5px; }
+      .shop-items button { min-height:35px; padding:6px 5px; font-size:.65rem; }
 
       .arena-wrap { padding:6px; }
       .arena { height:clamp(210px, 34svh, 270px); min-height:210px; }
@@ -201,7 +206,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 10 — 盾を装備して敵の攻撃を軽減しよう！</p>
+    <p class="subtitle">STEP 11 — 装備とアイテムを増やそう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -223,35 +228,12 @@
       </div>
     </section>
 
-    <section class="panel inventory-panel" aria-label="アイテムと装備">
-      <div class="inventory-row">
-        <div>
-          <span class="inventory-label">🧪 回復薬</span>
-          <strong class="inventory-value" id="potionCount">×2</strong>
-        </div>
-        <button id="usePotionButton" disabled>使う（HP +2）</button>
+    <section class="panel" aria-label="アイテムと装備">
+      <div class="panel-title">
+        <h2>🎒 所持品・装備</h2>
+        <strong class="inventory-value" id="equipmentSummary">ATK 1 · DEF 0</strong>
       </div>
-      <div class="inventory-row">
-        <div>
-          <span class="inventory-label">🧪 大きな回復薬</span>
-          <strong class="inventory-value" id="largePotionCount">×0</strong>
-        </div>
-        <button id="useLargePotionButton" disabled>使う（HP +4）</button>
-      </div>
-      <div class="inventory-row">
-        <div>
-          <span class="inventory-label">⚔️ 武器</span>
-          <strong class="inventory-value" id="weaponStatus">未装備</strong>
-        </div>
-        <button id="equipWeaponButton" disabled>木の剣を装備（攻撃 +1）</button>
-      </div>
-      <div class="inventory-row">
-        <div>
-          <span class="inventory-label">🛡️ 防具</span>
-          <strong class="inventory-value" id="shieldStatus">未装備 · DEF 0</strong>
-        </div>
-        <button id="equipShieldButton" disabled>木の盾を装備（防御 +1）</button>
-      </div>
+      <div class="inventory-items" id="inventoryItems"></div>
     </section>
 
     <section class="panel" aria-label="セーブデータ">
@@ -273,9 +255,7 @@
         <strong id="shopGold">0G</strong>
       </div>
       <p class="shop-note">宝箱を開けたあと、次の階へ進む前に買い物できるよ。</p>
-      <button id="buyPotionButton">回復薬 ×1（15G）</button>
-      <button id="buyLargePotionButton">大きな回復薬 ×1（30G）</button>
-      <button id="buyShieldButton">木の盾 ×1（30G）</button>
+      <div class="shop-items" id="shopItems"></div>
     </section>
 
     <section class="panel">
@@ -305,14 +285,14 @@
         <button class="move-button" id="leftButton" aria-label="左へ移動" disabled>◀ 左へ</button>
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
-      <p class="howto">操作：← → / A D、または左右ボタンで移動。必要な文字を順番どおりに拾おう。違う文字を拾うと反撃を受けるよ。盾の防御力はダメージを減らす（最低1）。</p>
+      <p class="howto">操作：← → / A D、または左右ボタンで移動。必要な文字を順番どおりに拾おう。違う文字を拾うと反撃を受けるよ。装備の効果は攻撃力・防御力に反映される（最低1ダメージ）。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 10 · DEFENSE & SHIELDS</p>
+    <p class="footer">WORD FALL QUEST · STEP 11 · EXPANDABLE EQUIPMENT</p>
   </main>
 
   <script type="module">
@@ -394,6 +374,70 @@
       bar.setAttribute("aria-valuenow", String(hp));
     }
 
+    function renderInventory(state) {
+      const root = $("inventoryItems");
+      root.replaceChildren();
+      const active = activeBattle(state);
+
+      $("equipmentSummary").textContent =
+        "ATK " + state.player.attackPower + " · DEF " + state.player.defensePower +
+        " · G " + state.inventory.gold;
+
+      for (const [itemId, item] of Object.entries(ITEM_DEFINITIONS)) {
+        const quantity = state.inventory.items[itemId] ?? 0;
+        const slot = item.slot ?? null;
+        const equipped = slot !== null && state.inventory.equipment[slot] === itemId;
+        const row = document.createElement("div");
+        row.className = "inventory-row";
+
+        const copy = document.createElement("div");
+        copy.className = "inventory-copy";
+        const label = document.createElement("span");
+        label.className = "inventory-label";
+        const details = [];
+        if (slot) details.push(EQUIPMENT_SLOT_LABELS[slot] ?? "装備");
+        if (item.attackBonus) details.push("ATK +" + item.attackBonus);
+        if (item.defenseBonus) details.push("DEF +" + item.defenseBonus);
+        if (item.healAmount) details.push("HP +" + item.healAmount);
+        label.textContent = details.join(" · ") || "アイテム";
+
+        const value = document.createElement("strong");
+        value.className = "inventory-value";
+        value.textContent = item.name + " ×" + quantity + (equipped ? " · 装備中" : "");
+        copy.append(label, value);
+
+        const button = document.createElement("button");
+        button.dataset.itemId = itemId;
+        if (item.type === "consumable") {
+          button.dataset.itemAction = "use";
+          button.textContent = "使う";
+          button.disabled = !active || quantity <= 0 || state.player.hp >= state.player.maxHp;
+        } else if (slot) {
+          button.dataset.itemAction = "equip";
+          button.textContent = equipped ? "装備中" : "装備する";
+          button.disabled = !active || equipped || quantity <= 0;
+        } else {
+          button.textContent = "使用不可";
+          button.disabled = true;
+        }
+
+        row.append(copy, button);
+        root.append(row);
+      }
+    }
+
+    function buildShopCatalog() {
+      const root = $("shopItems");
+      root.replaceChildren();
+      for (const [itemId, offer] of Object.entries(SHOP_CATALOG)) {
+        const item = ITEM_DEFINITIONS[itemId];
+        const button = document.createElement("button");
+        button.dataset.shopItem = itemId;
+        button.textContent = item.name + " ×1（" + offer.cost + "G）";
+        root.append(button);
+      }
+    }
+
     function renderStore(state) {
       const dungeonProgress = dungeon.getProgress();
       $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目 · 🪙 " + state.inventory.gold + "G";
@@ -401,9 +445,10 @@
         dungeonProgress.floorCleared && dungeonProgress.rewardClaimed;
       $("shopPanel").hidden = !shopOpen;
       $("shopGold").textContent = state.inventory.gold + "G";
-      $("buyPotionButton").disabled = !shopOpen || state.inventory.gold < 15;
-      $("buyLargePotionButton").disabled = !shopOpen || state.inventory.gold < 30;
-      $("buyShieldButton").disabled = !shopOpen || state.inventory.gold < 30;
+      for (const button of $("shopItems").querySelectorAll("[data-shop-item]")) {
+        const itemId = button.dataset.shopItem;
+        button.disabled = !shopOpen || state.inventory.gold < SHOP_CATALOG[itemId].cost;
+      }
       $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
@@ -413,44 +458,7 @@
         state.player.experience + " / " + state.player.nextLevelXp +
         " · DEF " + state.player.defensePower;
 
-      const potionCount = state.inventory.items["small-potion"] ?? 0;
-      $("potionCount").textContent = "×" + potionCount;
-      $("usePotionButton").disabled =
-        !activeBattle(state) || potionCount <= 0 ||
-        state.player.hp >= state.player.maxHp;
-      const largePotionCount = state.inventory.items["large-potion"] ?? 0;
-      $("largePotionCount").textContent = "×" + largePotionCount;
-      $("useLargePotionButton").disabled =
-        !activeBattle(state) || largePotionCount <= 0 ||
-        state.player.hp >= state.player.maxHp;
-
-      const weaponId = state.inventory.equipment.weapon;
-      const weapon = ITEM_DEFINITIONS[weaponId];
-      $("weaponStatus").textContent = weapon
-        ? weapon.name + "（攻撃 +" + weapon.attackBonus + "）"
-        : "未装備";
-      const woodenSwordCount = state.inventory.items["wooden-sword"] ?? 0;
-      const woodenSwordEquipped = weaponId === "wooden-sword";
-      $("equipWeaponButton").disabled =
-        !activeBattle(state) || woodenSwordEquipped || woodenSwordCount <= 0;
-      $("equipWeaponButton").textContent = woodenSwordEquipped
-        ? "装備中"
-        : "木の剣を装備（攻撃 +1）";
-
-      const shieldId = state.inventory.equipment.shield;
-      const shield = shieldId && Object.hasOwn(ITEM_DEFINITIONS, shieldId)
-        ? ITEM_DEFINITIONS[shieldId]
-        : null;
-      const woodenShieldCount = state.inventory.items["wooden-shield"] ?? 0;
-      const woodenShieldEquipped = shieldId === "wooden-shield";
-      $("shieldStatus").textContent = shield
-        ? shield.name + "（防御 +" + shield.defenseBonus + "） · 予備 ×" + woodenShieldCount
-        : "未装備 · 所持 ×" + woodenShieldCount + " · DEF " + state.player.defensePower;
-      $("equipShieldButton").disabled =
-        !activeBattle(state) || woodenShieldEquipped || woodenShieldCount <= 0;
-      $("equipShieldButton").textContent = woodenShieldEquipped
-        ? "装備中"
-        : "木の盾を装備（防御 +1）";
+      renderInventory(state);
 
       const enemy = state.enemy;
       $("enemyName").textContent = enemy ? "🟢 " + enemy.name : "🟢 敵";
@@ -619,80 +627,32 @@
       if (events.length > 0) saveProgress();
     }
 
-    $("usePotionButton").addEventListener("click", () => {
+    $("inventoryItems").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-item-action]");
+      if (!button || button.disabled) return;
+      const { itemId, itemAction } = button.dataset;
+      const item = ITEM_DEFINITIONS[itemId];
       const before = store.getState();
-      const after = store.dispatch({
-        type: GAME_ACTION.USE_ITEM,
-        itemId: "small-potion",
-      });
-      if (after === before) {
-        setStatus(
-          before.player.hp >= before.player.maxHp
-            ? "HPは満タンだよ。回復薬はまだ使えないよ。"
-            : "回復薬を持っていないよ。",
-          "bad",
-        );
-        return;
-      }
-      setStatus(
-        "回復薬を使った！HP +" +
-        (after.player.hp - before.player.hp) + " 回復したよ。",
-        "good",
-      );
-    });
+      const action = itemAction === "use"
+        ? { type: GAME_ACTION.USE_ITEM, itemId }
+        : { type: GAME_ACTION.EQUIP_ITEM, itemId };
+      const after = store.dispatch(action);
 
-    $("useLargePotionButton").addEventListener("click", () => {
-      const before = store.getState();
-      const after = store.dispatch({
-        type: GAME_ACTION.USE_ITEM,
-        itemId: "large-potion",
-      });
       if (after === before) {
-        setStatus(
-          before.player.hp >= before.player.maxHp
-            ? "HPは満タンだよ。大きな回復薬はまだ使えないよ。"
-            : "大きな回復薬を持っていないよ。",
-          "bad",
-        );
+        setStatus(itemAction === "use"
+          ? "今はそのアイテムを使えないよ。"
+          : "その装備は今は装備できないよ。", "bad");
         return;
       }
-      setStatus(
-        "大きな回復薬を使った！HP +" +
-        (after.player.hp - before.player.hp) + " 回復したよ。",
-        "good",
-      );
-    });
-
-    $("equipWeaponButton").addEventListener("click", () => {
-      const before = store.getState();
-      const after = store.dispatch({
-        type: GAME_ACTION.EQUIP_WEAPON,
-        itemId: "wooden-sword",
-      });
-      if (after === before) {
-        setStatus("木の剣を装備できない状態だよ。", "bad");
-        return;
+      if (itemAction === "use") {
+        setStatus(item.name + "を使った！HP +" +
+          (after.player.hp - before.player.hp) + " 回復したよ。", "good");
+      } else {
+        const slotLabel = EQUIPMENT_SLOT_LABELS[item.slot] ?? "装備";
+        setStatus(item.name + "を" + slotLabel + "に装備した！ ATK " +
+          after.player.attackPower + " · DEF " + after.player.defensePower, "good");
       }
-      setStatus(
-        "木の剣を装備！攻撃力が " + after.player.attackPower + " になったよ。",
-        "good",
-      );
-    });
-
-    $("equipShieldButton").addEventListener("click", () => {
-      const before = store.getState();
-      const after = store.dispatch({
-        type: GAME_ACTION.EQUIP_SHIELD,
-        itemId: "wooden-shield",
-      });
-      if (after === before) {
-        setStatus("木の盾を装備できない状態だよ。", "bad");
-        return;
-      }
-      setStatus(
-        "木の盾を装備！防御力が " + after.player.defensePower + " になったよ。",
-        "good",
-      );
+      render();
     });
 
     $("startButton").addEventListener("click", () => {
@@ -735,9 +695,11 @@
       setStatus(result.item.name + "を購入した！残り " + result.gold + "G。", "good");
       saveProgress();
     }
-    $("buyPotionButton").addEventListener("click", () => buyShopItem("small-potion"));
-    $("buyLargePotionButton").addEventListener("click", () => buyShopItem("large-potion"));
-    $("buyShieldButton").addEventListener("click", () => buyShopItem("wooden-shield"));
+    $("shopItems").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-shop-item]");
+      if (!button || button.disabled) return;
+      buyShopItem(button.dataset.shopItem);
+    });
 
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
@@ -764,6 +726,7 @@
       renderStore(state);
       if (action) saveProgress();
     });
+    buildShopCatalog();
     render();
     if (initialSave.loaded) {
       updateSaveMessage("前回のセーブデータをロードしたよ。");
