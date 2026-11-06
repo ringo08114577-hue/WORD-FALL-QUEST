@@ -132,6 +132,9 @@
     .shop-panel { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .shop-panel button { width:100%; }
     .shop-note { grid-column:1 / -1; color:#9eacc2; font-size:.72rem; margin:0; }
+    .save-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
+    .save-actions button { flex:1; min-width:90px; }
+    .save-message { color:#9eacc2; font-size:.68rem; margin:7px 0 0; }
     .inventory-panel { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:8px; }
     .inventory-row { display:flex; align-items:center; justify-content:space-between; gap:6px; min-width:0; }
     .inventory-label { display:block; color:#9eacc2; font-size:.63rem; }
@@ -180,6 +183,8 @@
       .howto { margin:4px 1px 0; font-size:.64rem; line-height:1.3; }
       .action-row { gap:6px; margin-top:5px; }
       .action-row button { flex:1; min-width:0; }
+      .save-actions { gap:5px; }
+      .save-actions button { min-width:0; padding:6px 7px; font-size:.68rem; }
       .footer { display:none; }
     }
     @media (max-height:700px) and (max-width:480px) {
@@ -242,6 +247,19 @@
       </div>
     </section>
 
+    <section class="panel" aria-label="セーブデータ">
+      <div class="panel-title">
+        <h2>💾 セーブデータ</h2>
+        <span class="inventory-label">自動保存あり</span>
+      </div>
+      <div class="save-actions">
+        <button id="saveNowButton">今すぐ保存</button>
+        <button id="loadSaveButton">ロード</button>
+        <button id="clearSaveButton">保存データ削除</button>
+      </div>
+      <p class="save-message" id="saveMessage" aria-live="polite">ゲームの進行は自動で保存されるよ。</p>
+    </section>
+
     <section class="panel shop-panel" id="shopPanel" hidden aria-label="ショップ">
       <div class="panel-title" style="grid-column:1 / -1">
         <h2>🏪 フロア間ショップ</h2>
@@ -298,6 +316,8 @@
       movePlayer,
       advanceFallingLetters,
       advanceToNextChallenge,
+      isValidSavedWordBattleState,
+      restoreWordBattleState,
     } from "./src/word-battle.js";
     import {
       createGameStore,
@@ -306,6 +326,7 @@
     } from "./src/game-state.js";
     import { createDungeonController } from "./src/dungeon.js";
     import { createShopController } from "./src/shop.js";
+    import { createSaveController } from "./src/save-system.js";
     import { ITEM_DEFINITIONS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
 
@@ -319,6 +340,22 @@
 
     let wordState = createWordBattleState();
     let spawnElapsed = 0;
+    const saveController = createSaveController({
+      store,
+      dungeon,
+      getExtraData: () => ({ wordState, spawnElapsed }),
+      validateExtraData: (extra) =>
+        Boolean(extra) &&
+        isValidSavedWordBattleState(extra.wordState) &&
+        Number.isFinite(extra.spawnElapsed) &&
+        extra.spawnElapsed >= 0 &&
+        extra.spawnElapsed < SPAWN_INTERVAL_MS,
+      restoreExtraData: (extra) => {
+        wordState = restoreWordBattleState(extra.wordState);
+        spawnElapsed = extra.spawnElapsed;
+      },
+    });
+    const initialSave = saveController.load();
     let statusText = "「冒険を始める」を押してゲームを開始しよう。";
     let statusTone = "";
 
@@ -476,6 +513,22 @@
       renderWordState();
     }
 
+    function updateSaveMessage(message) {
+      $("saveMessage").textContent = message;
+    }
+
+    function saveProgress(showMessage = false) {
+      const result = saveController.save();
+      if (showMessage) {
+        updateSaveMessage(
+          result.saved
+            ? "保存したよ（" + new Date(result.savedAt).toLocaleTimeString("ja-JP") + "）。"
+            : "保存できなかったよ。ブラウザの保存領域を確認してね。",
+        );
+      }
+      return result;
+    }
+
     function startGame() {
       const previousPhase = store.getState().phase;
       combat.reset();
@@ -496,12 +549,14 @@
         getCurrentChallenge(wordState).japanese + "」の英単語を完成させよう！",
       );
       render();
+      saveProgress();
     }
 
     function move(direction) {
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
       wordState = movePlayer(wordState, direction);
       renderWordState();
+      saveProgress();
     }
 
     function flashDamage(target) {
@@ -531,6 +586,7 @@
           $("nextButton").hidden = false;
         }
       }
+      if (events.length > 0) saveProgress();
     }
 
     $("usePotionButton").addEventListener("click", () => {
@@ -630,6 +686,7 @@
       }
       render();
       setStatus(result.item.name + "を購入した！残り " + result.gold + "G。", "good");
+      saveProgress();
     }
     $("buyPotionButton").addEventListener("click", () => buyShopItem("small-potion"));
     $("buyLargePotionButton").addEventListener("click", () => buyShopItem("large-potion"));
@@ -642,6 +699,7 @@
       $("nextButton").hidden = true;
       setStatus("次のお題は「" + getCurrentChallenge(wordState).japanese + "」だよ。");
       render();
+      saveProgress();
     });
     $("leftButton").addEventListener("click", () => move(-1));
     $("rightButton").addEventListener("click", () => move(1));
@@ -654,8 +712,35 @@
       if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") move(1);
     });
 
-    store.subscribe(renderStore);
+    store.subscribe((state, action) => {
+      renderStore(state);
+      if (action) saveProgress();
+    });
     render();
+    if (initialSave.loaded) {
+      updateSaveMessage("前回のセーブデータをロードしたよ。");
+    } else if (initialSave.reason === "invalid-save") {
+      updateSaveMessage("保存データを読み込めなかったよ。新しく冒険を始めてね。");
+    }
+
+    $("saveNowButton").addEventListener("click", () => saveProgress(true));
+    $("loadSaveButton").addEventListener("click", () => {
+      const result = saveController.load();
+      if (!result.loaded) {
+        updateSaveMessage("ロードできる保存データがないか、データが壊れているよ。");
+        return;
+      }
+      combat.reset();
+      render();
+      updateSaveMessage("セーブデータをロードしたよ。");
+    });
+    $("clearSaveButton").addEventListener("click", () => {
+      const result = saveController.clear();
+      updateSaveMessage(result.cleared
+        ? "保存データを削除したよ。今のゲームは続けられるよ。"
+        : "保存データを削除できなかったよ。");
+    });
+    window.addEventListener("pagehide", () => saveProgress());
 
     setInterval(() => {
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
@@ -678,6 +763,7 @@
         if (spawnElapsed >= SPAWN_INTERVAL_MS) {
           wordState = spawnFallingLetter(wordState);
           spawnElapsed = 0;
+          saveProgress();
         }
       }
       render();
