@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 9</title>
+  <title>WORD FALL QUEST | Step 10</title>
   <style>
     :root {
       color-scheme: dark;
@@ -201,7 +201,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 9 — 冒険の進行を保存して、いつでも続きから遊ぼう！</p>
+    <p class="subtitle">STEP 10 — 盾を装備して敵の攻撃を軽減しよう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -245,6 +245,13 @@
         </div>
         <button id="equipWeaponButton" disabled>木の剣を装備（攻撃 +1）</button>
       </div>
+      <div class="inventory-row">
+        <div>
+          <span class="inventory-label">🛡️ 防具</span>
+          <strong class="inventory-value" id="shieldStatus">未装備 · DEF 0</strong>
+        </div>
+        <button id="equipShieldButton" disabled>木の盾を装備（防御 +1）</button>
+      </div>
     </section>
 
     <section class="panel" aria-label="セーブデータ">
@@ -268,6 +275,7 @@
       <p class="shop-note">宝箱を開けたあと、次の階へ進む前に買い物できるよ。</p>
       <button id="buyPotionButton">回復薬 ×1（15G）</button>
       <button id="buyLargePotionButton">大きな回復薬 ×1（30G）</button>
+      <button id="buyShieldButton">木の盾 ×1（30G）</button>
     </section>
 
     <section class="panel">
@@ -304,7 +312,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 9 · SAVE & LOAD</p>
+    <p class="footer">WORD FALL QUEST · STEP 10 · DEFENSE & SHIELDS</p>
   </main>
 
   <script type="module">
@@ -395,13 +403,15 @@
       $("shopGold").textContent = state.inventory.gold + "G";
       $("buyPotionButton").disabled = !shopOpen || state.inventory.gold < 15;
       $("buyLargePotionButton").disabled = !shopOpen || state.inventory.gold < 30;
+      $("buyShieldButton").disabled = !shopOpen || state.inventory.gold < 30;
       $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
       setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
       $("playerProgression").textContent =
         "LV." + state.player.level + " · EXP " +
-        state.player.experience + " / " + state.player.nextLevelXp;
+        state.player.experience + " / " + state.player.nextLevelXp +
+        " · DEF " + state.player.defensePower;
 
       const potionCount = state.inventory.items["small-potion"] ?? 0;
       $("potionCount").textContent = "×" + potionCount;
@@ -426,6 +436,21 @@
       $("equipWeaponButton").textContent = woodenSwordEquipped
         ? "装備中"
         : "木の剣を装備（攻撃 +1）";
+
+      const shieldId = state.inventory.equipment.shield;
+      const shield = shieldId && Object.hasOwn(ITEM_DEFINITIONS, shieldId)
+        ? ITEM_DEFINITIONS[shieldId]
+        : null;
+      const woodenShieldCount = state.inventory.items["wooden-shield"] ?? 0;
+      const woodenShieldEquipped = shieldId === "wooden-shield";
+      $("shieldStatus").textContent = shield
+        ? shield.name + "（防御 +" + shield.defenseBonus + "）"
+        : "未装備 · DEF " + state.player.defensePower;
+      $("equipShieldButton").disabled =
+        !activeBattle(state) || woodenShieldEquipped || woodenShieldCount <= 0;
+      $("equipShieldButton").textContent = woodenShieldEquipped
+        ? "装備中"
+        : "木の盾を装備（防御 +1）";
 
       const enemy = state.enemy;
       $("enemyName").textContent = enemy ? "🟢 " + enemy.name : "🟢 敵";
@@ -654,6 +679,22 @@
       );
     });
 
+    $("equipShieldButton").addEventListener("click", () => {
+      const before = store.getState();
+      const after = store.dispatch({
+        type: GAME_ACTION.EQUIP_SHIELD,
+        itemId: "wooden-shield",
+      });
+      if (after === before) {
+        setStatus("木の盾を装備できない状態だよ。", "bad");
+        return;
+      }
+      setStatus(
+        "木の盾を装備！防御力が " + after.player.defensePower + " になったよ。",
+        "good",
+      );
+    });
+
     $("startButton").addEventListener("click", () => {
       const state = store.getState();
       const progress = dungeon.getProgress();
@@ -696,6 +737,7 @@
     }
     $("buyPotionButton").addEventListener("click", () => buyShopItem("small-potion"));
     $("buyLargePotionButton").addEventListener("click", () => buyShopItem("large-potion"));
+    $("buyShieldButton").addEventListener("click", () => buyShopItem("wooden-shield"));
 
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
