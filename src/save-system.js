@@ -7,6 +7,10 @@ import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
 export const SAVE_VERSION = 3;
 
+function isRecord(value) {
+  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+}
+
 function migrateSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
   if (![1, 2, SAVE_VERSION].includes(snapshot.version)) return null;
@@ -14,9 +18,9 @@ function migrateSnapshot(snapshot) {
   let migrated = snapshot;
   if (migrated.version === 1) {
     const gameState = migrated.gameState;
-    if (!gameState || typeof gameState !== "object" ||
-        !gameState.player || !gameState.inventory ||
-        !gameState.inventory.items || !gameState.inventory.equipment) return null;
+    if (!isRecord(gameState) || !isRecord(gameState.player) ||
+        !isRecord(gameState.inventory) || !isRecord(gameState.inventory.items) ||
+        !isRecord(gameState.inventory.equipment)) return null;
 
     migrated = {
       ...migrated,
@@ -45,9 +49,9 @@ function migrateSnapshot(snapshot) {
 
   if (migrated.version === 2) {
     const gameState = migrated.gameState;
-    if (!gameState || typeof gameState !== "object" ||
-        !gameState.inventory || !gameState.inventory.items ||
-        !gameState.inventory.equipment) return null;
+    if (!isRecord(gameState) || !isRecord(gameState.inventory) ||
+        !isRecord(gameState.inventory.items) ||
+        !isRecord(gameState.inventory.equipment)) return null;
 
     migrated = {
       ...migrated,
