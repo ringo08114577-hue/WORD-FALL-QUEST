@@ -199,7 +199,8 @@
         <span class="phase" id="phaseBadge" data-phase="title">開始前</span>
       </div>
       <p class="message" id="statusMessage" aria-live="polite">「冒険を始める」を押してゲームを開始しよう。</p>
-      <div class="progression" id="dungeonProgress">ダンジョン 1階 · 1 / 3体目</div>\n      <div class="vitals">
+      <div class="progression" id="dungeonProgress">ダンジョン 1階 · 1 / 3体目</div>
+      <div class="vitals">
         <div class="vital">
           <div class="vital-head"><span>🧙 プレイヤー</span><span class="hp-text" id="playerHp">HP 3 / 3</span></div>
           <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill" id="playerHpFill"></div></div>
@@ -287,7 +288,8 @@
 
     const $ = (id) => document.getElementById(id);
     const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
-    const combat = createCombatController(store);\n    const dungeon = createDungeonController(store);
+    const combat = createCombatController(store);
+    const dungeon = createDungeonController(store);
     const TICK_MS = 40;
     const SPAWN_INTERVAL_MS = 900;
 
