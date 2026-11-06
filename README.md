@@ -81,7 +81,6 @@
 - 報酬を受け取るまで次の階へ進めない
 - 報酬の二重取得・未クリア時の取得を防ぐテストを追加
 
-STEP 2のプレイ画面は `battle.html` です。トップページ `index.html` の「英単語バトルを開く」から移動できます。
 
 ## ファイル構成
 
@@ -100,7 +99,9 @@ STEP 2のプレイ画面は `battle.html` です。トップページ `index.htm
     ├── dungeon.js
     ├── dungeon.test.js
     ├── combat.js
-    └── combat.test.js
+    ├── combat.test.js
+    ├── shop.js
+    └── shop.test.js
 ```
 
 ## 起動方法
