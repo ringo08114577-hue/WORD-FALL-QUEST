@@ -323,7 +323,9 @@
     }
 
     function renderStore(state) {
-      const dungeonProgress = dungeon.getProgress();\n      $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目";\n      $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
+      const dungeonProgress = dungeon.getProgress();
+      $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目";
+      $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
       setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
@@ -363,8 +365,9 @@
       $("rightButton").disabled = !active || wordState.phase !== "active";
       $("startButton").hidden = active;
       $("startButton").textContent =
-        state.phase === GAME_PHASE.VICTORY ? "次のバトルへ" :
-        state.phase === GAME_PHASE.DEFEAT ? "最初からやり直す" : "冒険を始める";
+        state.phase === GAME_PHASE.VICTORY
+          ? (dungeonProgress.floorCleared ? "次の階へ" : "次の敵へ")
+          : state.phase === GAME_PHASE.DEFEAT ? "最初からやり直す" : "冒険を始める";
       $("nextButton").hidden = !(
         active && wordState.phase === "word-complete"
       );
@@ -433,18 +436,22 @@
     function startGame() {
       const previousPhase = store.getState().phase;
       combat.reset();
-      // 勝利後は成長を引き継いで次の戦闘へ。敗北時は冒険を最初からやり直す。
       if (previousPhase === GAME_PHASE.DEFEAT) {
         store.dispatch({ type: GAME_ACTION.RESET_GAME });
+        dungeon.reset();
       }
-      store.dispatch({
-        type: GAME_ACTION.START_BATTLE,
-        enemy: createEnemy("slime"),
-      });
+      const result = previousPhase === GAME_PHASE.VICTORY
+        ? dungeon.advance()
+        : dungeon.start();
+      if (!result.started) return;
       wordState = createWordBattleState();
       spawnElapsed = 0;
       $("arenaCover").hidden = true;
-      setStatus("りんごのスペルを完成させよう！");
+      const progress = dungeon.getProgress();
+      setStatus(
+        progress.floor + "階 " + progress.enemyNumber + "体目！「" +
+        getCurrentChallenge(wordState).japanese + "」の英単語を完成させよう！",
+      );
       render();
     }
 
