@@ -420,6 +420,97 @@ function deepFreeze(value) {
   return value;
 }
 
+
+/** Validate a game state loaded from an external save file. */
+export function isValidSavedGameState(saved) {
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) return false;
+  if (!Object.values(GAME_PHASE).includes(saved.phase)) return false;
+  if (!saved.player || !saved.inventory || !saved.battle || !saved.stats) return false;
+
+  const p = saved.player;
+  const inv = saved.inventory;
+  const items = inv.items;
+  const weaponId = inv.equipment?.weapon ?? null;
+  const weapon = weaponId === null ? null :
+    (Object.hasOwn(ITEM_DEFINITIONS, weaponId) ? ITEM_DEFINITIONS[weaponId] : null);
+
+  if (
+    !isPositiveInteger(p.level) ||
+    !isNonNegativeInteger(p.experience) ||
+    p.nextLevelXp !== experienceRequiredForNextLevel(p.level) ||
+    p.experience >= p.nextLevelXp ||
+    !isPositiveInteger(p.baseMaxHp) ||
+    !isPositiveInteger(p.baseAttackPower) ||
+    !isPositiveInteger(p.startingAttackPower) ||
+    p.maxHp !== p.baseMaxHp + p.level - 1 ||
+    !isNonNegativeInteger(p.hp) || p.hp > p.maxHp ||
+    p.attackPower !== p.baseAttackPower + (weapon?.attackBonus ?? 0) ||
+    !items || typeof items !== "object" || Array.isArray(items) ||
+    !inv.equipment || (weaponId !== null && (!weapon || weapon.type !== "weapon")) ||
+    !isNonNegativeInteger(inv.gold)
+  ) return false;
+
+  for (const key of Object.keys(items)) {
+    if (!Object.hasOwn(ITEM_DEFINITIONS, key) || !isNonNegativeInteger(items[key])) return false;
+  }
+  for (const key of Object.keys(ITEM_DEFINITIONS)) {
+    if (items[key] === undefined) return false;
+  }
+
+  if (
+    !isNonNegativeInteger(saved.battle.number) ||
+    !isNonNegativeInteger(saved.stats.enemiesDefeated) ||
+    !isNonNegativeInteger(saved.stats.totalExperienceEarned)
+  ) return false;
+  const validTime = (value) => value === null ||
+    typeof value === "string" || (typeof value === "number" && Number.isFinite(value));
+  if (!validTime(saved.battle.startedAt) || !validTime(saved.battle.endedAt)) return false;
+
+  const enemy = saved.enemy;
+  if (saved.phase === GAME_PHASE.TITLE) {
+    if (enemy !== null || saved.lastBattleResult !== null || p.hp === 0) return false;
+  } else {
+    if (
+      !enemy || typeof enemy !== "object" ||
+      (typeof enemy.id !== "string" && typeof enemy.id !== "number") ||
+      typeof enemy.name !== "string" || enemy.name.trim() === "" ||
+      !isPositiveInteger(enemy.maxHp) ||
+      !isNonNegativeInteger(enemy.hp) || enemy.hp > enemy.maxHp ||
+      !isPositiveInteger(enemy.attackPower) ||
+      !isNonNegativeInteger(enemy.experienceReward)
+    ) return false;
+  }
+
+  if (saved.phase === GAME_PHASE.BATTLE &&
+      (p.hp < 1 || enemy.hp < 1 || saved.pausedFrom !== null || saved.lastBattleResult !== null)) return false;
+  if (saved.phase === GAME_PHASE.PAUSED &&
+      (p.hp < 1 || enemy.hp < 1 || saved.pausedFrom !== GAME_PHASE.BATTLE || saved.lastBattleResult !== null)) return false;
+  if (saved.phase === GAME_PHASE.VICTORY &&
+      (p.hp < 1 || enemy.hp !== 0 || saved.pausedFrom !== null || saved.lastBattleResult !== "victory")) return false;
+  if (saved.phase === GAME_PHASE.DEFEAT &&
+      (p.hp !== 0 || saved.pausedFrom !== null || saved.lastBattleResult !== "defeat")) return false;
+  return true;
+}
+
+function copySavedGameState(saved) {
+  return {
+    phase: saved.phase,
+    pausedFrom: saved.pausedFrom,
+    player: { ...saved.player },
+    enemy: saved.enemy ? { ...saved.enemy } : null,
+    inventory: {
+      items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map(
+        (key) => [key, saved.inventory.items[key]],
+      )),
+      equipment: { weapon: saved.inventory.equipment.weapon ?? null },
+      gold: saved.inventory.gold,
+    },
+    battle: { ...saved.battle },
+    stats: { ...saved.stats },
+    lastBattleResult: saved.lastBattleResult,
+  };
+}
+
 /**
  * Small store for the browser UI and future game systems.
  * Subscribers are notified only when the state actually changes.
@@ -431,6 +522,17 @@ export function createGameStore(options = {}) {
   return {
     getState() {
       return state;
+    },
+
+    isValidState(savedState) {
+      return isValidSavedGameState(savedState);
+    },
+
+    restoreState(savedState) {
+      if (!isValidSavedGameState(savedState)) return false;
+      state = deepFreeze(copySavedGameState(savedState));
+      for (const listener of listeners) listener(state, null);
+      return true;
     },
 
     dispatch(action) {
