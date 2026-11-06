@@ -387,8 +387,10 @@
         const quantity = state.inventory.items[itemId] ?? 0;
         const slot = item.slot ?? null;
         const equipped = slot !== null && state.inventory.equipment[slot] === itemId;
+        if (quantity <= 0 && !equipped) continue;
         const row = document.createElement("div");
         row.className = "inventory-row";
+        row.title = item.description ?? "";
 
         const copy = document.createElement("div");
         copy.className = "inventory-copy";
