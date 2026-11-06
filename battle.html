@@ -313,10 +313,9 @@
       GAME_PHASE,
     } from "./src/game-state.js";
     import { createDungeonController } from "./src/dungeon.js";
-    import { createShopController } from "./src/shop.js";
+    import { createShopController, SHOP_CATALOG } from "./src/shop.js";
     import { createSaveController } from "./src/save-system.js";
-    import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS } from "./items.js";
-    import { SHOP_CATALOG } from "./shop.js";
+    import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
 
     const $ = (id) => document.getElementById(id);
