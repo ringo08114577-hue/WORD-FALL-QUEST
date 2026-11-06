@@ -628,8 +628,8 @@
         setStatus(messages[result.reason] ?? "購入できなかったよ。", "bad");
         return;
       }
-      setStatus(result.item.name + "を購入した！残り " + result.gold + "G。", "good");
       render();
+      setStatus(result.item.name + "を購入した！残り " + result.gold + "G。", "good");
     }
     $("buyPotionButton").addEventListener("click", () => buyShopItem("small-potion"));
     $("buyLargePotionButton").addEventListener("click", () => buyShopItem("large-potion"));
