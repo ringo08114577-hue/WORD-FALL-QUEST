@@ -223,6 +223,20 @@
       </div>
       <div class="inventory-row">
         <div>
+          <span class="inventory-label">🧪 大きな回復薬</span>
+          <strong class="inventory-value" id="largePotionCount">×0</strong>
+        </div>
+        <button id="useLargePotionButton" disabled>使う（HP +4）</button>
+      </div>
+      <div class="inventory-row">
+        <div>
+          <span class="inventory-label">🪙 ゴールド</span>
+          <strong class="inventory-value" id="goldCount">0 G</strong>
+        </div>
+        <span class="inventory-label">宝箱の報酬で獲得</span>
+      </div>
+      <div class="inventory-row">
+        <div>
           <span class="inventory-label">⚔️ 武器</span>
           <strong class="inventory-value" id="weaponStatus">未装備</strong>
         </div>
@@ -264,7 +278,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 6 · DUNGEON PROGRESSION</p>
+    <p class="footer">WORD FALL QUEST · STEP 7 · TREASURE REWARDS</p>
   </main>
 
   <script type="module">
@@ -340,6 +354,12 @@
       $("usePotionButton").disabled =
         !activeBattle(state) || potionCount <= 0 ||
         state.player.hp >= state.player.maxHp;
+      const largePotionCount = state.inventory.items["large-potion"] ?? 0;
+      $("largePotionCount").textContent = "×" + largePotionCount;
+      $("useLargePotionButton").disabled =
+        !activeBattle(state) || largePotionCount <= 0 ||
+        state.player.hp >= state.player.maxHp;
+      $("goldCount").textContent = state.inventory.gold + " G";
 
       const weaponId = state.inventory.equipment.weapon;
       const weapon = ITEM_DEFINITIONS[weaponId];
@@ -368,7 +388,9 @@
       $("startButton").hidden = active;
       $("startButton").textContent =
         state.phase === GAME_PHASE.VICTORY
-          ? (dungeonProgress.floorCleared ? "次の階へ" : "次の敵へ")
+          ? (dungeonProgress.floorCleared
+              ? (dungeonProgress.rewardClaimed ? "次の階へ" : "宝箱を開ける")
+              : "次の敵へ")
           : state.phase === GAME_PHASE.DEFEAT ? "最初からやり直す" : "冒険を始める";
       $("nextButton").hidden = !(
         active && wordState.phase === "word-complete"
@@ -379,12 +401,16 @@
         const floorCleared = dungeonProgress.floorCleared;
         $("coverTitle").textContent = (state.enemy?.name ?? "敵") + "を倒した！";
         $("coverNote").textContent = floorCleared
-          ? "この階の敵をすべて倒した！次の階へ進もう。"
+          ? (dungeonProgress.rewardClaimed
+              ? "宝箱の報酬を受け取った！次の階へ進もう。"
+              : "この階の敵をすべて倒した！宝箱を開けよう。")
           : "次の敵が待っている。準備ができたら進もう。";
         $("startButton").hidden = false;
         setStatus(
           floorCleared
-            ? dungeonProgress.floor + "階クリア！次の階へ進もう。"
+            ? (dungeonProgress.rewardClaimed
+                ? dungeonProgress.floor + "階クリア！次の階へ進もう。"
+                : dungeonProgress.floor + "階クリア！宝箱を開けよう。")
             : (state.enemy?.name ?? "敵") + "を倒した！次の敵へ進もう。",
           "good",
         );
@@ -514,6 +540,28 @@
       );
     });
 
+    $("useLargePotionButton").addEventListener("click", () => {
+      const before = store.getState();
+      const after = store.dispatch({
+        type: GAME_ACTION.USE_ITEM,
+        itemId: "large-potion",
+      });
+      if (after === before) {
+        setStatus(
+          before.player.hp >= before.player.maxHp
+            ? "HPは満タンだよ。大きな回復薬はまだ使えないよ。"
+            : "大きな回復薬を持っていないよ。",
+          "bad",
+        );
+        return;
+      }
+      setStatus(
+        "大きな回復薬を使った！HP +" +
+        (after.player.hp - before.player.hp) + " 回復したよ。",
+        "good",
+      );
+    });
+
     $("equipWeaponButton").addEventListener("click", () => {
       const before = store.getState();
       const after = store.dispatch({
@@ -530,7 +578,27 @@
       );
     });
 
-    $("startButton").addEventListener("click", startGame);
+    $("startButton").addEventListener("click", () => {
+      const progress = dungeon.getProgress();
+      if (
+        store.getState().phase === GAME_PHASE.VICTORY &&
+        progress.floorCleared &&
+        !progress.rewardClaimed
+      ) {
+        const reward = dungeon.claimFloorReward();
+        if (reward.claimed) {
+          const item = ITEM_DEFINITIONS[reward.itemId];
+          setStatus(
+            "宝箱を開けた！" + item.name + " ×" + reward.quantity +
+            " と " + reward.gold + "G を獲得！",
+            "good",
+          );
+        }
+        render();
+        return;
+      }
+      startGame();
+    });
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
       wordState = advanceToNextChallenge(wordState);
