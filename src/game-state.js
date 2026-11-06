@@ -1,4 +1,4 @@
-import { ITEM_DEFINITIONS, createInitialInventory } from "./items.js";
+import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, createInitialInventory } from "./items.js";
 
 /**
  * WORD FALL QUEST - Game state core
@@ -261,7 +261,9 @@ export function gameReducer(state, action) {
 
     case GAME_ACTION.USE_ITEM: {
       if (state.phase !== GAME_PHASE.BATTLE) return state;
-      const item = ITEM_DEFINITIONS[action.itemId];
+      const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
+        ? ITEM_DEFINITIONS[action.itemId]
+        : null;
       if (!item || item.type !== "consumable" || item.effect !== "heal" || !isPositiveInteger(item.healAmount)) return state;
 
       const quantity = state.inventory.items[action.itemId] ?? 0;
@@ -288,7 +290,9 @@ export function gameReducer(state, action) {
 
     case GAME_ACTION.EQUIP_WEAPON: {
       if (state.phase !== GAME_PHASE.BATTLE) return state;
-      const item = ITEM_DEFINITIONS[action.itemId];
+      const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
+        ? ITEM_DEFINITIONS[action.itemId]
+        : null;
       if (!item || item.type !== "weapon" || !isPositiveInteger(item.attackBonus)) {
         return state;
       }
@@ -326,7 +330,9 @@ export function gameReducer(state, action) {
     }
 
     case GAME_ACTION.ADD_ITEM: {
-      const item = ITEM_DEFINITIONS[action.itemId];
+      const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
+        ? ITEM_DEFINITIONS[action.itemId]
+        : null;
       const quantity = action.quantity === undefined ? 1 : action.quantity;
       if (!item || !isPositiveInteger(quantity)) return state;
       return {
@@ -352,9 +358,18 @@ export function gameReducer(state, action) {
 
     case GAME_ACTION.BUY_ITEM: {
       if (state.phase !== GAME_PHASE.VICTORY) return state;
-      const item = ITEM_DEFINITIONS[action.itemId];
+      const itemExists = Object.hasOwn(ITEM_DEFINITIONS, action.itemId);
+      const priceExists = Object.hasOwn(ITEM_SHOP_PRICES, action.itemId);
+      const item = itemExists ? ITEM_DEFINITIONS[action.itemId] : null;
       const cost = action.cost;
-      if (!item || !isPositiveInteger(cost) || state.inventory.gold < cost) {
+      const expectedCost = priceExists ? ITEM_SHOP_PRICES[action.itemId] : null;
+      if (
+        !item ||
+        expectedCost === null ||
+        cost !== expectedCost ||
+        !isPositiveInteger(cost) ||
+        state.inventory.gold < cost
+      ) {
         return state;
       }
       return {
