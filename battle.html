@@ -305,6 +305,7 @@
       GAME_PHASE,
     } from "./src/game-state.js";
     import { createDungeonController } from "./src/dungeon.js";
+    import { createShopController } from "./src/shop.js";
     import { ITEM_DEFINITIONS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
 
@@ -312,6 +313,7 @@
     const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
     const combat = createCombatController(store);
     const dungeon = createDungeonController(store);
+    const shop = createShopController(store, dungeon);
     const TICK_MS = 40;
     const SPAWN_INTERVAL_MS = 900;
 
@@ -615,26 +617,22 @@
       }
       startGame();
     });
-    function buyShopItem(itemId, cost, itemName) {
-      const before = store.getState();
-      const after = store.dispatch({
-        type: GAME_ACTION.BUY_ITEM,
-        itemId,
-        cost,
-      });
-      if (after === before) {
-        setStatus("ゴールドが足りないか、今は買い物できないよ。", "bad");
+    function buyShopItem(itemId) {
+      const result = shop.buy(itemId);
+      if (!result.purchased) {
+        const messages = {
+          "not-at-shop": "ショップは宝箱を開けたあとに利用できるよ。",
+          "not-enough-gold": "ゴールドが足りないよ。",
+          "unknown-item": "その商品は取り扱っていないよ。",
+        };
+        setStatus(messages[result.reason] ?? "購入できなかったよ。", "bad");
         return;
       }
-      setStatus(itemName + "を購入した！残り " + after.inventory.gold + "G。", "good");
+      setStatus(result.item.name + "を購入した！残り " + result.gold + "G。", "good");
       render();
     }
-    $("buyPotionButton").addEventListener("click", () =>
-      buyShopItem("small-potion", 15, "回復薬")
-    );
-    $("buyLargePotionButton").addEventListener("click", () =>
-      buyShopItem("large-potion", 30, "大きな回復薬")
-    );
+    $("buyPotionButton").addEventListener("click", () => buyShopItem("small-potion"));
+    $("buyLargePotionButton").addEventListener("click", () => buyShopItem("large-potion"));
 
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE) return;
