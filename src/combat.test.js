@@ -176,3 +176,25 @@ test("同じ文字イベントをリセット後の新しい戦闘で再利用�
   assert.equal(again.ignored, false);
   assert.equal(store.getState().player.hp, 2);
 });
+
+
+test("盾は敵の反撃ダメージを1減らすが、最低1ダメージは受ける", () => {
+  const store = startBattle({
+    enemy: { ...createEnemy("slime"), attackPower: 2 },
+  });
+  store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
+  store.dispatch({
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "wooden-shield",
+  });
+  const combat = createCombatController(store);
+  const result = combat.handle({
+    eventId: "shield-test-letter-1",
+    type: "wrong",
+    letter: "Z",
+  });
+
+  assert.equal(result.damage, 1);
+  assert.equal(store.getState().player.hp, 2);
+  assert.equal(store.getState().player.defensePower, 1);
+});
