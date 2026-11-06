@@ -452,7 +452,7 @@ export function isValidSavedGameState(saved) {
   const inv = saved.inventory;
   const items = inv.items;
   const equipment = inv.equipment;
-  const equipmentBonuses = getEquipmentBonuses(equipment);
+  const equipmentBonuses = getEquipmentBonuses(equipment ?? {});
   const seenEquippedItems = new Set();
   let equipmentValid = Boolean(equipment && typeof equipment === "object" && !Array.isArray(equipment));
   if (equipmentValid) {
