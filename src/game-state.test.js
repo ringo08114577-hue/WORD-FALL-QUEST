@@ -434,7 +434,7 @@ test("大きな回復薬は定義された回復量だけHPを回復する", () 
     enemy: slime,
   });
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "large-potion" });
-  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 3 });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
   state = gameReducer(state, { type: GAME_ACTION.USE_ITEM, itemId: "large-potion" });
   assert.equal(state.player.hp, 3);
   assert.equal(state.inventory.items["large-potion"], 0);
