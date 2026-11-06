@@ -83,6 +83,50 @@ export function createDungeonController(store) {
       return { claimed: true, floor, itemId, quantity, gold };
     },
 
+    getSaveData() {
+      return { floor, enemyIndex, started, rewardClaimed };
+    },
+
+    isValidSaveData(data, savedGameState = store.getState()) {
+      if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+      if (
+        !Number.isSafeInteger(data.floor) || data.floor < 1 ||
+        !Number.isInteger(data.enemyIndex) ||
+        data.enemyIndex < 0 || data.enemyIndex >= FLOOR_ENEMIES.length ||
+        typeof data.started !== "boolean" ||
+        typeof data.rewardClaimed !== "boolean"
+      ) return false;
+
+      if (!data.started) {
+        return data.floor === 1 && data.enemyIndex === 0 &&
+          data.rewardClaimed === false &&
+          savedGameState.phase === GAME_PHASE.TITLE;
+      }
+      if (savedGameState.phase === GAME_PHASE.TITLE || !savedGameState.enemy) return false;
+      const expectedEnemy = createEnemy(FLOOR_ENEMIES[data.enemyIndex], {
+        floor: data.floor,
+      });
+      if (
+        savedGameState.enemy.id !== expectedEnemy.id ||
+        savedGameState.enemy.maxHp !== expectedEnemy.maxHp ||
+        savedGameState.enemy.attackPower !== expectedEnemy.attackPower ||
+        savedGameState.enemy.experienceReward !== expectedEnemy.experienceReward
+      ) return false;
+      if (data.rewardClaimed &&
+          (data.enemyIndex !== FLOOR_ENEMIES.length - 1 ||
+           savedGameState.phase !== GAME_PHASE.VICTORY)) return false;
+      return true;
+    },
+
+    restoreSaveData(data) {
+      if (!this.isValidSaveData(data)) return false;
+      floor = data.floor;
+      enemyIndex = data.enemyIndex;
+      started = data.started;
+      rewardClaimed = data.rewardClaimed;
+      return true;
+    },
+
     getProgress() {
       return {
         floor,
