@@ -22,6 +22,8 @@ export const GAME_ACTION = Object.freeze({
   HEAL_PLAYER: "HEAL_PLAYER",
   USE_ITEM: "USE_ITEM",
   EQUIP_WEAPON: "EQUIP_WEAPON",
+  ADD_ITEM: "ADD_ITEM",
+  ADD_GOLD: "ADD_GOLD",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
   RESET_GAME: "RESET_GAME",
@@ -152,7 +154,7 @@ export function createInitialGameState({
       nextLevelXp: experienceRequiredForNextLevel(1),
     },
     enemy: null,
-    inventory: createInitialInventory(),
+    inventory: { ...createInitialInventory(), gold: 0 },
     battle: {
       number: 0,
       startedAt: null,
@@ -259,7 +261,7 @@ export function gameReducer(state, action) {
     case GAME_ACTION.USE_ITEM: {
       if (state.phase !== GAME_PHASE.BATTLE) return state;
       const item = ITEM_DEFINITIONS[action.itemId];
-      if (!item || item.type !== "consumable" || item.effect !== "heal") return state;
+      if (!item || item.type !== "consumable" || item.effect !== "heal" || !isPositiveInteger(item.healAmount)) return state;
 
       const quantity = state.inventory.items[action.itemId] ?? 0;
       if (!isPositiveInteger(quantity) || state.player.hp >= state.player.maxHp) {
@@ -319,6 +321,31 @@ export function gameReducer(state, action) {
             weapon: action.itemId,
           },
         },
+      };
+    }
+
+    case GAME_ACTION.ADD_ITEM: {
+      const item = ITEM_DEFINITIONS[action.itemId];
+      const quantity = action.quantity === undefined ? 1 : action.quantity;
+      if (!item || !isPositiveInteger(quantity)) return state;
+      return {
+        ...state,
+        inventory: {
+          ...state.inventory,
+          items: {
+            ...state.inventory.items,
+            [action.itemId]: (state.inventory.items[action.itemId] ?? 0) + quantity,
+          },
+        },
+      };
+    }
+
+    case GAME_ACTION.ADD_GOLD: {
+      const amount = action.amount;
+      if (!isPositiveInteger(amount)) return state;
+      return {
+        ...state,
+        inventory: { ...state.inventory, gold: state.inventory.gold + amount },
       };
     }
 
