@@ -34,6 +34,7 @@ test("ゴールド不足・未知の商品・ショップ外の購入を拒否�
   const dungeon = createDungeonController(store);
   const shop = createShopController(store, dungeon);
   assert.equal(shop.buy("unknown").reason, "unknown-item");
+  assert.equal(shop.buy("toString").reason, "unknown-item");
   assert.equal(shop.buy("small-potion").reason, "not-at-shop");
   clearFloor(store, dungeon);
   dungeon.claimFloorReward();
