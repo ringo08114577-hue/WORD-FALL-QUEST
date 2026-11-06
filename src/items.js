@@ -1,7 +1,8 @@
 /**
  * WORD FALL QUEST - Data-driven item catalog
  *
- * Add new items here. Equipment behavior is derived from slot and bonus data.
+ * Add a new item definition here. Optional shopPrice and startingQuantity
+ * control shop availability and starting inventory automatically.
  */
 export const EQUIPMENT_SLOTS = Object.freeze([
   "weapon",
@@ -17,15 +18,6 @@ export const EQUIPMENT_SLOT_LABELS = Object.freeze({
   accessory: "アクセサリー",
 });
 
-export const ITEM_SHOP_PRICES = Object.freeze({
-  "small-potion": 15,
-  "large-potion": 30,
-  "wooden-shield": 30,
-  "iron-sword": 80,
-  "leather-armor": 65,
-  "copper-charm": 90,
-});
-
 export const ITEM_DEFINITIONS = Object.freeze({
   "small-potion": Object.freeze({
     id: "small-potion",
@@ -33,6 +25,8 @@ export const ITEM_DEFINITIONS = Object.freeze({
     type: "consumable",
     effect: "heal",
     healAmount: 2,
+    startingQuantity: 2,
+    shopPrice: 15,
     description: "HPを2回復する。",
   }),
   "large-potion": Object.freeze({
@@ -41,6 +35,7 @@ export const ITEM_DEFINITIONS = Object.freeze({
     type: "consumable",
     effect: "heal",
     healAmount: 4,
+    shopPrice: 30,
     description: "HPを4回復する。",
   }),
   "wooden-sword": Object.freeze({
@@ -49,6 +44,7 @@ export const ITEM_DEFINITIONS = Object.freeze({
     type: "weapon",
     slot: "weapon",
     attackBonus: 1,
+    startingQuantity: 1,
     description: "攻撃力が1上がる。",
   }),
   "wooden-shield": Object.freeze({
@@ -57,6 +53,7 @@ export const ITEM_DEFINITIONS = Object.freeze({
     type: "shield",
     slot: "shield",
     defenseBonus: 1,
+    shopPrice: 30,
     description: "防御力が1上がる。",
   }),
   "iron-sword": Object.freeze({
@@ -65,6 +62,7 @@ export const ITEM_DEFINITIONS = Object.freeze({
     type: "weapon",
     slot: "weapon",
     attackBonus: 2,
+    shopPrice: 80,
     description: "攻撃力が2上がる。",
   }),
   "leather-armor": Object.freeze({
@@ -73,6 +71,7 @@ export const ITEM_DEFINITIONS = Object.freeze({
     type: "armor",
     slot: "armor",
     defenseBonus: 1,
+    shopPrice: 65,
     description: "防御力が1上がる。",
   }),
   "copper-charm": Object.freeze({
@@ -82,19 +81,29 @@ export const ITEM_DEFINITIONS = Object.freeze({
     slot: "accessory",
     attackBonus: 1,
     defenseBonus: 1,
+    shopPrice: 90,
     description: "攻撃力と防御力が1ずつ上がる。",
   }),
 });
+
+export const ITEM_SHOP_PRICES = Object.freeze(
+  Object.fromEntries(
+    Object.entries(ITEM_DEFINITIONS)
+      .filter(([, item]) => Number.isSafeInteger(item.shopPrice) && item.shopPrice > 0)
+      .map(([itemId, item]) => [itemId, item.shopPrice]),
+  ),
+);
 
 export function isEquipmentItem(item) {
   return Boolean(item && EQUIPMENT_SLOTS.includes(item.slot));
 }
 
 export function getEquipmentBonuses(equipment = {}) {
+  const equipped = equipment && typeof equipment === "object" ? equipment : {};
   return EQUIPMENT_SLOTS.reduce(
     (total, slot) => {
-      const item = equipment[slot] && Object.hasOwn(ITEM_DEFINITIONS, equipment[slot])
-        ? ITEM_DEFINITIONS[equipment[slot]]
+      const item = equipped[slot] && Object.hasOwn(ITEM_DEFINITIONS, equipped[slot])
+        ? ITEM_DEFINITIONS[equipped[slot]]
         : null;
       if (item) {
         total.attackBonus += item.attackBonus ?? 0;
@@ -109,9 +118,9 @@ export function getEquipmentBonuses(equipment = {}) {
 export function createInitialInventory() {
   return {
     items: Object.fromEntries(
-      Object.keys(ITEM_DEFINITIONS).map((itemId) => [
+      Object.entries(ITEM_DEFINITIONS).map(([itemId, item]) => [
         itemId,
-        itemId === "small-potion" ? 2 : itemId === "wooden-sword" ? 1 : 0,
+        item.startingQuantity ?? 0,
       ]),
     ),
     equipment: Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot, null])),
