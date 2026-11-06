@@ -445,7 +445,7 @@
       const woodenShieldEquipped = shieldId === "wooden-shield";
       $("shieldStatus").textContent = shield
         ? shield.name + "（防御 +" + shield.defenseBonus + "） · 予備 ×" + woodenShieldCount
-        : "未装備 · DEF " + state.player.defensePower;
+        : "未装備 · 所持 ×" + woodenShieldCount + " · DEF " + state.player.defensePower;
       $("equipShieldButton").disabled =
         !activeBattle(state) || woodenShieldEquipped || woodenShieldCount <= 0;
       $("equipShieldButton").textContent = woodenShieldEquipped
