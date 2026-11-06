@@ -17,6 +17,7 @@ export function createDungeonController(store) {
   let floor = 1;
   let enemyIndex = 0;
   let started = false;
+  let rewardClaimed = false;
 
   function startCurrentEnemy() {
     const state = store.getState();
@@ -45,9 +46,13 @@ export function createDungeonController(store) {
         return { started: false, reason: "battle-not-won" };
       }
       const floorCleared = enemyIndex === FLOOR_ENEMIES.length - 1;
+      if (floorCleared && !rewardClaimed) {
+        return { started: false, reason: "reward-not-claimed" };
+      }
       if (floorCleared) {
         floor += 1;
         enemyIndex = 0;
+        rewardClaimed = false;
       } else {
         enemyIndex += 1;
       }
@@ -58,6 +63,24 @@ export function createDungeonController(store) {
       floor = 1;
       enemyIndex = 0;
       started = false;
+      rewardClaimed = false;
+    },
+
+    claimFloorReward() {
+      const progress = this.getProgress();
+      if (!progress.floorCleared) {
+        return { claimed: false, reason: "floor-not-cleared" };
+      }
+      if (rewardClaimed) {
+        return { claimed: false, reason: "already-claimed" };
+      }
+      const itemId = floor % 2 === 1 ? "small-potion" : "large-potion";
+      const quantity = 1;
+      const gold = 10 + floor * 5;
+      store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId, quantity });
+      store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: gold });
+      rewardClaimed = true;
+      return { claimed: true, floor, itemId, quantity, gold };
     },
 
     getProgress() {
@@ -69,6 +92,7 @@ export function createDungeonController(store) {
           store.getState().phase === GAME_PHASE.VICTORY &&
           enemyIndex === FLOOR_ENEMIES.length - 1,
         started,
+        rewardClaimed,
       };
     },
   };
