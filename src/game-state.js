@@ -468,7 +468,7 @@ export function isValidSavedGameState(saved) {
 
   const enemy = saved.enemy;
   if (saved.phase === GAME_PHASE.TITLE) {
-    if (enemy !== null || saved.lastBattleResult !== null || p.hp === 0) return false;
+    if (enemy !== null || saved.lastBattleResult !== null || p.hp === 0 || saved.pausedFrom !== null) return false;
   } else {
     if (
       !enemy || typeof enemy !== "object" ||
@@ -496,8 +496,25 @@ function copySavedGameState(saved) {
   return {
     phase: saved.phase,
     pausedFrom: saved.pausedFrom,
-    player: { ...saved.player },
-    enemy: saved.enemy ? { ...saved.enemy } : null,
+    player: {
+      hp: saved.player.hp,
+      maxHp: saved.player.maxHp,
+      attackPower: saved.player.attackPower,
+      baseMaxHp: saved.player.baseMaxHp,
+      baseAttackPower: saved.player.baseAttackPower,
+      startingAttackPower: saved.player.startingAttackPower,
+      level: saved.player.level,
+      experience: saved.player.experience,
+      nextLevelXp: saved.player.nextLevelXp,
+    },
+    enemy: saved.enemy ? {
+      id: saved.enemy.id,
+      name: saved.enemy.name,
+      hp: saved.enemy.hp,
+      maxHp: saved.enemy.maxHp,
+      attackPower: saved.enemy.attackPower,
+      experienceReward: saved.enemy.experienceReward,
+    } : null,
     inventory: {
       items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map(
         (key) => [key, saved.inventory.items[key]],
@@ -505,8 +522,15 @@ function copySavedGameState(saved) {
       equipment: { weapon: saved.inventory.equipment.weapon ?? null },
       gold: saved.inventory.gold,
     },
-    battle: { ...saved.battle },
-    stats: { ...saved.stats },
+    battle: {
+      number: saved.battle.number,
+      startedAt: saved.battle.startedAt,
+      endedAt: saved.battle.endedAt,
+    },
+    stats: {
+      enemiesDefeated: saved.stats.enemiesDefeated,
+      totalExperienceEarned: saved.stats.totalExperienceEarned,
+    },
     lastBattleResult: saved.lastBattleResult,
   };
 }
