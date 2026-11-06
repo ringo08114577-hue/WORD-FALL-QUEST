@@ -116,13 +116,14 @@
     .controls { display:flex; justify-content:center; gap:8px; margin-top:8px; }
     button {
       border:1px solid #3b506e; color:#f2f6ff; background:#22334c;
+      position:relative; z-index:1; touch-action:manipulation;
       border-radius:10px; padding:9px 14px; min-height:40px;
       font:inherit; font-weight:800; cursor:pointer;
     }
     button.primary { background:#2563eb; border-color:#3b82f6; }
     button:disabled { opacity:.35; cursor:not-allowed; }
     .move-button { min-width:95px; font-size:.95rem; }
-    .action-row { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:8px; }
+    .action-row { position:relative; z-index:10; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:8px; pointer-events:auto; }
     .action-row button { min-width:130px; }
     .next-button[hidden], .start-button[hidden] { display:none; }
     .stats { display:flex; justify-content:center; gap:16px; color:#a9bad0; font-size:.77rem; }
@@ -571,29 +572,24 @@
     });
 
     $("startButton").addEventListener("click", () => {
+      const state = store.getState();
       const progress = dungeon.getProgress();
       if (
-        store.getState().phase === GAME_PHASE.VICTORY &&
+        state.phase === GAME_PHASE.VICTORY &&
         progress.floorCleared &&
         !progress.rewardClaimed
       ) {
         const reward = dungeon.claimFloorReward();
-        if (reward.claimed) {
-          const item = ITEM_DEFINITIONS[reward.itemId];
-          setStatus(
-            "宝箱を開けた！" + item.name + " ×" + reward.quantity +
-            " と " + reward.gold + "G を獲得！",
-            "good",
-          );
-        }
         render();
         if (reward.claimed) {
           const item = ITEM_DEFINITIONS[reward.itemId];
           setStatus(
             "宝箱を開けた！" + item.name + " ×" + reward.quantity +
-            " と " + reward.gold + "G を獲得！",
+            " と " + reward.gold + "G を獲得！「次の階へ」を押して進もう。",
             "good",
           );
+        } else {
+          setStatus("宝箱を受け取れなかったよ。もう一度ボタンを押してね。", "bad");
         }
         return;
       }
