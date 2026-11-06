@@ -2,42 +2,76 @@
  * WORD FALL QUEST - Local save system
  * Versioned, validated snapshots of game, dungeon, and optional UI progress.
  */
+import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
+
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 function migrateSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
-  if (snapshot.version === SAVE_VERSION) return snapshot;
-  if (snapshot.version !== 1) return null;
+  if (![1, 2, SAVE_VERSION].includes(snapshot.version)) return null;
 
-  const gameState = snapshot.gameState;
-  if (!gameState || typeof gameState !== "object" ||
-      !gameState.player || !gameState.inventory ||
-      !gameState.inventory.items || !gameState.inventory.equipment) return null;
+  let migrated = snapshot;
+  if (migrated.version === 1) {
+    const gameState = migrated.gameState;
+    if (!gameState || typeof gameState !== "object" ||
+        !gameState.player || !gameState.inventory ||
+        !gameState.inventory.items || !gameState.inventory.equipment) return null;
 
-  return {
-    ...snapshot,
-    version: SAVE_VERSION,
-    gameState: {
-      ...gameState,
-      player: {
-        ...gameState.player,
-        baseDefensePower: gameState.player.baseDefensePower ?? 0,
-        defensePower: gameState.player.defensePower ?? 0,
-      },
-      inventory: {
-        ...gameState.inventory,
-        items: {
-          ...gameState.inventory.items,
-          "wooden-shield": gameState.inventory.items["wooden-shield"] ?? 0,
+    migrated = {
+      ...migrated,
+      version: 2,
+      gameState: {
+        ...gameState,
+        player: {
+          ...gameState.player,
+          baseDefensePower: gameState.player.baseDefensePower ?? 0,
+          defensePower: gameState.player.defensePower ?? 0,
         },
-        equipment: {
-          ...gameState.inventory.equipment,
-          shield: gameState.inventory.equipment.shield ?? null,
+        inventory: {
+          ...gameState.inventory,
+          items: {
+            ...gameState.inventory.items,
+            "wooden-shield": gameState.inventory.items["wooden-shield"] ?? 0,
+          },
+          equipment: {
+            ...gameState.inventory.equipment,
+            shield: gameState.inventory.equipment.shield ?? null,
+          },
         },
       },
-    },
-  };
+    };
+  }
+
+  if (migrated.version === 2) {
+    const gameState = migrated.gameState;
+    if (!gameState || typeof gameState !== "object" ||
+        !gameState.inventory || !gameState.inventory.items ||
+        !gameState.inventory.equipment) return null;
+
+    migrated = {
+      ...migrated,
+      version: SAVE_VERSION,
+      gameState: {
+        ...gameState,
+        inventory: {
+          ...gameState.inventory,
+          items: Object.fromEntries(
+            Object.keys(ITEM_DEFINITIONS).map((itemId) => [
+              itemId,
+              gameState.inventory.items[itemId] ?? 0,
+            ]),
+          ),
+          equipment: Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [
+            slot,
+            gameState.inventory.equipment[slot] ?? null,
+          ])),
+        },
+      },
+    };
+  }
+
+  return migrated.version === SAVE_VERSION ? migrated : null;
 }
 
 export function createSaveController({
