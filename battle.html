@@ -230,13 +230,6 @@
       </div>
       <div class="inventory-row">
         <div>
-          <span class="inventory-label">🪙 ゴールド</span>
-          <strong class="inventory-value" id="goldCount">0 G</strong>
-        </div>
-        <span class="inventory-label">宝箱の報酬で獲得</span>
-      </div>
-      <div class="inventory-row">
-        <div>
           <span class="inventory-label">⚔️ 武器</span>
           <strong class="inventory-value" id="weaponStatus">未装備</strong>
         </div>
@@ -340,7 +333,7 @@
 
     function renderStore(state) {
       const dungeonProgress = dungeon.getProgress();
-      $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目";
+      $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目 · 🪙 " + state.inventory.gold + "G";
       $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
@@ -359,7 +352,6 @@
       $("useLargePotionButton").disabled =
         !activeBattle(state) || largePotionCount <= 0 ||
         state.player.hp >= state.player.maxHp;
-      $("goldCount").textContent = state.inventory.gold + " G";
 
       const weaponId = state.inventory.equipment.weapon;
       const weapon = ITEM_DEFINITIONS[weaponId];
@@ -595,6 +587,7 @@
           );
         }
         render();
+        if (reward.claimed) {\n          const item = ITEM_DEFINITIONS[reward.itemId];\n          setStatus("宝箱を開けた！" + item.name + " ×" + reward.quantity + " と " + reward.gold + "G を獲得！", "good");\n        }
         return;
       }
       startGame();
