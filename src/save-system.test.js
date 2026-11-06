@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
+import { createGameStore, createInitialGameState, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createDungeonController } from "./dungeon.js";
 import { createWordBattleState, spawnFallingLetter, collectLetter, restoreWordBattleState } from "./word-battle.js";
 import { createSaveController, SAVE_STORAGE_KEY } from "./save-system.js";
@@ -156,4 +156,49 @@ test("保存データ削除は保存領域からデータを取り除く", () =>
   assert.equal(storage.getItem(SAVE_STORAGE_KEY) !== null, true);
   assert.equal(data.controller.clear().cleared, true);
   assert.equal(storage.getItem(SAVE_STORAGE_KEY), null);
+});
+
+
+test("STEP 9の旧セーブデータを盾対応の新形式へ移行できる", () => {
+  const storage = memoryStorage();
+  const oldState = structuredClone(createInitialGameState());
+  delete oldState.player.baseDefensePower;
+  delete oldState.player.defensePower;
+  delete oldState.inventory.items["wooden-shield"];
+  delete oldState.inventory.equipment.shield;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({
+    version: 1,
+    savedAt: "2026-11-06T00:00:00.000Z",
+    gameState: oldState,
+    dungeonState: {
+      floor: 1,
+      enemyIndex: 0,
+      started: false,
+      rewardClaimed: false,
+    },
+    extra: {
+      wordState: createWordBattleState(),
+      spawnElapsed: 0,
+    },
+  }));
+
+  const data = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  const result = data.controller.load();
+  assert.equal(result.loaded, true);
+  assert.equal(data.store.getState().player.defensePower, 0);
+  assert.equal(data.store.getState().inventory.items["wooden-shield"], 0);
+  assert.equal(data.store.getState().inventory.equipment.shield, null);
+  assert.equal(
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version,
+    1,
+    "ロードだけでは元データを上書きしない",
+  );
+  assert.equal(data.controller.save().saved, true);
+  assert.equal(
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version,
+    2,
+  );
 });
