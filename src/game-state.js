@@ -22,6 +22,7 @@ export const GAME_ACTION = Object.freeze({
   HEAL_PLAYER: "HEAL_PLAYER",
   USE_ITEM: "USE_ITEM",
   EQUIP_WEAPON: "EQUIP_WEAPON",
+  EQUIP_SHIELD: "EQUIP_SHIELD",
   ADD_ITEM: "ADD_ITEM",
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
@@ -94,7 +95,16 @@ function normalizeAmount(amount) {
  */
 function getEquippedWeaponBonus(inventory) {
   const weaponId = inventory?.equipment?.weapon;
-  return ITEM_DEFINITIONS[weaponId]?.attackBonus ?? 0;
+  return weaponId && Object.hasOwn(ITEM_DEFINITIONS, weaponId)
+    ? ITEM_DEFINITIONS[weaponId].attackBonus ?? 0
+    : 0;
+}
+
+function getEquippedShieldBonus(inventory) {
+  const shieldId = inventory?.equipment?.shield;
+  return shieldId && Object.hasOwn(ITEM_DEFINITIONS, shieldId)
+    ? ITEM_DEFINITIONS[shieldId].defenseBonus ?? 0
+    : 0;
 }
 
 function addPlayerExperience(player, amount, inventory) {
@@ -125,6 +135,7 @@ function addPlayerExperience(player, amount, inventory) {
     hp,
     baseAttackPower,
     attackPower: baseAttackPower + getEquippedWeaponBonus(inventory),
+    defensePower: (player.baseDefensePower ?? 0) + getEquippedShieldBonus(inventory),
   };
 }
 
@@ -149,6 +160,8 @@ export function createInitialGameState({
       attackPower: playerAttackPower,
       baseMaxHp: playerMaxHp,
       baseAttackPower: playerAttackPower,
+      baseDefensePower: 0,
+      defensePower: 0,
       startingAttackPower: playerAttackPower,
       level: 1,
       experience: 0,
@@ -329,6 +342,48 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.EQUIP_SHIELD: {
+      if (state.phase !== GAME_PHASE.BATTLE) return state;
+      const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
+        ? ITEM_DEFINITIONS[action.itemId]
+        : null;
+      if (!item || item.type !== "shield" || !isPositiveInteger(item.defenseBonus)) {
+        return state;
+      }
+
+      const quantity = state.inventory.items[action.itemId] ?? 0;
+      if (!isPositiveInteger(quantity)) return state;
+      if (state.inventory.equipment.shield === action.itemId) return state;
+
+      const previousShieldId = state.inventory.equipment.shield;
+      const previousShield = previousShieldId && Object.hasOwn(ITEM_DEFINITIONS, previousShieldId)
+        ? ITEM_DEFINITIONS[previousShieldId]
+        : null;
+      const nextItems = {
+        ...state.inventory.items,
+        [action.itemId]: quantity - 1,
+      };
+      if (previousShield?.type === "shield") {
+        nextItems[previousShieldId] = (nextItems[previousShieldId] ?? 0) + 1;
+      }
+
+      return {
+        ...state,
+        player: {
+          ...state.player,
+          defensePower: (state.player.baseDefensePower ?? 0) + item.defenseBonus,
+        },
+        inventory: {
+          ...state.inventory,
+          items: nextItems,
+          equipment: {
+            ...state.inventory.equipment,
+            shield: action.itemId,
+          },
+        },
+      };
+    }
+
     case GAME_ACTION.ADD_ITEM: {
       const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
         ? ITEM_DEFINITIONS[action.itemId]
@@ -431,8 +486,11 @@ export function isValidSavedGameState(saved) {
   const inv = saved.inventory;
   const items = inv.items;
   const weaponId = inv.equipment?.weapon ?? null;
+  const shieldId = inv.equipment?.shield ?? null;
   const weapon = weaponId === null ? null :
     (Object.hasOwn(ITEM_DEFINITIONS, weaponId) ? ITEM_DEFINITIONS[weaponId] : null);
+  const shield = shieldId === null ? null :
+    (Object.hasOwn(ITEM_DEFINITIONS, shieldId) ? ITEM_DEFINITIONS[shieldId] : null);
 
   if (
     !isPositiveInteger(p.level) ||
@@ -441,12 +499,16 @@ export function isValidSavedGameState(saved) {
     p.experience >= p.nextLevelXp ||
     !isPositiveInteger(p.baseMaxHp) ||
     !isPositiveInteger(p.baseAttackPower) ||
+    !isNonNegativeInteger(p.baseDefensePower) ||
     !isPositiveInteger(p.startingAttackPower) ||
     p.maxHp !== p.baseMaxHp + p.level - 1 ||
     !isNonNegativeInteger(p.hp) || p.hp > p.maxHp ||
     p.attackPower !== p.baseAttackPower + (weapon?.attackBonus ?? 0) ||
+    p.defensePower !== p.baseDefensePower + (shield?.defenseBonus ?? 0) ||
     !items || typeof items !== "object" || Array.isArray(items) ||
-    !inv.equipment || (weaponId !== null && (!weapon || weapon.type !== "weapon")) ||
+    !inv.equipment ||
+    (weaponId !== null && (!weapon || weapon.type !== "weapon")) ||
+    (shieldId !== null && (!shield || shield.type !== "shield")) ||
     !isNonNegativeInteger(inv.gold)
   ) return false;
 
@@ -502,6 +564,8 @@ function copySavedGameState(saved) {
       attackPower: saved.player.attackPower,
       baseMaxHp: saved.player.baseMaxHp,
       baseAttackPower: saved.player.baseAttackPower,
+      baseDefensePower: saved.player.baseDefensePower,
+      defensePower: saved.player.defensePower,
       startingAttackPower: saved.player.startingAttackPower,
       level: saved.player.level,
       experience: saved.player.experience,
@@ -519,7 +583,10 @@ function copySavedGameState(saved) {
       items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map(
         (key) => [key, saved.inventory.items[key]],
       )),
-      equipment: { weapon: saved.inventory.equipment.weapon ?? null },
+      equipment: {
+        weapon: saved.inventory.equipment.weapon ?? null,
+        shield: saved.inventory.equipment.shield ?? null,
+      },
       gold: saved.inventory.gold,
     },
     battle: {
