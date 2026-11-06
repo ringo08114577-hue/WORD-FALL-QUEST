@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 8</title>
+  <title>WORD FALL QUEST | Step 9</title>
   <style>
     :root {
       color-scheme: dark;
@@ -201,7 +201,7 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 8 — ゴールドを使って冒険の準備を整えよう！</p>
+    <p class="subtitle">STEP 9 — 冒険の進行を保存して、いつでも続きから遊ぼう！</p>
 
     <section class="panel">
       <div class="panel-title">
@@ -304,7 +304,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 8 · SHOP & ECONOMY</p>
+    <p class="footer">WORD FALL QUEST · STEP 9 · SAVE & LOAD</p>
   </main>
 
   <script type="module">
@@ -659,6 +659,7 @@
       ) {
         const reward = dungeon.claimFloorReward();
         render();
+        saveProgress();
         if (reward.claimed) {
           const item = ITEM_DEFINITIONS[reward.itemId];
           setStatus(
