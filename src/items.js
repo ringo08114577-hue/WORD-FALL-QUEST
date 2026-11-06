@@ -6,6 +6,7 @@
 export const ITEM_SHOP_PRICES = Object.freeze({
   "small-potion": 15,
   "large-potion": 30,
+  "wooden-shield": 30,
 });
 
 export const ITEM_DEFINITIONS = Object.freeze({
@@ -29,6 +30,12 @@ export const ITEM_DEFINITIONS = Object.freeze({
     type: "weapon",
     attackBonus: 1,
   }),
+  "wooden-shield": Object.freeze({
+    id: "wooden-shield",
+    name: "木の盾",
+    type: "shield",
+    defenseBonus: 1,
+  }),
 });
 
 export function createInitialInventory() {
@@ -37,9 +44,11 @@ export function createInitialInventory() {
       "small-potion": 2,
       "large-potion": 0,
       "wooden-sword": 1,
+      "wooden-shield": 0,
     },
     equipment: {
       weapon: null,
+      shield: null,
     },
   };
 }
