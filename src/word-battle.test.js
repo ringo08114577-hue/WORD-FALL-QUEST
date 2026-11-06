@@ -15,6 +15,8 @@ import {
   collectLetter,
   advanceFallingLetters,
   advanceToNextChallenge,
+  isValidSavedWordBattleState,
+  restoreWordBattleState,
 } from "./word-battle.js";
 
 function addLetter(state, { id = 1, value, lane = state.playerLane, y = 0, speed = 100 }) {
@@ -239,9 +241,7 @@ test("乱数関数がNaNや無限大を返した場合は拒否する", () => {
 });
 
 
-test("セーブした英単語進行を検証して正しく復元できる", async () => {
-  const { isValidSavedWordBattleState, restoreWordBattleState } =
-    await import("./word-battle.js");
+test("セーブした英単語進行を検証して正しく復元できる", () => {
   const state = createWordBattleState();
   assert.equal(isValidSavedWordBattleState(state), true);
   assert.deepEqual(restoreWordBattleState(state), state);
