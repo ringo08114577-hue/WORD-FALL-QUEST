@@ -198,3 +198,22 @@ test("盾は敵の反撃ダメージを1減らすが、最低1ダメージは受
   assert.equal(store.getState().player.hp, 2);
   assert.equal(store.getState().player.defensePower, 1);
 });
+
+
+test("防御力が敵の攻撃力以上でも最低1ダメージは受ける", () => {
+  const store = startBattle({
+    enemy: { ...createEnemy("slime"), attackPower: 1 },
+  });
+  store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
+  store.dispatch({
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "wooden-shield",
+  });
+  const result = createCombatController(store).handle({
+    eventId: "shield-minimum-damage",
+    type: "wrong",
+    letter: "Z",
+  });
+  assert.equal(result.damage, 1);
+  assert.equal(store.getState().player.hp, 2);
+});
