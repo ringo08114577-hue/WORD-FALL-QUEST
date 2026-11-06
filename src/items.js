@@ -3,6 +3,11 @@
  *
  * Keep item effects and equipment bonuses in data instead of combat code.
  */
+export const ITEM_SHOP_PRICES = Object.freeze({
+  "small-potion": 15,
+  "large-potion": 30,
+});
+
 export const ITEM_DEFINITIONS = Object.freeze({
   "small-potion": Object.freeze({
     id: "small-potion",
