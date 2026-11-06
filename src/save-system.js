@@ -38,14 +38,22 @@ export function createSaveController({
         const target = getStorage();
         if (!target) return { saved: false, reason: "storage-unavailable" };
         const extra = getExtraData();
+        const gameState = store.getState();
+        const dungeonState = dungeon.getSaveData();
+        if (
+          !store.isValidState(gameState) ||
+          !dungeon.isValidSaveData(dungeonState, gameState)
+        ) {
+          return { saved: false, reason: "invalid-game-state" };
+        }
         if (!validateExtraData(extra)) {
           return { saved: false, reason: "invalid-extra-data" };
         }
         const snapshot = {
           version: SAVE_VERSION,
           savedAt: new Date().toISOString(),
-          gameState: store.getState(),
-          dungeonState: dungeon.getSaveData(),
+          gameState,
+          dungeonState,
           extra,
         };
         target.setItem(SAVE_STORAGE_KEY, JSON.stringify(snapshot));
