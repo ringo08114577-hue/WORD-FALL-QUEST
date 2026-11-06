@@ -40,7 +40,12 @@ export function resolveCombatEvent(gameState, event) {
   }
 
   if (event.type === COMBAT_EVENT.WRONG) {
-    const amount = positivePower(gameState.enemy.attackPower);
+    const enemyPower = positivePower(gameState.enemy.attackPower);
+    const defensePower = Number.isSafeInteger(gameState.player?.defensePower) &&
+      gameState.player.defensePower >= 0
+      ? gameState.player.defensePower
+      : 0;
+    const amount = Math.max(1, enemyPower - defensePower);
     return {
       ignored: false,
       action: { type: GAME_ACTION.DAMAGE_PLAYER, amount },
