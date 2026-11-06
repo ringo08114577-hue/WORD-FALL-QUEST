@@ -174,6 +174,8 @@ test("初期プレイヤーはレベル1で、次のレベルまで10EXP", () =>
   assert.equal(state.player.nextLevelXp, 10);
   assert.equal(state.player.maxHp, 3);
   assert.equal(state.player.attackPower, 1);
+  assert.equal(state.player.defensePower, 0);
+  assert.equal(state.player.baseDefensePower, 0);
   assert.equal(state.stats.totalExperienceEarned, 0);
 });
 
@@ -278,8 +280,8 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
 test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", () => {
   const state = createInitialGameState();
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1 },
-    equipment: { weapon: null },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0 },
+    equipment: { weapon: null, shield: null },
     gold: 0,
   });
 });
@@ -370,8 +372,8 @@ test("アイテムはバトル中以外には使えず、敗北時のリセッ�
   assert.equal(state.player.maxHp, 4);
   assert.equal(state.player.attackPower, 2);
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1 },
-    equipment: { weapon: null },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0 },
+    equipment: { weapon: null, shield: null },
     gold: 0,
   });
 });
@@ -470,4 +472,56 @@ test("ショップ価格はゲーム状態側でも固定され、不正な商�
     quantity: 1,
   });
   assert.equal(invalidKey, state);
+});
+
+
+test("木の盾を装備すると防御力が上がり、装備状態と所持数が更新される", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "wooden-shield",
+    quantity: 1,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "wooden-shield",
+  });
+
+  assert.equal(state.player.baseDefensePower, 0);
+  assert.equal(state.player.defensePower, 1);
+  assert.equal(state.inventory.items["wooden-shield"], 0);
+  assert.equal(state.inventory.equipment.shield, "wooden-shield");
+
+  const duplicate = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "wooden-shield",
+  });
+  assert.equal(duplicate, state);
+
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
+  assert.equal(state.phase, GAME_PHASE.VICTORY);
+  state = gameReducer(state, { type: GAME_ACTION.RESET_GAME });
+  assert.equal(state.player.defensePower, 0);
+  assert.equal(state.inventory.equipment.shield, null);
+});
+
+test("所持していない盾や防具以外は装備できない", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+  const noShield = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "wooden-shield",
+  });
+  const potionAsShield = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "small-potion",
+  });
+  assert.equal(noShield, state);
+  assert.equal(potionAsShield, state);
 });
