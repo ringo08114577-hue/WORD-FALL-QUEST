@@ -1,0 +1,102 @@
+/**
+ * WORD FALL QUEST - Local save system
+ * Versioned, validated snapshots of game, dungeon, and optional UI progress.
+ */
+export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
+export const SAVE_VERSION = 1;
+
+export function createSaveController({
+  store,
+  dungeon,
+  storage,
+  getExtraData = () => ({}),
+  validateExtraData = () => true,
+  restoreExtraData = () => {},
+}) {
+  if (!store || typeof store.getState !== "function" ||
+      typeof store.isValidState !== "function" ||
+      typeof store.restoreState !== "function") {
+    throw new TypeError("save controllerには復元に対応したgame storeが必要です。");
+  }
+  if (!dungeon || typeof dungeon.getSaveData !== "function" ||
+      typeof dungeon.isValidSaveData !== "function" ||
+      typeof dungeon.restoreSaveData !== "function") {
+    throw new TypeError("save controllerには保存に対応したdungeon controllerが必要です。");
+  }
+
+  function getStorage() {
+    try {
+      return storage ?? globalThis.localStorage ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  return {
+    save() {
+      try {
+        const target = getStorage();
+        if (!target) return { saved: false, reason: "storage-unavailable" };
+        const extra = getExtraData();
+        if (!validateExtraData(extra)) {
+          return { saved: false, reason: "invalid-extra-data" };
+        }
+        const snapshot = {
+          version: SAVE_VERSION,
+          savedAt: new Date().toISOString(),
+          gameState: store.getState(),
+          dungeonState: dungeon.getSaveData(),
+          extra,
+        };
+        target.setItem(SAVE_STORAGE_KEY, JSON.stringify(snapshot));
+        return { saved: true, savedAt: snapshot.savedAt };
+      } catch {
+        return { saved: false, reason: "storage-write-failed" };
+      }
+    },
+
+    load() {
+      try {
+        const target = getStorage();
+        if (!target) return { loaded: false, reason: "storage-unavailable" };
+        const raw = target.getItem(SAVE_STORAGE_KEY);
+        if (!raw) return { loaded: false, reason: "save-not-found" };
+        const snapshot = JSON.parse(raw);
+        if (
+          !snapshot || snapshot.version !== SAVE_VERSION ||
+          !store.isValidState(snapshot.gameState) ||
+          !dungeon.isValidSaveData(snapshot.dungeonState, snapshot.gameState) ||
+          !validateExtraData(snapshot.extra)
+        ) {
+          return { loaded: false, reason: "invalid-save" };
+        }
+
+        if (!store.restoreState(snapshot.gameState)) {
+          return { loaded: false, reason: "invalid-save" };
+        }
+        if (!dungeon.restoreSaveData(snapshot.dungeonState)) {
+          return { loaded: false, reason: "invalid-save" };
+        }
+        restoreExtraData(snapshot.extra);
+        return {
+          loaded: true,
+          savedAt: snapshot.savedAt ?? null,
+          extra: snapshot.extra,
+        };
+      } catch {
+        return { loaded: false, reason: "storage-read-failed" };
+      }
+    },
+
+    clear() {
+      try {
+        const target = getStorage();
+        if (!target) return { cleared: false, reason: "storage-unavailable" };
+        target.removeItem(SAVE_STORAGE_KEY);
+        return { cleared: true };
+      } catch {
+        return { cleared: false, reason: "storage-clear-failed" };
+      }
+    },
+  };
+}
