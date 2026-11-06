@@ -37,7 +37,7 @@ function randomUnit(random) {
     throw new TypeError("randomには0以上1未満の乱数関数を指定してください。");
   }
   const value = random();
-  if (typeof value !== "number" || value < 0 || value >= 1) {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value >= 1) {
     throw new RangeError("randomは0以上1未満の数値を返してください。");
   }
   return value;
