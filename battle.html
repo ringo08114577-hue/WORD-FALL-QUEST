@@ -587,7 +587,14 @@
           );
         }
         render();
-
+        if (reward.claimed) {
+          const item = ITEM_DEFINITIONS[reward.itemId];
+          setStatus(
+            "宝箱を開けた！" + item.name + " ×" + reward.quantity +
+            " と " + reward.gold + "G を獲得！",
+            "good",
+          );
+        }
         return;
       }
       startGame();
