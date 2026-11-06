@@ -224,3 +224,16 @@ test("取得イベントには同じ文字を二重処理しないためのIDが
   });
   assert.equal(result.events[0].eventId, "challenge-0-letter-77");
 });
+
+
+test("乱数関数がNaNや無限大を返した場合は拒否する", () => {
+  const state = createWordBattleState();
+  assert.throws(
+    () => spawnFallingLetter(state, { random: () => Number.NaN }),
+    RangeError,
+  );
+  assert.throws(
+    () => spawnFallingLetter(state, { random: () => Number.POSITIVE_INFINITY }),
+    RangeError,
+  );
+});
