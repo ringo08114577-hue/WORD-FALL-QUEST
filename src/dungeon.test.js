@@ -69,6 +69,7 @@ test("フロアを進むと敵が強くなり、プレイヤーの成長と所�
   const hpBefore = store.getState().player.hp;
   const levelBefore = store.getState().player.level;
   const potionsBefore = store.getState().inventory.items["small-potion"];
+  dungeon.claimFloorReward();
   dungeon.advance();
 
   assert.equal(store.getState().enemy.maxHp, 4);
