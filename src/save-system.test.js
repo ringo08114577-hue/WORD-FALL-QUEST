@@ -202,3 +202,29 @@ test("STEP 9の旧セーブデータを盾対応の新形式へ移行できる",
     2,
   );
 });
+
+
+test("装備中の盾と防御力をセーブ・ロードで引き継ぐ", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
+  first.store.dispatch({
+    type: GAME_ACTION.EQUIP_SHIELD,
+    itemId: "wooden-shield",
+  });
+  assert.equal(first.store.getState().player.defensePower, 1);
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.store.getState().player.defensePower, 1);
+  assert.equal(second.store.getState().inventory.equipment.shield, "wooden-shield");
+  assert.equal(second.store.getState().inventory.items["wooden-shield"], 0);
+});
