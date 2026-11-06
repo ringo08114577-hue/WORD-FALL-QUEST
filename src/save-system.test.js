@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createDungeonController } from "./dungeon.js";
-import { createWordBattleState, restoreWordBattleState } from "./word-battle.js";
+import { createWordBattleState, spawnFallingLetter, collectLetter, restoreWordBattleState } from "./word-battle.js";
 import { createSaveController, SAVE_STORAGE_KEY } from "./save-system.js";
 
 function memoryStorage() {
@@ -40,7 +40,9 @@ function winEnemy(store) {
 
 test("戦闘中のゲーム・ダンジョン・お題進行を保存して復元できる", () => {
   const storage = memoryStorage();
-  const originalWordState = createWordBattleState();
+  const firstLetter = spawnFallingLetter(createWordBattleState(), { random: () => 0 });
+  const afterFirstLetter = collectLetter(firstLetter, 1).state;
+  const originalWordState = spawnFallingLetter(afterFirstLetter, { random: () => 0 });
   const extra = { wordState: originalWordState, spawnElapsed: 360 };
   const first = setup(storage, extra);
   first.dungeon.start();
@@ -59,6 +61,12 @@ test("戦闘中のゲーム・ダンジョン・お題進行を保存して復�
   assert.equal(second.store.getState().enemy.id, "slime");
   assert.deepEqual(second.dungeon.getProgress(), first.dungeon.getProgress());
   assert.equal(second.getRestoredExtra().spawnElapsed, 360);
+  assert.equal(second.getRestoredExtra().wordState.progressIndex, 1);
+  assert.equal(second.getRestoredExtra().wordState.letters[0].value, "P");
+  assert.deepEqual(
+    restoreWordBattleState(second.getRestoredExtra().wordState),
+    second.getRestoredExtra().wordState,
+  );
 });
 
 test("フロアクリア後・報酬受取済みの状態も復元しショップ進行を保持する", () => {
@@ -134,4 +142,18 @@ test("ストレージ書き込みエラーをゲーム動作に波及させな�
   data.dungeon.start();
   assert.equal(data.controller.save().reason, "storage-write-failed");
   assert.equal(data.store.getState().phase, GAME_PHASE.BATTLE);
+});
+
+
+test("保存データ削除は保存領域からデータを取り除く", () => {
+  const storage = memoryStorage();
+  const data = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  data.dungeon.start();
+  assert.equal(data.controller.save().saved, true);
+  assert.equal(storage.getItem(SAVE_STORAGE_KEY) !== null, true);
+  assert.equal(data.controller.clear().cleared, true);
+  assert.equal(storage.getItem(SAVE_STORAGE_KEY), null);
 });
