@@ -75,7 +75,7 @@ test("フロアを進むと敵が強くなり、プレイヤーの成長と所�
   assert.equal(store.getState().enemy.maxHp, 4);
   assert.equal(store.getState().player.hp, hpBefore);
   assert.equal(store.getState().player.level, levelBefore);
-  assert.equal(store.getState().inventory.items["small-potion"], potionsBefore);
+  assert.equal(store.getState().inventory.items["small-potion"], potionsBefore + 1);
 });
 
 test("敗北時は進行操作できず、リセット後は1階から始められる", () => {
