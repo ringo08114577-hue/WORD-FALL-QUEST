@@ -3,7 +3,42 @@
  * Versioned, validated snapshots of game, dungeon, and optional UI progress.
  */
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
+
+function migrateSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
+  if (snapshot.version === SAVE_VERSION) return snapshot;
+  if (snapshot.version !== 1) return null;
+
+  const gameState = snapshot.gameState;
+  if (!gameState || typeof gameState !== "object" ||
+      !gameState.player || !gameState.inventory ||
+      !gameState.inventory.items || !gameState.inventory.equipment) return null;
+
+  return {
+    ...snapshot,
+    version: SAVE_VERSION,
+    gameState: {
+      ...gameState,
+      player: {
+        ...gameState.player,
+        baseDefensePower: gameState.player.baseDefensePower ?? 0,
+        defensePower: gameState.player.defensePower ?? 0,
+      },
+      inventory: {
+        ...gameState.inventory,
+        items: {
+          ...gameState.inventory.items,
+          "wooden-shield": gameState.inventory.items["wooden-shield"] ?? 0,
+        },
+        equipment: {
+          ...gameState.inventory.equipment,
+          shield: gameState.inventory.equipment.shield ?? null,
+        },
+      },
+    },
+  };
+}
 
 export function createSaveController({
   store,
@@ -69,9 +104,9 @@ export function createSaveController({
         if (!target) return { loaded: false, reason: "storage-unavailable" };
         const raw = target.getItem(SAVE_STORAGE_KEY);
         if (!raw) return { loaded: false, reason: "save-not-found" };
-        const snapshot = JSON.parse(raw);
+        const snapshot = migrateSnapshot(JSON.parse(raw));
         if (
-          !snapshot || snapshot.version !== SAVE_VERSION ||
+          !snapshot ||
           !store.isValidState(snapshot.gameState) ||
           !dungeon.isValidSaveData(snapshot.dungeonState, snapshot.gameState) ||
           !validateExtraData(snapshot.extra)
