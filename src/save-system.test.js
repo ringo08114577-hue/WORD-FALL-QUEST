@@ -164,8 +164,12 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   const oldState = structuredClone(createInitialGameState());
   delete oldState.player.baseDefensePower;
   delete oldState.player.defensePower;
-  delete oldState.inventory.items["wooden-shield"];
+  for (const itemId of ["wooden-shield", "iron-sword", "leather-armor", "copper-charm"]) {
+    delete oldState.inventory.items[itemId];
+  }
   delete oldState.inventory.equipment.shield;
+  delete oldState.inventory.equipment.armor;
+  delete oldState.inventory.equipment.accessory;
   storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({
     version: 1,
     savedAt: "2026-11-06T00:00:00.000Z",
