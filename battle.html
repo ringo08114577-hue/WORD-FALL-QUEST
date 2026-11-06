@@ -305,7 +305,7 @@
         <button class="move-button" id="leftButton" aria-label="左へ移動" disabled>◀ 左へ</button>
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
-      <p class="howto">操作：キーボードの ← → / A D、または左右ボタン。必要な文字を順番どおりに拾うと正解。違う文字を拾うとHPが1減るよ。</p>
+      <p class="howto">操作：← → / A D、または左右ボタンで移動。必要な文字を順番どおりに拾おう。違う文字を拾うと反撃を受けるよ。盾の防御力はダメージを減らす（最低1）。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -444,7 +444,7 @@
       const woodenShieldCount = state.inventory.items["wooden-shield"] ?? 0;
       const woodenShieldEquipped = shieldId === "wooden-shield";
       $("shieldStatus").textContent = shield
-        ? shield.name + "（防御 +" + shield.defenseBonus + "）"
+        ? shield.name + "（防御 +" + shield.defenseBonus + "） · 予備 ×" + woodenShieldCount
         : "未装備 · DEF " + state.player.defensePower;
       $("equipShieldButton").disabled =
         !activeBattle(state) || woodenShieldEquipped || woodenShieldCount <= 0;
