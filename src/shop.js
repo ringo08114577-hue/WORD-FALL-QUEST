@@ -3,12 +3,16 @@
  * Purchases are available only after the floor reward has been claimed.
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
-import { ITEM_DEFINITIONS } from "./items.js";
+import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES } from "./items.js";
 
-export const SHOP_CATALOG = Object.freeze({
-  "small-potion": Object.freeze({ itemId: "small-potion", cost: 15 }),
-  "large-potion": Object.freeze({ itemId: "large-potion", cost: 30 }),
-});
+export const SHOP_CATALOG = Object.freeze(
+  Object.fromEntries(
+    Object.entries(ITEM_SHOP_PRICES).map(([itemId, cost]) => [
+      itemId,
+      Object.freeze({ itemId, cost }),
+    ]),
+  ),
+);
 
 export function createShopController(store, dungeon) {
   if (!store || typeof store.getState !== "function" || typeof store.dispatch !== "function") {
@@ -20,8 +24,8 @@ export function createShopController(store, dungeon) {
 
   return {
     buy(itemId) {
-      const offer = SHOP_CATALOG[itemId];
-      if (!offer || !ITEM_DEFINITIONS[itemId]) {
+      const offer = Object.hasOwn(SHOP_CATALOG, itemId) ? SHOP_CATALOG[itemId] : null;
+      if (!offer || !Object.hasOwn(ITEM_DEFINITIONS, itemId)) {
         return { purchased: false, reason: "unknown-item" };
       }
       const state = store.getState();
