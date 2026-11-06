@@ -278,8 +278,9 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
 test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", () => {
   const state = createInitialGameState();
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "wooden-sword": 1 },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1 },
     equipment: { weapon: null },
+    gold: 0,
   });
 });
 
@@ -369,8 +370,9 @@ test("アイテムはバトル中以外には使えず、敗北時のリセッ�
   assert.equal(state.player.maxHp, 4);
   assert.equal(state.player.attackPower, 2);
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "wooden-sword": 1 },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1 },
     equipment: { weapon: null },
+    gold: 0,
   });
 });
 
@@ -390,4 +392,48 @@ test("未登録アイテムや装備できない種類は無視される", () =>
   });
   assert.equal(unknownItem, state);
   assert.equal(invalidWeapon, state);
+});
+
+
+test("宝箱報酬で登録済みアイテムとゴールドを追加できる", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "large-potion",
+    quantity: 2,
+  });
+  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 15 });
+  assert.equal(state.inventory.items["large-potion"], 2);
+  assert.equal(state.inventory.gold, 15);
+
+  const invalidItem = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "unknown",
+    quantity: 1,
+  });
+  const invalidQuantity = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "small-potion",
+    quantity: 0,
+  });
+  const invalidGold = gameReducer(state, {
+    type: GAME_ACTION.ADD_GOLD,
+    amount: -1,
+  });
+  assert.equal(invalidItem, state);
+  assert.equal(invalidQuantity, state);
+  assert.equal(invalidGold, state);
+});
+
+test("大きな回復薬は定義された回復量だけHPを回復する", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+  state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "large-potion" });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 3 });
+  state = gameReducer(state, { type: GAME_ACTION.USE_ITEM, itemId: "large-potion" });
+  assert.equal(state.player.hp, 3);
+  assert.equal(state.inventory.items["large-potion"], 0);
 });
