@@ -159,7 +159,7 @@ test("保存データ削除は保存領域からデータを取り除く", () =>
 });
 
 
-test("STEP 9の旧セーブデータを盾対応の新形式へ移行できる", () => {
+test("旧セーブデータを拡張装備対応の新形式へ移行できる", () => {
   const storage = memoryStorage();
   const oldState = structuredClone(createInitialGameState());
   delete oldState.player.baseDefensePower;
@@ -199,7 +199,7 @@ test("STEP 9の旧セーブデータを盾対応の新形式へ移行できる",
   assert.equal(data.controller.save().saved, true);
   assert.equal(
     JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version,
-    2,
+    3,
   );
 });
 
@@ -227,4 +227,69 @@ test("装備中の盾と防御力をセーブ・ロードで引き継ぐ", () =>
   assert.equal(second.store.getState().player.defensePower, 1);
   assert.equal(second.store.getState().inventory.equipment.shield, "wooden-shield");
   assert.equal(second.store.getState().inventory.items["wooden-shield"], 0);
+});
+
+
+test("STEP 10形式のセーブデータを追加装備スロットへ移行できる", () => {
+  const storage = memoryStorage();
+  const oldState = structuredClone(createInitialGameState());
+  for (const itemId of ["iron-sword", "leather-armor", "copper-charm"]) {
+    delete oldState.inventory.items[itemId];
+  }
+  delete oldState.inventory.equipment.armor;
+  delete oldState.inventory.equipment.accessory;
+
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({
+    version: 2,
+    savedAt: "2026-11-06T00:00:00.000Z",
+    gameState: oldState,
+    dungeonState: {
+      floor: 1,
+      enemyIndex: 0,
+      started: false,
+      rewardClaimed: false,
+    },
+    extra: {
+      wordState: createWordBattleState(),
+      spawnElapsed: 0,
+    },
+  }));
+
+  const data = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  const result = data.controller.load();
+  assert.equal(result.loaded, true);
+  assert.equal(data.store.getState().inventory.items["iron-sword"], 0);
+  assert.equal(data.store.getState().inventory.items["leather-armor"], 0);
+  assert.equal(data.store.getState().inventory.items["copper-charm"], 0);
+  assert.equal(data.store.getState().inventory.equipment.armor, null);
+  assert.equal(data.store.getState().inventory.equipment.accessory, null);
+});
+
+test("鎧とアクセサリーの装備状態もセーブ・ロードで保持する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "leather-armor" });
+  first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "copper-charm" });
+  first.store.dispatch({ type: GAME_ACTION.EQUIP_ITEM, itemId: "leather-armor" });
+  first.store.dispatch({ type: GAME_ACTION.EQUIP_ITEM, itemId: "copper-charm" });
+  assert.equal(first.store.getState().player.attackPower, 2);
+  assert.equal(first.store.getState().player.defensePower, 2);
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.store.getState().inventory.equipment.armor, "leather-armor");
+  assert.equal(second.store.getState().inventory.equipment.accessory, "copper-charm");
+  assert.equal(second.store.getState().player.attackPower, 2);
+  assert.equal(second.store.getState().player.defensePower, 2);
 });
