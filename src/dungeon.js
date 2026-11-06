@@ -1,0 +1,75 @@
+/**
+ * WORD FALL QUEST - Dungeon progression
+ *
+ * A floor contains a fixed sequence of three encounters. The controller
+ * coordinates battles while game-state remains the owner of player resources.
+ */
+import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
+import { createEnemy } from "./enemies.js";
+
+const FLOOR_ENEMIES = Object.freeze(["slime", "bat", "goblin"]);
+
+export function createDungeonController(store) {
+  if (!store || typeof store.getState !== "function" || typeof store.dispatch !== "function") {
+    throw new TypeError("dungeon controllerにはgame storeが必要です。");
+  }
+
+  let floor = 1;
+  let enemyIndex = 0;
+  let started = false;
+
+  function startCurrentEnemy() {
+    const state = store.getState();
+    if (![GAME_PHASE.TITLE, GAME_PHASE.VICTORY].includes(state.phase)) {
+      return { started: false, reason: "invalid-phase" };
+    }
+    const enemyId = FLOOR_ENEMIES[enemyIndex];
+    store.dispatch({
+      type: GAME_ACTION.START_BATTLE,
+      enemy: createEnemy(enemyId, { floor }),
+    });
+    started = true;
+    return { started: true, floor, enemyNumber: enemyIndex + 1, enemy: store.getState().enemy };
+  }
+
+  return {
+    start() {
+      if (started) return { started: false, reason: "already-started" };
+      floor = 1;
+      enemyIndex = 0;
+      return startCurrentEnemy();
+    },
+
+    advance() {
+      if (!started || store.getState().phase !== GAME_PHASE.VICTORY) {
+        return { started: false, reason: "battle-not-won" };
+      }
+      const floorCleared = enemyIndex === FLOOR_ENEMIES.length - 1;
+      if (floorCleared) {
+        floor += 1;
+        enemyIndex = 0;
+      } else {
+        enemyIndex += 1;
+      }
+      return { ...startCurrentEnemy(), floorCleared, floor, enemyNumber: enemyIndex + 1 };
+    },
+
+    reset() {
+      floor = 1;
+      enemyIndex = 0;
+      started = false;
+    },
+
+    getProgress() {
+      return {
+        floor,
+        enemyNumber: enemyIndex + 1,
+        enemiesPerFloor: FLOOR_ENEMIES.length,
+        floorCleared: started &&
+          store.getState().phase === GAME_PHASE.VICTORY &&
+          enemyIndex === FLOOR_ENEMIES.length - 1,
+        started,
+      };
+    },
+  };
+}
