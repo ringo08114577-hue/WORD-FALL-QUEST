@@ -52,7 +52,7 @@ test("同じフロアの敵を順番に倒し、3体目の勝利でフロアク�
   assert.equal(store.getState().inventory.gold, 15);
   assert.equal(dungeon.advance().floorCleared, true);
   assert.equal(dungeon.getProgress().floor, 2);
-  assert.equal(store.getState().enemy.id, "slime");
+  assert.equal(store.getState().enemy.id, "bat");
   assert.equal(store.getState().phase, GAME_PHASE.BATTLE);
 });
 
@@ -128,4 +128,58 @@ test("フロア未クリア時や敗北時は宝箱報酬を受け取れない",
   store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
   assert.equal(dungeon.claimFloorReward().reason, "floor-not-cleared");
   assert.equal(store.getState().inventory.gold, 0);
+});
+
+
+test("階層ごとに敵編成が変わり、3階の最後にボスが登場する", () => {
+  const store = createGameStore();
+  const dungeon = createDungeonController(store);
+  dungeon.start();
+  for (let i = 0; i < 3; i++) {
+    winCurrentEnemy(store);
+    if (i < 2) dungeon.advance();
+  }
+  dungeon.claimFloorReward();
+  dungeon.advance();
+  assert.equal(store.getState().enemy.id, "bat");
+
+  for (let i = 0; i < 3; i++) {
+    winCurrentEnemy(store);
+    if (i < 2) dungeon.advance();
+  }
+  dungeon.claimFloorReward();
+  dungeon.advance();
+  assert.equal(store.getState().enemy.id, "goblin");
+  winCurrentEnemy(store);
+  dungeon.advance();
+  assert.equal(store.getState().enemy.id, "moss-golem");
+  winCurrentEnemy(store);
+  dungeon.advance();
+  assert.equal(store.getState().enemy.id, "forest-dragon");
+  assert.equal(store.getState().enemy.isBoss, true);
+});
+
+test("旧セーブの進行中フロアは旧編成で継続し、次の階から新編成へ切り替わる", () => {
+  const store = createGameStore();
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: createEnemy("slime", { floor: 2 }),
+  });
+  const dungeon = createDungeonController(store);
+  assert.equal(dungeon.restoreSaveData({
+    floor: 2, enemyIndex: 0, started: true, rewardClaimed: false,
+  }), true);
+
+  for (let i = 0; i < 3; i++) {
+    winCurrentEnemy(store);
+    if (i < 2) {
+      const next = dungeon.advance();
+      assert.equal(next.enemy.id, ["bat", "goblin"][i]);
+    }
+  }
+  dungeon.claimFloorReward();
+  dungeon.advance();
+  assert.equal(dungeon.getProgress().floor, 3);
+  assert.equal(store.getState().enemy.id, "goblin");
+  assert.equal(dungeon.getSaveData().encounterSetVersion, 2);
 });

@@ -5,7 +5,7 @@
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -13,7 +13,7 @@ function isRecord(value) {
 
 function migrateSnapshot(snapshot) {
   if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) return null;
-  if (![1, 2, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (![1, 2, 3, SAVE_VERSION].includes(snapshot.version)) return null;
 
   let migrated = snapshot;
   if (migrated.version === 1) {
@@ -55,7 +55,7 @@ function migrateSnapshot(snapshot) {
 
     migrated = {
       ...migrated,
-      version: SAVE_VERSION,
+      version: 3,
       gameState: {
         ...gameState,
         inventory: {
@@ -75,7 +75,18 @@ function migrateSnapshot(snapshot) {
     };
   }
 
-  return migrated.version === SAVE_VERSION ? migrated : null;
+  if(migrated.version===3){
+    const gameState=migrated.gameState,dungeonState=migrated.dungeonState;
+    if(!isRecord(gameState)||!isRecord(dungeonState))return null;
+    migrated={...migrated,version:SAVE_VERSION,
+      gameState:{...gameState,enemy:isRecord(gameState.enemy)?{
+        ...gameState.enemy,
+        abilities:Array.isArray(gameState.enemy.abilities)?gameState.enemy.abilities:[],
+        isBoss:gameState.enemy.isBoss===true,
+      }:gameState.enemy??null},
+      dungeonState:{...dungeonState,encounterSetVersion:dungeonState.encounterSetVersion??1}};
+  }
+  return migrated.version===SAVE_VERSION?migrated:null;
 }
 
 export function createSaveController({

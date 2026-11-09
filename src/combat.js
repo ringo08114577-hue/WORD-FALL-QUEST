@@ -5,6 +5,7 @@
  * those events into HP actions, keeping game-state and word logic separate.
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
+import { ENEMY_ABILITY_DEFINITIONS, getEnemyAbilityEffects } from "./enemies.js";
 
 export const COMBAT_EVENT = Object.freeze({
   CORRECT: "correct",
@@ -41,39 +42,28 @@ export function resolveCombatEvent(gameState, event) {
 
   if (event.type === COMBAT_EVENT.WRONG) {
     const enemyPower = positivePower(gameState.enemy.attackPower);
-    const defensePower = Number.isSafeInteger(gameState.player?.defensePower) &&
-      gameState.player.defensePower >= 0
-      ? gameState.player.defensePower
-      : 0;
-    const amount = Math.max(1, enemyPower - defensePower);
+    const defensePower = Number.isSafeInteger(gameState.player?.defensePower) && gameState.player.defensePower >= 0
+      ? gameState.player.defensePower : 0;
+    const effects = getEnemyAbilityEffects(gameState.enemy);
+    const effectiveDefense = Math.max(0, defensePower - effects.defensePiercing);
+    const amount = Math.max(1, enemyPower + effects.counterAttackBonus - effectiveDefense);
+    const counterAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.counterAttackBonus>0);
+    const abilityNote = counterAbility ? "（"+counterAbility.name+"）" : "";
+    const piercingNote = effects.defensePiercing>0 ? " 防御力を一部無視！" : "";
     return {
-      ignored: false,
-      action: { type: GAME_ACTION.DAMAGE_PLAYER, amount },
-      damageTarget: "player",
-      damage: amount,
-      message:
-        gameState.enemy.name +
-        "の反撃！「" +
-        (event.letter || "?") +
-        "」は違う文字。HP -" +
-        amount,
-      tone: "bad",
+      ignored:false, action:{type:GAME_ACTION.DAMAGE_PLAYER,amount}, damageTarget:"player", damage:amount,
+      message:gameState.enemy.name+"の反撃"+abilityNote+"！「"+(event.letter||"?")+"」は違う文字。HP -"+amount+"。"+piercingNote,
+      tone:"bad",
     };
   }
-
-  const amount = positivePower(gameState.player.attackPower);
+  const effects = getEnemyAbilityEffects(gameState.enemy);
+  const amount = Math.max(1,positivePower(gameState.player.attackPower)-effects.damageReduction);
+  const guardAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.damageReduction>0);
+  const abilityNote = guardAbility ? "（"+guardAbility.name+"でダメージ軽減）" : "";
   return {
-    ignored: false,
-    action: { type: GAME_ACTION.DAMAGE_ENEMY, amount },
-    damageTarget: "enemy",
-    damage: amount,
-    message:
-      "単語完成！" +
-      gameState.enemy.name +
-      "に" +
-      amount +
-      "ダメージ！",
-    tone: "good",
+    ignored:false, action:{type:GAME_ACTION.DAMAGE_ENEMY,amount}, damageTarget:"enemy", damage:amount,
+    message:"単語完成！"+gameState.enemy.name+"に"+amount+"ダメージ！"+abilityNote,
+    tone:"good",
   };
 }
 

@@ -203,7 +203,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   assert.equal(data.controller.save().saved, true);
   assert.equal(
     JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version,
-    3,
+    4,
   );
 });
 
@@ -296,4 +296,32 @@ test("鎧とアクセサリーの装備状態もセーブ・ロードで保持�
   assert.equal(second.store.getState().inventory.equipment.accessory, "copper-charm");
   assert.equal(second.store.getState().player.attackPower, 2);
   assert.equal(second.store.getState().player.defensePower, 2);
+});
+
+
+test("バージョン3のセーブは旧敵編成を保ったまま能力データ形式へ移行する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  assert.equal(first.controller.save().saved, true);
+
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 3;
+  delete legacy.gameState.enemy.abilities;
+  delete legacy.gameState.enemy.isBoss;
+  delete legacy.dungeonState.encounterSetVersion;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  const result = second.controller.load();
+  assert.equal(result.loaded, true);
+  assert.deepEqual(second.store.getState().enemy.abilities, []);
+  assert.equal(second.store.getState().enemy.isBoss, false);
+  assert.equal(second.dungeon.getSaveData().encounterSetVersion, 1);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 4);
 });

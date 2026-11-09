@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 11</title>
+  <title>WORD FALL QUEST | Step 12</title>
   <style>
     :root {
       color-scheme: dark;
@@ -48,6 +48,8 @@
     .vital { background:#111d30; border-radius:11px; padding:9px; }
     .vital-head { display:flex; justify-content:space-between; gap:8px; margin-bottom:5px; font-size:.76rem; font-weight:800; }
     .hp-text { color:#d8e5f8; font-variant-numeric:tabular-nums; }
+    .enemy-traits { min-height:1em; margin-top:6px; color:#a8bdd7; font-size:.68rem; line-height:1.4; }
+    .enemy-traits.boss { color:#fda4af; font-weight:850; }
     .bar { height:8px; background:#26354b; overflow:hidden; border-radius:99px; }
     .bar-fill { height:100%; width:100%; border-radius:99px; background:linear-gradient(90deg,#34d399,#86efac); transition:width .18s ease; }
     .bar-fill.enemy { background:linear-gradient(90deg,#f97316,#fbbf24); }
@@ -224,6 +226,7 @@
         <div class="vital">
           <div class="vital-head"><span id="enemyName">🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
           <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
+          <div class="enemy-traits" id="enemyTraits" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -292,7 +295,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 11 · EXPANDABLE EQUIPMENT</p>
+    <p class="footer">WORD FALL QUEST · STEP 12 · ENEMY ABILITIES</p>
   </main>
 
   <script type="module">
@@ -317,6 +320,7 @@
     import { createSaveController } from "./src/save-system.js";
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
+    import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
 
     const $ = (id) => document.getElementById(id);
     const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
@@ -463,11 +467,23 @@
       renderInventory(state);
 
       const enemy = state.enemy;
-      $("enemyName").textContent = enemy ? "🟢 " + enemy.name : "🟢 敵";
+      $("enemyName").textContent = enemy
+        ? (enemy.isBoss ? "🐉 BOSS " : "🟢 ") + enemy.name
+        : "🟢 敵";
       const enemyHp = enemy ? enemy.hp : 3;
       const enemyMaxHp = enemy ? enemy.maxHp : 3;
       $("enemyHp").textContent = "HP " + enemyHp + " / " + enemyMaxHp;
       setBar("enemyHpBar", "enemyHpFill", enemyHp, enemyMaxHp);
+      const enemyAbilities = (enemy?.abilities ?? [])
+        .map((abilityId) => ENEMY_ABILITY_DEFINITIONS[abilityId])
+        .filter(Boolean);
+      $("enemyTraits").textContent = enemy
+        ? (enemy.isBoss ? "👑 ボス · " : "") +
+          (enemyAbilities.length > 0
+            ? enemyAbilities.map((ability) => ability.name + "：" + ability.description).join(" / ")
+            : "特殊能力なし")
+        : "";
+      $("enemyTraits").className = "enemy-traits" + (enemy?.isBoss ? " boss" : "");
 
       const active = state.phase === GAME_PHASE.BATTLE;
       const finished = state.phase === GAME_PHASE.VICTORY || state.phase === GAME_PHASE.DEFEAT;

@@ -1,4 +1,5 @@
 import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, EQUIPMENT_SLOTS, getEquipmentBonuses, createInitialInventory } from "./items.js";
+import { ENEMY_ABILITY_DEFINITIONS } from "./enemies.js";
 
 /**
  * WORD FALL QUEST - Game state core
@@ -49,41 +50,23 @@ export function experienceRequiredForNextLevel(level) {
 }
 
 function normalizeEnemy(enemy) {
-  if (!enemy || typeof enemy !== "object") {
-    throw new TypeError("START_BATTLEには敵データが必要です。");
-  }
-
+  if (!enemy || typeof enemy !== "object") throw new TypeError("START_BATTLEには敵データが必要です。");
   const { id, name, maxHp } = enemy;
   const attackPower = enemy.attackPower === undefined ? 1 : enemy.attackPower;
-  const experienceReward =
-    enemy.experienceReward === undefined ? 0 : enemy.experienceReward;
-
+  const experienceReward = enemy.experienceReward === undefined ? 0 : enemy.experienceReward;
+  const abilities = enemy.abilities === undefined ? [] : enemy.abilities;
+  const isBoss = enemy.isBoss === undefined ? false : enemy.isBoss;
   if (
     (typeof id !== "string" && typeof id !== "number") ||
-    typeof name !== "string" ||
-    name.trim() === "" ||
-    !isPositiveInteger(maxHp) ||
-    !isPositiveInteger(attackPower) ||
-    !isNonNegativeInteger(experienceReward)
-  ) {
-    throw new TypeError(
-      "敵データはid・name・正の整数maxHpとattackPower、0以上の整数experienceRewardを指定してください。",
-    );
-  }
-
+    typeof name !== "string" || name.trim() === "" ||
+    !isPositiveInteger(maxHp) || !isPositiveInteger(attackPower) ||
+    !isNonNegativeInteger(experienceReward) || !Array.isArray(abilities) ||
+    abilities.some((abilityId) => typeof abilityId !== "string" || !Object.hasOwn(ENEMY_ABILITY_DEFINITIONS,abilityId)) ||
+    new Set(abilities).size !== abilities.length || typeof isBoss !== "boolean"
+  ) throw new TypeError("敵データは有効な能力IDの配列とisBossを含む正しいステータスを指定してください。");
   const hp = enemy.hp === undefined ? maxHp : enemy.hp;
-  if (!Number.isSafeInteger(hp) || hp < 1 || hp > maxHp) {
-    throw new TypeError("敵のhpは1以上maxHp以下の整数にしてください。");
-  }
-
-  return {
-    id,
-    name: name.trim(),
-    hp,
-    maxHp,
-    attackPower,
-    experienceReward,
-  };
+  if (!Number.isSafeInteger(hp) || hp < 1 || hp > maxHp) throw new TypeError("敵のhpは1以上maxHp以下の整数にしてください。");
+  return {id,name:name.trim(),hp,maxHp,attackPower,experienceReward,abilities:[...abilities],isBoss};
 }
 
 function normalizeAmount(amount) {
@@ -522,7 +505,11 @@ export function isValidSavedGameState(saved) {
       !isPositiveInteger(enemy.maxHp) ||
       !isNonNegativeInteger(enemy.hp) || enemy.hp > enemy.maxHp ||
       !isPositiveInteger(enemy.attackPower) ||
-      !isNonNegativeInteger(enemy.experienceReward)
+      !isNonNegativeInteger(enemy.experienceReward) ||
+      !Array.isArray(enemy.abilities) ||
+      enemy.abilities.some((abilityId) => typeof abilityId !== "string" || !Object.hasOwn(ENEMY_ABILITY_DEFINITIONS,abilityId)) ||
+      new Set(enemy.abilities).size !== enemy.abilities.length ||
+      typeof enemy.isBoss !== "boolean"
     ) return false;
   }
 
@@ -561,6 +548,8 @@ function copySavedGameState(saved) {
       maxHp: saved.enemy.maxHp,
       attackPower: saved.enemy.attackPower,
       experienceReward: saved.enemy.experienceReward,
+      abilities: [...saved.enemy.abilities],
+      isBoss: saved.enemy.isBoss,
     } : null,
     inventory: {
       items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map(

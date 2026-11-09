@@ -22,6 +22,8 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
     maxHp: 3,
     attackPower: 1,
     experienceReward: 10,
+    abilities: [],
+    isBoss: false,
   });
   slime.maxHp = 99;
   assert.equal(createEnemy("slime").maxHp, 3);
@@ -216,4 +218,43 @@ test("防御力が敵の攻撃力以上でも最低1ダメージは受ける", (
   });
   assert.equal(result.damage, 1);
   assert.equal(store.getState().player.hp, 2);
+});
+
+
+test("コウモリの素早い反撃は間違った文字へのダメージを1増やす", () => {
+  const store = startBattle({ enemy: createEnemy("bat") });
+  const result = createCombatController(store).handle({
+    eventId: "bat-swift-counter", type: "wrong", letter: "Z",
+  });
+  assert.equal(result.damage, 2);
+  assert.match(result.message, /すばやい反撃/);
+  assert.equal(store.getState().player.hp, 1);
+});
+
+test("ゴブリンのかたい体は単語攻撃のダメージを1減らす", () => {
+  const store = startBattle({ playerAttackPower: 2, enemy: createEnemy("goblin") });
+  const result = createCombatController(store).handle({
+    eventId: "goblin-guard", type: "word-complete",
+  });
+  assert.equal(result.damage, 1);
+  assert.equal(store.getState().enemy.hp, 3);
+  assert.match(result.message, /かたい体/);
+});
+
+test("オークの防御突破はプレイヤーの防御力を1無視する", () => {
+  const store = startBattle({ enemy: createEnemy("orc") });
+  store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
+  store.dispatch({ type: GAME_ACTION.EQUIP_SHIELD, itemId: "wooden-shield" });
+  assert.equal(store.getState().player.defensePower, 1);
+  const result = createCombatController(store).handle({
+    eventId: "orc-piercing", type: "wrong", letter: "X",
+  });
+  assert.equal(result.damage, 2);
+  assert.match(result.message, /防御力を一部無視/);
+});
+
+test("ボスは複数の能力を組み合わせて持つ", () => {
+  const dragon = createEnemy("forest-dragon");
+  assert.equal(dragon.isBoss, true);
+  assert.deepEqual(dragon.abilities, ["swift", "guard", "piercing"]);
 });
