@@ -95,6 +95,7 @@
     ├── word-battle.js
     ├── word-battle.test.js
     ├── enemies.js
+    ├── enemies.test.js
     ├── items.js
     ├── dungeon.js
     ├── dungeon.test.js
@@ -153,7 +154,7 @@ npm test
 - セーブデータに防具を保存し、STEP 9の旧セーブも自動移行
 - 防具装備・ダメージ軽減・購入・セーブ移行の自動テストを追加
 
-STEP 2のプレイ画面は `battle.html` です。トップページ `index.html` の「英単語バトルを開く」から移動できます。
+現行版のプレイ画面は `battle.html` です。`index.html` の「最新バージョンをプレイ」から移動できます。
 
 
 ### Step 11 — 拡張できる装備・アイテムシステム
