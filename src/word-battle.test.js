@@ -17,6 +17,11 @@ import {
   advanceToNextChallenge,
   isValidSavedWordBattleState,
   restoreWordBattleState,
+  selectChallengeForSkill,
+  spawnLaneWave,
+  advanceLaneWave,
+  canCollectCurrentLaneLetter,
+  collectCurrentLaneLetter,
 } from "./word-battle.js";
 
 function addLetter(state, { id = 1, value, lane = state.playerLane, y = 0, speed = 100 }) {
@@ -249,4 +254,62 @@ test("セーブした英単語進行を検証して正しく復元できる", ()
   const invalid = { ...state, playerLane: 99 };
   assert.equal(isValidSavedWordBattleState(invalid), false);
   assert.equal(restoreWordBattleState(invalid), null);
+});
+
+
+test("技を選ぶと対応する文字数の英単語に切り替わる", () => {
+  const state = createWordBattleState();
+  const quick = selectChallengeForSkill(state, "quick-strike", { random: () => 0 });
+  assert.ok(getCurrentChallenge(quick).word.length >= 3);
+  assert.ok(getCurrentChallenge(quick).word.length <= 4);
+  const power = selectChallengeForSkill(state, "power-strike", { random: () => 0 });
+  assert.ok(getCurrentChallenge(power).word.length >= 5);
+  assert.ok(getCurrentChallenge(power).word.length <= 6);
+  const ultimate = selectChallengeForSkill(state, "ultimate-strike", { random: () => 0 });
+  assert.ok(getCurrentChallenge(ultimate).word.length >= 7);
+  assert.ok(getCurrentChallenge(ultimate).word.length <= 8);
+  assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
+});
+
+test("5レーンに一列の文字が出て、必要な文字は1レーンだけに配置される", () => {
+  const state = createWordBattleState();
+  const wave = spawnLaneWave(state, { random: () => 0, speed: 120 });
+  assert.equal(wave.letters.length, 5);
+  assert.deepEqual(wave.letters.map((letter) => letter.lane), [0, 1, 2, 3, 4]);
+  assert.equal(wave.letters.filter((letter) => letter.role === "needed").length, 1);
+  assert.equal(wave.letters.filter((letter) => letter.value === "A").length, 1);
+  assert.ok(wave.letters.every((letter) => letter.y === -36));
+});
+
+test("5レーンの文字は一緒に移動し、決定ラインを通過すると消える", () => {
+  const wave = spawnLaneWave(createWordBattleState(), { random: () => 0 });
+  const moved = advanceLaneWave(wave, 100, { boardHeight: 270, catchLine: 206, window: 42 });
+  assert.ok(moved.state.letters.every((letter) => Math.abs(letter.y -  -24) < 0.001));
+  const expired = advanceLaneWave(moved.state, 3000, { boardHeight: 270, catchLine: 206, window: 42 });
+  assert.equal(expired.expired, true);
+  assert.equal(expired.state.letters.length, 0);
+});
+
+test("決定ボタンを押すと選択中レーンの文字を1つだけ判定する", () => {
+  let state = spawnLaneWave(createWordBattleState(), { random: () => 0 });
+  state = {
+    ...state,
+    letters: state.letters.map((letter) => ({ ...letter, y: 206 })),
+    playerLane: 0,
+  };
+  assert.equal(canCollectCurrentLaneLetter(state, { catchLine: 206, window: 30 }), true);
+  const result = collectCurrentLaneLetter(state, { catchLine: 206, window: 30 });
+  assert.equal(result.result, "correct");
+  assert.equal(result.event.type, "correct");
+  assert.equal(result.state.progressIndex, 1);
+  assert.equal(result.state.letters.length, 0);
+});
+
+test("決定ラインに文字がない場合は何も消費しない", () => {
+  let state = spawnLaneWave(createWordBattleState(), { random: () => 0 });
+  state = { ...state, playerLane: 0 };
+  const result = collectCurrentLaneLetter(state, { catchLine: 206, window: 10 });
+  assert.equal(result.result, "waiting");
+  assert.equal(result.state, state);
+  assert.equal(result.event, null);
 });

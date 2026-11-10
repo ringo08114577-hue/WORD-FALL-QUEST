@@ -258,3 +258,36 @@ test("ボスは複数の能力を組み合わせて持つ", () => {
   assert.equal(dragon.isBoss, true);
   assert.deepEqual(dragon.abilities, ["swift", "guard", "piercing"]);
 });
+
+
+test("技の種類によって単語完成時のダメージが変わる", () => {
+  for (const [skillId, expectedDamage] of [
+    ["quick-strike", 1],
+    ["power-strike", 2],
+    ["ultimate-strike", 3],
+  ]) {
+    const store = startBattle();
+    const result = createCombatController(store).handle({
+      eventId: "skill-" + skillId,
+      type: "word-complete",
+      skillId,
+    });
+    assert.equal(result.damage, expectedDamage);
+    assert.equal(store.getState().enemy.hp, 3 - expectedDamage);
+  }
+});
+
+test("時間経過の敵攻撃は防御力を適用してプレイヤーにダメージを与える", () => {
+  const store = startBattle({
+    enemy: { ...createEnemy("slime"), attackPower: 2 },
+  });
+  store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
+  store.dispatch({ type: GAME_ACTION.EQUIP_ITEM, itemId: "wooden-shield" });
+  const result = createCombatController(store).handle({
+    eventId: "timed-attack-1",
+    type: "timed-attack",
+  });
+  assert.equal(result.damage, 1);
+  assert.equal(store.getState().player.hp, 2);
+  assert.match(result.message, /時間攻撃/);
+});

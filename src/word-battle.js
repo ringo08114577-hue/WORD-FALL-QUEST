@@ -6,6 +6,8 @@
  * lane movement, collision checks, and correct/incorrect pickup results.
  */
 
+import { SKILL_DEFINITIONS } from "./skills.js";
+
 export const WORD_CHALLENGES = Object.freeze([
   Object.freeze({ id: "apple", japanese: "りんご", word: "APPLE" }),
   Object.freeze({ id: "dog", japanese: "いぬ", word: "DOG" }),
@@ -13,6 +15,18 @@ export const WORD_CHALLENGES = Object.freeze([
   Object.freeze({ id: "book", japanese: "ほん", word: "BOOK" }),
   Object.freeze({ id: "water", japanese: "みず", word: "WATER" }),
   Object.freeze({ id: "sun", japanese: "たいよう", word: "SUN" }),
+  Object.freeze({ id: "bird", japanese: "とり", word: "BIRD" }),
+  Object.freeze({ id: "fish", japanese: "さかな", word: "FISH" }),
+  Object.freeze({ id: "green", japanese: "みどり", word: "GREEN" }),
+  Object.freeze({ id: "tiger", japanese: "とら", word: "TIGER" }),
+  Object.freeze({ id: "orange", japanese: "オレンジ", word: "ORANGE" }),
+  Object.freeze({ id: "planet", japanese: "わくせい", word: "PLANET" }),
+  Object.freeze({ id: "monkey", japanese: "さる", word: "MONKEY" }),
+  Object.freeze({ id: "morning", japanese: "あさ", word: "MORNING" }),
+  Object.freeze({ id: "library", japanese: "としょかん", word: "LIBRARY" }),
+  Object.freeze({ id: "journey", japanese: "たび", word: "JOURNEY" }),
+  Object.freeze({ id: "elephant", japanese: "ぞう", word: "ELEPHANT" }),
+  Object.freeze({ id: "notebook", japanese: "ノート", word: "NOTEBOOK" }),
 ]);
 
 export const WORD_BATTLE_PHASE = Object.freeze({
@@ -237,6 +251,166 @@ export function setPlayerLane(state, lane) {
     return state;
   }
   return { ...state, playerLane: lane };
+}
+
+/**
+ * Select a spelling challenge whose length matches the chosen skill.
+ * The existing score, mistakes, lane position, and event counter are retained.
+ */
+export function selectChallengeForSkill(
+  state,
+  skillId,
+  { random = Math.random } = {},
+) {
+  const skill = Object.hasOwn(SKILL_DEFINITIONS, skillId)
+    ? SKILL_DEFINITIONS[skillId]
+    : null;
+  if (!skill) throw new RangeError("登録されていない技です: " + skillId);
+
+  const candidates = WORD_CHALLENGES
+    .map((challenge, index) => ({ challenge, index }))
+    .filter(({ challenge }) =>
+      challenge.word.length >= skill.minWordLength &&
+      challenge.word.length <= skill.maxWordLength,
+    );
+  if (candidates.length === 0) {
+    throw new Error("この技に対応する英単語が登録されていません。");
+  }
+
+  const selected = candidates[Math.floor(randomUnit(random) * candidates.length)];
+  return {
+    ...state,
+    phase: WORD_BATTLE_PHASE.ACTIVE,
+    challengeIndex: selected.index,
+    progressIndex: 0,
+    letters: [],
+    lastResult: null,
+  };
+}
+
+/**
+ * Creates one moving row across all five lanes. Exactly one lane contains
+ * the next required letter; the other lanes contain distinct distractors.
+ */
+export function spawnLaneWave(
+  state,
+  { random = Math.random, speed = 120 } = {},
+) {
+  if (state.phase !== WORD_BATTLE_PHASE.ACTIVE || state.letters.length > 0) {
+    return state;
+  }
+  if (typeof speed !== "number" || !Number.isFinite(speed) || speed <= 0) {
+    throw new RangeError("speedは正の数値にしてください。");
+  }
+
+  const expected = getExpectedLetter(state);
+  if (!expected) return state;
+
+  const correctLane = Math.floor(randomUnit(random) * state.laneCount);
+  const distractors = ALPHABET.split("").filter((letter) => letter !== expected);
+  const letters = [];
+
+  for (let lane = 0; lane < state.laneCount; lane += 1) {
+    let value;
+    let role;
+    if (lane === correctLane) {
+      value = expected;
+      role = "needed";
+    } else {
+      const index = Math.floor(randomUnit(random) * distractors.length);
+      value = distractors.splice(index, 1)[0];
+      role = "distractor";
+    }
+    letters.push({
+      id: state.nextLetterId + letters.length,
+      value,
+      role,
+      lane,
+      y: -36,
+      speed,
+    });
+  }
+
+  return {
+    ...state,
+    letters,
+    nextLetterId: state.nextLetterId + letters.length,
+  };
+}
+
+/** Move all letters in the current row at the same speed. */
+export function advanceLaneWave(
+  state,
+  deltaMs,
+  { boardHeight = 270, catchLine = boardHeight - 64, window = 42 } = {},
+) {
+  if (state.phase !== WORD_BATTLE_PHASE.ACTIVE || state.letters.length === 0) {
+    return { state, expired: false };
+  }
+  if (!Number.isFinite(deltaMs) || deltaMs < 0) {
+    throw new RangeError("deltaMsは0以上の数値にしてください。");
+  }
+  if (
+    !Number.isFinite(boardHeight) || boardHeight <= 0 ||
+    !Number.isFinite(catchLine) || catchLine < 0 || catchLine >= boardHeight ||
+    !Number.isFinite(window) || window < 0
+  ) {
+    throw new RangeError("レーンの移動範囲が正しくありません。");
+  }
+
+  const letters = state.letters.map((letter) => ({
+    ...letter,
+    y: letter.y + letter.speed * (deltaMs / 1000),
+  }));
+  if (letters[0].y > catchLine + window) {
+    return { state: { ...state, letters: [] }, expired: true };
+  }
+  return { state: { ...state, letters }, expired: false };
+}
+
+/** True when the selected lane has a letter inside the decision window. */
+export function canCollectCurrentLaneLetter(
+  state,
+  { catchLine = 206, window = 42 } = {},
+) {
+  if (state.phase !== WORD_BATTLE_PHASE.ACTIVE) return false;
+  return state.letters.some((letter) =>
+    letter.lane === state.playerLane &&
+    Math.abs(letter.y - catchLine) <= window,
+  );
+}
+
+/**
+ * Explicitly collect the letter in the player's lane after the player presses
+ * the decision button. The whole row disappears after one decision.
+ */
+export function collectCurrentLaneLetter(
+  state,
+  { catchLine = 206, window = 42 } = {},
+) {
+  if (!canCollectCurrentLaneLetter(state, { catchLine, window })) {
+    return { state, result: "waiting", event: null, letter: null };
+  }
+
+  const letter = state.letters.find((item) =>
+    item.lane === state.playerLane &&
+    Math.abs(item.y - catchLine) <= window,
+  );
+  const picked = collectLetter(state, letter.id);
+  const nextState = { ...picked.state, letters: [] };
+  const event = picked.result === "ignored" ? null : {
+    eventId: "challenge-" + state.challengeIndex + "-letter-" + letter.id,
+    type: picked.result,
+    letter: letter.value,
+    expected: picked.expected ?? null,
+  };
+
+  return {
+    ...picked,
+    state: nextState,
+    event,
+    letter,
+  };
 }
 
 export function collectLetter(state, letterId) {
