@@ -105,7 +105,7 @@ export function restoreWordBattleState(saved) {
   if (!isValidSavedWordBattleState(saved)) return null;
   return {
     ...saved,
-    letters: saved.letters.map((letter) => ({ ...letter, y: 0, speed: 0 })),
+    letters: saved.letters.map((letter) => ({ ...letter })),
   };
 }
 
