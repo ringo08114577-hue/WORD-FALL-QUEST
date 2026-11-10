@@ -275,7 +275,7 @@
 
     <section class="panel">
       <div class="question">
-        <div class="question-label">この日本語の英単語を完成させよう</div>
+        <div class="question-label" id="questionLabel">この日本語の英単語を完成させよう</div>
         <div class="japanese" id="japanesePrompt">りんご</div>
         <div class="spelling" id="spellingProgress" aria-label="スペルの進み具合"></div>
       </div>
@@ -402,10 +402,17 @@
         selectedSkillId = extra.selectedSkillId ??
           (awaitingSkill ? null : "quick-strike");
         enemyAttackCount = 0;
-        if (wordState.phase === "active" && wordState.letters.length > 0 &&
-            wordState.letters.length !== wordState.laneCount) {
-          wordState = { ...wordState, letters: [] };
-          spawnElapsed = 0;
+        if (wordState.phase === "active" && wordState.letters.length > 0) {
+          const savedLetters = wordState.letters;
+          const looksLikeLaneWave =
+            savedLetters.length === wordState.laneCount &&
+            new Set(savedLetters.map((letter) => letter.lane)).size === wordState.laneCount &&
+            savedLetters.every((letter) => Math.abs(letter.y - savedLetters[0].y) < 0.01) &&
+            savedLetters.filter((letter) => letter.role === "needed").length === 1;
+          if (!looksLikeLaneWave) {
+            wordState = { ...wordState, letters: [] };
+            spawnElapsed = 0;
+          }
         }
       },
     });
@@ -553,7 +560,7 @@
       $("rightButton").disabled = !canControl;
       $("confirmButton").disabled = !(
         canControl && canCollectCurrentLaneLetter(wordState, {
-          catchLine: ($("arena").clientHeight || 270) - 64,
+          catchLine: ($("arena").clientHeight || 270) - 48,
           window: 42,
         })
       );
@@ -564,7 +571,7 @@
               ? (dungeonProgress.rewardClaimed ? "次の階へ" : "宝箱を開ける")
               : "次の敵へ")
           : state.phase === GAME_PHASE.DEFEAT ? "最初からやり直す" : "冒険を始める";
-      $("nextButton").hidden = !(active && wordState.phase === "word-complete");
+      $("nextButton").hidden = !(active && wordState.phase === "word-complete" && !awaitingSkill);
       $("nextButton").textContent = "次の技を選ぶ";
       $("skillPanel").hidden = !(active && awaitingSkill);
       for (const button of $("skillPanel").querySelectorAll("[data-skill]")) {
@@ -613,9 +620,13 @@
 
     function renderWordState() {
       const challenge = getCurrentChallenge(wordState);
-      $("japanesePrompt").textContent = challenge.japanese;
+      const choosingSkill = awaitingSkill && store.getState().phase === GAME_PHASE.BATTLE;
+      $("questionLabel").textContent = choosingSkill
+        ? "技を選ぶと、出題される英単語が決まるよ"
+        : "この日本語の英単語を完成させよう";
+      $("japanesePrompt").textContent = choosingSkill ? "技を選択" : challenge.japanese;
       $("spellingProgress").replaceChildren();
-      const parts = getSpellingProgress(wordState).split(" ");
+      const parts = choosingSkill ? [] : getSpellingProgress(wordState).split(" ");
       for (const character of parts) {
         const slot = document.createElement("span");
         slot.className = "slot" + (character === "_" ? "" : " filled");
@@ -631,7 +642,7 @@
 
       const layer = $("lettersLayer");
       layer.replaceChildren();
-      const catchLine = ($("arena").clientHeight || 270) - 64;
+      const catchLine = ($("arena").clientHeight || 270) - 48;
       for (const letter of wordState.letters) {
         const node = document.createElement("div");
         const isSelectedAndReady = letter.lane === wordState.playerLane &&
@@ -762,7 +773,7 @@
           store.getState().phase === GAME_PHASE.BATTLE
         ) {
           $("coverTitle").textContent = "単語完成！";
-          $("coverNote").textContent = "次のお題へ進んで、もう一度攻撃しよう。";
+          $("coverNote").textContent = "次の技を選んで、新しい単語に挑戦しよう。";
           $("arenaCover").hidden = false;
           $("nextButton").hidden = false;
         }

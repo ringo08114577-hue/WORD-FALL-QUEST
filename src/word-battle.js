@@ -342,7 +342,7 @@ export function spawnLaneWave(
 export function advanceLaneWave(
   state,
   deltaMs,
-  { boardHeight = 270, catchLine = boardHeight - 64, window = 42 } = {},
+  { boardHeight = 270, catchLine = boardHeight - 48, window = 42 } = {},
 ) {
   if (state.phase !== WORD_BATTLE_PHASE.ACTIVE || state.letters.length === 0) {
     return { state, expired: false };
@@ -371,7 +371,7 @@ export function advanceLaneWave(
 /** True when the selected lane has a letter inside the decision window. */
 export function canCollectCurrentLaneLetter(
   state,
-  { catchLine = 206, window = 42 } = {},
+  { catchLine = 222, window = 42 } = {},
 ) {
   if (state.phase !== WORD_BATTLE_PHASE.ACTIVE) return false;
   return state.letters.some((letter) =>
