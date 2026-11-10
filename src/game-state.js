@@ -24,6 +24,7 @@ export const GAME_ACTION = Object.freeze({
   HEAL_PLAYER: "HEAL_PLAYER",
   USE_ITEM: "USE_ITEM",
   EQUIP_ITEM: "EQUIP_ITEM",
+  PREPARE_EQUIPMENT: "PREPARE_EQUIPMENT",
   EQUIP_WEAPON: "EQUIP_WEAPON",
   EQUIP_SHIELD: "EQUIP_SHIELD",
   ADD_ITEM: "ADD_ITEM",
@@ -87,7 +88,10 @@ function getEquippedShieldBonus(inventory) {
 }
 
 function equipItem(state, action, requiredSlot = null) {
-  if (state.phase !== GAME_PHASE.BATTLE) return state;
+  const canEquipDuringBattle = state.phase === GAME_PHASE.BATTLE;
+  const canPrepareEquipment = action.type === GAME_ACTION.PREPARE_EQUIPMENT &&
+    [GAME_PHASE.TITLE, GAME_PHASE.BATTLE, GAME_PHASE.VICTORY].includes(state.phase);
+  if (!canEquipDuringBattle && !canPrepareEquipment) return state;
   const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
     ? ITEM_DEFINITIONS[action.itemId]
     : null;
@@ -325,6 +329,10 @@ export function gameReducer(state, action) {
     }
 
     case GAME_ACTION.EQUIP_ITEM:
+      return equipItem(state, action);
+
+    // The adventurer home can prepare equipment before entering or resuming a dungeon.
+    case GAME_ACTION.PREPARE_EQUIPMENT:
       return equipItem(state, action);
 
     // Compatibility aliases for existing callers.

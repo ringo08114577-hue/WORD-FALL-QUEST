@@ -603,3 +603,52 @@ test("未所持・戦闘外の汎用装備アクションは状態を変更し�
     battleState,
   );
 });
+
+test("冒険者ホームでは冒険前に装備を整え、同じ枠の旧装備を所持品へ戻せる", () => {
+  let state = createInitialGameState();
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.PREPARE_EQUIPMENT,
+    itemId: "wooden-sword",
+  });
+  assert.equal(state.phase, GAME_PHASE.TITLE);
+  assert.equal(state.inventory.equipment.weapon, "wooden-sword");
+  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.inventory.items["wooden-sword"], 0);
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "iron-sword",
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.PREPARE_EQUIPMENT,
+    itemId: "iron-sword",
+  });
+  assert.equal(state.inventory.equipment.weapon, "iron-sword");
+  assert.equal(state.inventory.items["iron-sword"], 0);
+  assert.equal(state.inventory.items["wooden-sword"], 1);
+  assert.equal(state.player.attackPower, 3);
+});
+
+test("事前装備アクションは一時停止・敗北状態では使えない", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+  state = gameReducer(state, { type: GAME_ACTION.PAUSE_BATTLE });
+  const paused = gameReducer(state, {
+    type: GAME_ACTION.PREPARE_EQUIPMENT,
+    itemId: "wooden-sword",
+  });
+  assert.equal(paused, state);
+
+  state = gameReducer(gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  }), { type: GAME_ACTION.DAMAGE_PLAYER, amount: 3 });
+  const defeated = gameReducer(state, {
+    type: GAME_ACTION.PREPARE_EQUIPMENT,
+    itemId: "wooden-sword",
+  });
+  assert.equal(defeated, state);
+});

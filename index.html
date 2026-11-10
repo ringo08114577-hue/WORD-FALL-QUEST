@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 1</title>
+  <title>WORD FALL QUEST | 冒険者ホーム</title>
   <style>
     :root {
       color-scheme: dark;
@@ -16,247 +16,362 @@
     body {
       margin: 0;
       min-height: 100vh;
-      padding: 24px 16px 40px;
+      padding: 18px 12px 32px;
       background:
-        radial-gradient(circle at 50% 0%, rgba(56, 117, 201, .24), transparent 36rem),
+        radial-gradient(circle at 50% 0%, rgba(56,117,201,.25), transparent 38rem),
         #0b1220;
     }
-    main { width: min(100%, 760px); margin: 0 auto; }
-    .eyebrow {
-      color: #7dd3fc; font-size: .76rem; font-weight: 800;
-      letter-spacing: .16em; text-transform: uppercase;
-    }
-    h1 { margin: 8px 0 4px; font-size: clamp(1.8rem, 6vw, 2.8rem); letter-spacing: .04em; }
-    .subtitle { color: #9eacc2; margin: 0 0 24px; line-height: 1.7; }
+    main { width: min(100%, 900px); margin: 0 auto; }
+    .topline { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+    .eyebrow { color:#7dd3fc; font-size:.7rem; font-weight:850; letter-spacing:.14em; }
+    .small-link { color:#bfdbfe; font-size:.75rem; text-decoration:none; font-weight:750; }
+    h1 { margin:7px 0 3px; font-size:clamp(1.8rem,6vw,2.6rem); letter-spacing:.03em; }
+    .subtitle { margin:0 0 14px; color:#9eacc2; font-size:.86rem; line-height:1.5; }
     .panel {
-      border: 1px solid #29384f; border-radius: 20px;
-      background: rgba(18, 29, 47, .92);
-      padding: 20px; margin: 14px 0;
-      box-shadow: 0 16px 40px rgba(0,0,0,.18);
+      margin:10px 0; padding:15px; border:1px solid #29384f; border-radius:17px;
+      background:rgba(18,29,47,.94); box-shadow:0 12px 30px rgba(0,0,0,.16);
     }
-    .panel-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    .panel h2 { margin: 0; font-size: 1.05rem; }
-    .phase {
-      display:inline-flex; align-items:center; border-radius:999px;
-      padding:6px 11px; font-size:.8rem; font-weight:800;
-      background:#233a56; color:#bae6fd;
-    }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    h2 { margin:0; font-size:1rem; }
+    .phase { padding:5px 9px; border-radius:999px; background:#233a56; color:#bae6fd; font-size:.7rem; font-weight:850; }
     .phase[data-phase="victory"] { background:#164e3a; color:#bbf7d0; }
     .phase[data-phase="defeat"] { background:#5a202b; color:#fecdd3; }
     .phase[data-phase="paused"] { background:#58421c; color:#fde68a; }
-    .status-message { min-height: 52px; color:#c5d2e5; line-height:1.7; margin:14px 0 0; }
-    .unit {
-      display:flex; justify-content:space-between; align-items:center;
-      gap:12px; margin: 18px 0 8px;
+    .hero { display:grid; grid-template-columns:1.1fr 1fr; gap:12px; align-items:center; }
+    .hero-copy { display:flex; gap:12px; align-items:center; min-width:0; }
+    .avatar { display:grid; place-items:center; flex:0 0 66px; height:66px; border-radius:18px; background:linear-gradient(145deg,#1e4168,#14243b); border:1px solid #416080; font-size:2.35rem; }
+    .hero-name { font-size:1.05rem; font-weight:900; }
+    .hero-sub { margin-top:4px; color:#9eacc2; font-size:.74rem; line-height:1.45; }
+    .hero-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; }
+    .mini-stat { padding:9px; border-radius:11px; background:#111d30; }
+    .mini-stat span { display:block; color:#91a4be; font-size:.66rem; }
+    .mini-stat strong { display:block; margin-top:3px; font-size:1.05rem; font-variant-numeric:tabular-nums; }
+    .xp-track { height:7px; margin-top:8px; overflow:hidden; border-radius:99px; background:#29384f; }
+    .xp-fill { height:100%; width:0; border-radius:99px; background:linear-gradient(90deg,#3b82f6,#7dd3fc); }
+    .journey { display:grid; grid-template-columns:1fr auto; align-items:center; gap:14px; }
+    .journey-title { font-weight:900; font-size:1.04rem; }
+    .journey-copy { margin-top:5px; color:#a9bad0; font-size:.78rem; line-height:1.55; }
+    .journey-progress { margin-top:8px; color:#93c5fd; font-weight:800; font-size:.74rem; }
+    .primary-link {
+      display:inline-flex; justify-content:center; align-items:center; gap:6px;
+      padding:12px 15px; min-height:46px; border-radius:12px;
+      background:#2563eb; border:1px solid #3b82f6; color:white;
+      text-decoration:none; font-size:.84rem; font-weight:900; white-space:nowrap;
     }
-    .unit-name { font-weight:800; }
-    .hp-text { color:#d8e5f8; font-variant-numeric:tabular-nums; }
-    .bar { height:12px; background:#26354b; overflow:hidden; border-radius:99px; }
-    .bar-fill { height:100%; width:100%; border-radius:99px; background:linear-gradient(90deg,#34d399,#86efac); transition:width .2s ease; }
-    .bar-fill.enemy { background:linear-gradient(90deg,#f97316,#fbbf24); }
-    .controls { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+    .primary-link:focus-visible, button:focus-visible, a:focus-visible { outline:3px solid #facc15; outline-offset:3px; }
+    .equipment-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+    .equipment-card { min-width:0; padding:11px; border-radius:12px; background:#111d30; border:1px solid #263a56; }
+    .equipment-slot { color:#91a4be; font-size:.68rem; font-weight:800; }
+    .equipment-name { margin-top:4px; font-size:.9rem; font-weight:900; overflow-wrap:anywhere; }
+    .equipment-bonus { margin-top:4px; color:#9eacc2; font-size:.68rem; }
+    .equipment-options { display:grid; gap:5px; margin-top:9px; }
     button {
-      border:1px solid #3b506e; color:#f2f6ff; background:#22334c;
-      border-radius:12px; padding:11px 15px; min-height:44px;
-      font:inherit; font-weight:750; cursor:pointer;
+      width:100%; padding:8px 9px; min-height:36px; border:1px solid #3b506e;
+      border-radius:9px; color:#f2f6ff; background:#22334c; font:inherit;
+      font-size:.7rem; font-weight:800; cursor:pointer;
     }
-    button.primary { background:#2563eb; border-color:#3b82f6; }
-    button.danger { background:#51242c; border-color:#8b3542; }
-    button:disabled { opacity:.35; cursor:not-allowed; }
-    button[hidden], .enemy-panel[hidden] { display:none; }
-    .stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-    .stat { border-radius:14px; background:#111d30; padding:14px; }
-    .stat-label { display:block; color:#90a4bf; font-size:.8rem; }
-    .stat-value { display:block; margin-top:5px; font-size:1.45rem; font-weight:850; font-variant-numeric:tabular-nums; }
-    .notice { color:#91a4be; font-size:.85rem; line-height:1.7; }
-    .footer { color:#64748b; text-align:center; font-size:.75rem; margin-top:26px; }
-    @media (max-width:480px) {
-      body { padding:18px 12px 30px; }
-      .panel { padding:16px; border-radius:16px; }
-      .controls button { flex:1 1 calc(50% - 10px); }
+    button:hover:not(:disabled) { background:#2b4260; }
+    button:disabled { opacity:.38; cursor:not-allowed; }
+    .muted { color:#91a4be; font-size:.72rem; line-height:1.5; }
+    .inventory-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+    .inventory-item { padding:9px; border-radius:10px; background:#111d30; min-width:0; }
+    .inventory-item strong { display:block; font-size:.76rem; overflow-wrap:anywhere; }
+    .inventory-item span { display:block; margin-top:3px; color:#9eacc2; font-size:.67rem; }
+    .record-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    .record { padding:10px; border-radius:11px; background:#111d30; }
+    .record span { display:block; color:#91a4be; font-size:.66rem; }
+    .record strong { display:block; margin-top:4px; font-size:1.12rem; }
+    .feedback { min-height:1.2em; margin:9px 1px 0; color:#86efac; font-size:.73rem; }
+    .footer { margin-top:18px; color:#64748b; text-align:center; font-size:.68rem; }
+    @media (max-width:620px) {
+      body { padding:10px 8px 20px; }
+      .panel { padding:11px; margin:7px 0; border-radius:14px; }
+      .hero { grid-template-columns:1fr; gap:9px; }
+      .avatar { flex-basis:56px; height:56px; font-size:2rem; }
+      .hero-stats { grid-template-columns:repeat(4,minmax(0,1fr)); }
+      .mini-stat { padding:7px 5px; }
+      .mini-stat span { font-size:.58rem; }
+      .mini-stat strong { font-size:.88rem; }
+      .journey { grid-template-columns:1fr; }
+      .primary-link { width:100%; }
+      .equipment-grid { gap:7px; }
+      .equipment-card { padding:9px; }
+      .inventory-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .record-grid { gap:6px; }
+      .record { padding:8px 6px; }
+      .record strong { font-size:1rem; }
+    }
+    @media (max-width:360px) {
+      .hero-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .equipment-grid { grid-template-columns:1fr; }
+      .inventory-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .small-link { font-size:.65rem; }
     }
   </style>
 </head>
 <body>
   <main>
-    <div class="eyebrow">WORD FALL QUEST · DEVELOPMENT BUILD</div>
-    <h1>ゲームの状態管理</h1>
-    <p class="subtitle">STEP 1 — バトルの開始・進行・勝利・敗北を管理する土台</p>
+    <div class="topline">
+      <div class="eyebrow">WORD FALL QUEST · ADVENTURER HOME</div>
+      <a class="small-link" href="./debug-state.html">開発用画面</a>
+    </div>
+    <h1>冒険者ホーム</h1>
+    <p class="subtitle">冒険の準備を整えて、ダンジョンへ出発しよう。</p>
+
     <section class="panel">
-      <h2>最新バージョンをプレイ</h2>
-      <p class="notice">英単語バトルに、ダンジョン・宝箱・ショップ・装備・敵の特殊能力・ボス戦を追加した最新版です。</p>
-      <a href="./battle.html" style="display:inline-block;border-radius:12px;padding:11px 15px;background:#2563eb;color:#fff;text-decoration:none;font-weight:800;">英単語バトルを開く →</a>
+      <div class="panel-head">
+        <h2>冒険者ステータス</h2>
+        <span class="phase" id="phaseBadge" data-phase="title">準備中</span>
+      </div>
+      <div class="hero">
+        <div class="hero-copy">
+          <div class="avatar" aria-hidden="true">🧙</div>
+          <div>
+            <div class="hero-name">冒険者 <span id="levelLabel">LV.1</span></div>
+            <div class="hero-sub" id="heroMessage">最初のダンジョンが待っているよ。</div>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="mini-stat"><span>HP</span><strong id="hpValue">3 / 3</strong></div>
+          <div class="mini-stat"><span>EXP</span><strong id="xpValue">0 / 10</strong></div>
+          <div class="mini-stat"><span>攻撃力</span><strong id="attackValue">1</strong></div>
+          <div class="mini-stat"><span>防御力</span><strong id="defenseValue">0</strong></div>
+        </div>
+      </div>
+      <div class="xp-track" aria-label="次のレベルまでの経験値"><div class="xp-fill" id="xpFill"></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>🧭 ダンジョン</h2><span class="muted" id="floorLabel">地下1階</span></div>
+      <div class="journey">
+        <div>
+          <div class="journey-title" id="journeyTitle">冒険の準備</div>
+          <div class="journey-copy" id="journeyCopy">敵を倒して経験値とゴールドを集め、少しずつ強くなろう。</div>
+          <div class="journey-progress" id="journeyProgress">未出発 · 1階からスタート</div>
+        </div>
+        <a class="primary-link" id="adventureButton" href="./battle.html">ダンジョンへ出発 →</a>
+      </div>
+      <p class="feedback" id="saveFeedback" aria-live="polite"></p>
     </section>
 
     <section class="panel">
       <div class="panel-head">
-        <h2>ゲーム状態</h2>
-        <span class="phase" id="phaseBadge" data-phase="title">タイトル</span>
+        <h2>🛡️ 装備を整える</h2>
+        <span class="muted">変更は自動保存</span>
       </div>
-      <p class="status-message" id="statusMessage" aria-live="polite">
-        バトル開始前です。「バトル開始」を押して状態の変化を確認できます。
-      </p>
+      <div class="equipment-grid" id="equipmentGrid"></div>
+      <p class="muted" id="equipmentHint">所持している装備を選ぶと、能力値に反映されるよ。</p>
     </section>
 
     <section class="panel">
-      <h2>プレイヤー</h2>
-      <div class="unit">
-        <span class="unit-name">冒険者</span>
-        <span class="hp-text" id="playerHp">HP 3 / 3</span>
-      </div>
-      <div class="bar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3" id="playerHpBar">
-        <div class="bar-fill" id="playerHpFill"></div>
-      </div>
-
-      <div class="enemy-panel" id="enemyPanel" hidden>
-        <div class="unit">
-          <span class="unit-name" id="enemyName">スライム</span>
-          <span class="hp-text" id="enemyHp">HP 3 / 3</span>
-        </div>
-        <div class="bar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3" id="enemyHpBar">
-          <div class="bar-fill enemy" id="enemyHpFill"></div>
-        </div>
-      </div>
-
-      <div class="controls">
-        <button class="primary" id="startButton">バトル開始</button>
-        <button id="pauseButton" hidden>一時停止</button>
-        <button id="resumeButton" hidden>バトル再開</button>
-        <button class="danger" id="playerDamageButton" disabled>プレイヤーに1ダメージ</button>
-        <button id="enemyDamageButton" disabled>敵に1ダメージ</button>
-        <button id="healButton" disabled>プレイヤーを1回復</button>
-        <button id="resetButton">最初から</button>
-      </div>
+      <div class="panel-head"><h2>🎒 持ち物</h2><strong id="goldValue">0 G</strong></div>
+      <div class="inventory-grid" id="inventoryGrid"></div>
     </section>
 
     <section class="panel">
-      <h2>進行データ</h2>
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-label">バトル回数</span>
-          <strong class="stat-value" id="battleCount">0</strong>
-        </div>
-        <div class="stat">
-          <span class="stat-label">撃破した敵</span>
-          <strong class="stat-value" id="defeatedCount">0</strong>
-        </div>
+      <div class="panel-head"><h2>📘 冒険の記録</h2><span class="muted">これまでの成果</span></div>
+      <div class="record-grid">
+        <div class="record"><span>撃破した敵</span><strong id="defeatedValue">0</strong></div>
+        <div class="record"><span>獲得EXP合計</span><strong id="totalXpValue">0</strong></div>
+        <div class="record"><span>バトル回数</span><strong id="battleCountValue">0</strong></div>
       </div>
     </section>
 
-    <section class="panel">
-      <h2>このステップで確認すること</h2>
-      <p class="notice">
-        ・タイトルからバトルを開始できる<br>
-        ・プレイヤーHPが0になると敗北になる<br>
-        ・敵HPが0になると勝利になる<br>
-        ・一時停止中はHPが変化しない<br>
-        ・勝利後は次のバトルへ進める<br><br>
-        ※ここはゲームの状態管理を確認する開発用画面です。通常のプレイは上の「最新バージョンをプレイ」から始めてください。
-      </p>
-    </section>
-
-    <p class="footer">WORD FALL QUEST · STEP 1 · GAME STATE CORE</p>
+    <p class="footer">WORD FALL QUEST · STEP 15 · ADVENTURER HOME</p>
   </main>
 
   <script type="module">
     import { createGameStore, GAME_ACTION, GAME_PHASE } from "./src/game-state.js";
+    import { createDungeonController } from "./src/dungeon.js";
+    import { createSaveController } from "./src/save-system.js";
+    import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
 
-    const store = createGameStore({ playerMaxHp: 3 });
     const $ = (id) => document.getElementById(id);
+    const store = createGameStore();
+    const dungeon = createDungeonController(store);
+    let extraData = {};
+    const saves = createSaveController({
+      store,
+      dungeon,
+      getExtraData: () => extraData,
+      validateExtraData: (value) => Boolean(value && typeof value === "object" && !Array.isArray(value)),
+      restoreExtraData: (value) => { extraData = value; },
+    });
+    const initialLoad = saves.load();
 
     const phaseLabels = {
-      [GAME_PHASE.TITLE]: "タイトル",
-      [GAME_PHASE.BATTLE]: "バトル中",
+      [GAME_PHASE.TITLE]: "準備中",
+      [GAME_PHASE.BATTLE]: "探索中",
       [GAME_PHASE.PAUSED]: "一時停止",
       [GAME_PHASE.VICTORY]: "勝利",
       [GAME_PHASE.DEFEAT]: "敗北",
     };
+    const canPrepare = (phase) => [
+      GAME_PHASE.TITLE, GAME_PHASE.BATTLE, GAME_PHASE.VICTORY,
+    ].includes(phase);
 
-    function setBar(barId, fillId, hp, maxHp) {
-      const bar = $(barId);
-      const fill = $(fillId);
-      const percent = maxHp > 0 ? (hp / maxHp) * 100 : 0;
-      fill.style.width = percent + "%";
-      bar.setAttribute("aria-valuemax", String(maxHp));
-      bar.setAttribute("aria-valuenow", String(hp));
+    function createText(tag, className, value) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      element.textContent = value;
+      return element;
     }
 
-    function getMessage(state) {
-      switch (state.phase) {
-        case GAME_PHASE.TITLE:
-          return "バトル開始前です。「バトル開始」を押して状態の変化を確認できます。";
-        case GAME_PHASE.BATTLE:
-          return "バトル中です。テスト用ボタンでHPの増減を確認できます。";
-        case GAME_PHASE.PAUSED:
-          return "一時停止中です。再開するまでバトル状態は進みません。";
-        case GAME_PHASE.VICTORY:
-          return "勝利！敵を倒しました。次のバトルを開始できます。";
-        case GAME_PHASE.DEFEAT:
-          return "敗北……。プレイヤーHPが0になりました。「最初から」で再挑戦できます。";
-        default:
-          return "";
+    function getAdventureCopy(state, progress) {
+      if (state.phase === GAME_PHASE.BATTLE) {
+        return ["探索の途中だよ", (state.enemy?.name ?? "敵") + "とのバトル中。続きから再開しよう。"];
+      }
+      if (state.phase === GAME_PHASE.PAUSED) {
+        return ["冒険を一時停止中", "ダンジョンに戻って冒険を再開しよう。"];
+      }
+      if (state.phase === GAME_PHASE.VICTORY) {
+        if (progress.floorCleared && !progress.rewardClaimed) {
+          return ["フロアの敵を全て撃破！", "宝箱を開けて報酬を受け取ろう。"];
+        }
+        if (progress.floorCleared && progress.rewardClaimed) {
+          return ["フロアクリア！", "報酬を受け取ったよ。次の階へ進もう。"];
+        }
+        return ["敵を撃破した！", "次の敵へ進んでダンジョンを攻略しよう。"];
+      }
+      if (state.phase === GAME_PHASE.DEFEAT) {
+        return ["冒険が中断されたよ", "もう一度ダンジョンに挑戦しよう。"];
+      }
+      return ["冒険の準備", "敵を倒して経験値とゴールドを集め、少しずつ強くなろう。"];
+    }
+
+    function renderEquipment(state) {
+      const root = $("equipmentGrid");
+      root.replaceChildren();
+      for (const slot of EQUIPMENT_SLOTS) {
+        const card = createText("div", "equipment-card", "");
+        const equippedId = state.inventory.equipment[slot];
+        const equipped = equippedId ? ITEM_DEFINITIONS[equippedId] : null;
+        card.append(createText("div", "equipment-slot", EQUIPMENT_SLOT_LABELS[slot]));
+        card.append(createText("div", "equipment-name", equipped?.name ?? "未装備"));
+        const bonus = equipped
+          ? [
+              equipped.attackBonus ? "ATK +" + equipped.attackBonus : "",
+              equipped.defenseBonus ? "DEF +" + equipped.defenseBonus : "",
+            ].filter(Boolean).join(" · ") || "能力ボーナスなし"
+          : "装備を選んで能力を強化しよう";
+        card.append(createText("div", "equipment-bonus", bonus));
+
+        const options = createText("div", "equipment-options", "");
+        const available = Object.values(ITEM_DEFINITIONS).filter((item) =>
+          item.slot === slot &&
+          (state.inventory.items[item.id] ?? 0) > 0 &&
+          item.id !== equippedId
+        );
+        if (available.length === 0) {
+          options.append(createText("p", "muted", "交換できる装備はないよ。"));
+        }
+        for (const item of available) {
+          const button = createText("button", "", item.name + "を装備する");
+          button.type = "button";
+          button.dataset.equipItem = item.id;
+          button.disabled = !canPrepare(state.phase);
+          options.append(button);
+        }
+        card.append(options);
+        root.append(card);
+      }
+      $("equipmentHint").textContent = canPrepare(state.phase)
+        ? "所持している装備を選ぶと、能力値に反映されて自動保存されるよ。"
+        : "一時停止・敗北中は装備を変更できないよ。";
+    }
+
+    function renderInventory(state) {
+      const root = $("inventoryGrid");
+      root.replaceChildren();
+      const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
+        (state.inventory.items[item.id] ?? 0) > 0
+      );
+      if (owned.length === 0) {
+        root.append(createText("p", "muted", "持ち物はまだないよ。"));
+        return;
+      }
+      for (const item of owned) {
+        const card = createText("div", "inventory-item", "");
+        card.append(createText("strong", "", item.name));
+        card.append(createText("span", "", "所持数 " + state.inventory.items[item.id]));
+        root.append(card);
       }
     }
 
     function render(state) {
-      $("phaseBadge").textContent = phaseLabels[state.phase];
+      const progress = dungeon.getProgress();
+      $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
-      $("statusMessage").textContent = getMessage(state);
+      $("levelLabel").textContent = "LV." + state.player.level;
+      $("hpValue").textContent = state.player.hp + " / " + state.player.maxHp;
+      $("xpValue").textContent = state.player.experience + " / " + state.player.nextLevelXp;
+      $("attackValue").textContent = String(state.player.attackPower);
+      $("defenseValue").textContent = String(state.player.defensePower);
+      $("xpFill").style.width = Math.min(100, state.player.experience / state.player.nextLevelXp * 100) + "%";
+      $("goldValue").textContent = state.inventory.gold + " G";
+      $("defeatedValue").textContent = String(state.stats.enemiesDefeated);
+      $("totalXpValue").textContent = String(state.stats.totalExperienceEarned);
+      $("battleCountValue").textContent = String(state.battle.number);
 
-      $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
-      setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
+      const adventureCopy = getAdventureCopy(state, progress);
+      $("journeyTitle").textContent = adventureCopy[0];
+      $("journeyCopy").textContent = adventureCopy[1];
+      $("heroMessage").textContent = state.enemy
+        ? "現在の相手：" + state.enemy.name
+        : "最初のダンジョンが待っているよ。";
+      $("floorLabel").textContent = "地下" + progress.floor + "階";
+      $("journeyProgress").textContent = progress.started
+        ? progress.floor + "階 · " + progress.enemyNumber + " / " + progress.enemiesPerFloor + "体目"
+        : "未出発 · 1階からスタート";
 
-      const hasEnemy = Boolean(state.enemy);
-      $("enemyPanel").hidden = !hasEnemy;
-      if (hasEnemy) {
-        $("enemyName").textContent = state.enemy.name;
-        $("enemyHp").textContent = "HP " + state.enemy.hp + " / " + state.enemy.maxHp;
-        setBar("enemyHpBar", "enemyHpFill", state.enemy.hp, state.enemy.maxHp);
+      if (state.phase === GAME_PHASE.TITLE) {
+        $("adventureButton").textContent = "ダンジョンへ出発 →";
+      } else if (state.phase === GAME_PHASE.BATTLE || state.phase === GAME_PHASE.PAUSED) {
+        $("adventureButton").textContent = "冒険に戻る →";
+      } else if (state.phase === GAME_PHASE.VICTORY) {
+        $("adventureButton").textContent = progress.floorCleared && !progress.rewardClaimed
+          ? "宝箱を開けに戻る →"
+          : progress.floorCleared ? "次の階へ進む →" : "次の敵へ進む →";
+      } else {
+        $("adventureButton").textContent = "再挑戦する →";
       }
 
-      const isBattle = state.phase === GAME_PHASE.BATTLE;
-      $("startButton").hidden = !(
-        state.phase === GAME_PHASE.TITLE || state.phase === GAME_PHASE.VICTORY
-      );
-      $("startButton").textContent =
-        state.phase === GAME_PHASE.VICTORY ? "次のバトルへ" : "バトル開始";
-      $("pauseButton").hidden = !isBattle;
-      $("resumeButton").hidden = state.phase !== GAME_PHASE.PAUSED;
-      $("playerDamageButton").disabled = !isBattle;
-      $("enemyDamageButton").disabled = !isBattle;
-      $("healButton").disabled = !isBattle;
-
-      $("battleCount").textContent = String(state.battle.number);
-      $("defeatedCount").textContent = String(state.stats.enemiesDefeated);
+      renderEquipment(state);
+      renderInventory(state);
     }
 
-    $("startButton").addEventListener("click", () => {
-      store.dispatch({
-        type: GAME_ACTION.START_BATTLE,
-        enemy: { id: "slime", name: "スライム", maxHp: 3 },
+    $("equipmentGrid").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-equip-item]");
+      if (!button || button.disabled) return;
+      const itemId = button.dataset.equipItem;
+      const before = store.getState();
+      const after = store.dispatch({
+        type: GAME_ACTION.PREPARE_EQUIPMENT,
+        itemId,
       });
-    });
-    $("pauseButton").addEventListener("click", () => {
-      store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
-    });
-    $("resumeButton").addEventListener("click", () => {
-      store.dispatch({ type: GAME_ACTION.RESUME_BATTLE });
-    });
-    $("playerDamageButton").addEventListener("click", () => {
-      store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
-    });
-    $("enemyDamageButton").addEventListener("click", () => {
-      store.dispatch({ type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
-    });
-    $("healButton").addEventListener("click", () => {
-      store.dispatch({ type: GAME_ACTION.HEAL_PLAYER, amount: 1 });
-    });
-    $("resetButton").addEventListener("click", () => {
-      store.dispatch({ type: GAME_ACTION.RESET_GAME });
+      if (after === before) {
+        $("saveFeedback").textContent = "装備を変更できなかったよ。所持数や状態を確認してね。";
+        return;
+      }
+      const result = saves.save();
+      const item = ITEM_DEFINITIONS[itemId];
+      $("saveFeedback").textContent = result.saved
+        ? item.name + "を装備したよ。能力値を更新して保存したよ。"
+        : item.name + "を装備したよ。ただし保存できなかったため、ブラウザの保存領域を確認してね。";
+      render(store.getState());
     });
 
     store.subscribe(render);
     render(store.getState());
+
+    if (!initialLoad.loaded) {
+      $("saveFeedback").textContent = initialLoad.reason === "save-not-found"
+        ? "新しい冒険を始めよう。最初の装備はここで整えられるよ。"
+        : "保存データを読み込めなかったよ。開発用画面では状態を確認できるよ。";
+    } else {
+      $("saveFeedback").textContent = "前回の冒険データを読み込んだよ。";
+    }
+    window.addEventListener("pagehide", () => saves.save());
   </script>
 </body>
 </html>
