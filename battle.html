@@ -21,7 +21,7 @@
         radial-gradient(circle at 50% 0%, rgba(56, 117, 201, .24), transparent 38rem),
         #0b1220;
     }
-    main { width: min(100%, 760px); margin: 0 auto; }
+    main { width: min(100%, 900px); margin: 0 auto; }
     .topline { display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .eyebrow { color:#7dd3fc; font-size:.68rem; font-weight:850; letter-spacing:.15em; }
     .back-link { color:#bfdbfe; text-decoration:none; font-size:.76rem; font-weight:750; }
@@ -33,6 +33,11 @@
       box-shadow:0 10px 26px rgba(0,0,0,.14);
     }
     .panel-title { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .battle-status { padding:8px 10px; margin:5px 0; }
+    .battle-status > .panel-title h2 { font-size:.82rem; }
+    .battle-status .message { margin:3px 0 5px; font-size:.76rem; }
+    .battle-status .progression { margin:2px 0 5px; }
+    .question-panel { padding:8px 10px; margin:5px 0; }
     h2 { margin:0; font-size:.95rem; }
     .phase {
       border-radius:999px; padding:4px 8px; background:#233a56;
@@ -68,9 +73,9 @@
       border-radius:8px; background:#15243a; font-size:1.05rem; font-weight:900;
     }
     .slot.filled { color:#86efac; border-color:#277c5a; background:#123629; }
-    .arena-wrap { padding:9px; }
+    .arena-wrap { padding:10px; margin:6px 0; }
     .arena {
-      position:relative; height:clamp(220px, 35svh, 310px); overflow:hidden; border-radius:14px;
+      position:relative; height:clamp(320px, 48svh, 460px); overflow:hidden; border-radius:14px;
       border:1px solid #344963;
       background:
         linear-gradient(180deg, rgba(20,45,73,.75), rgba(13,25,43,.96)),
@@ -85,19 +90,20 @@
     .lane-lines { position:absolute; inset:0; display:grid; grid-template-columns:repeat(5,1fr); pointer-events:none; }
     .lane-lines span { border-right:1px solid rgba(148,173,202,.12); }
     .lane-lines span:last-child { border:0; }
-    .catch-line {
-      position:absolute; left:0; right:0; top:calc(100% - 48px); border-top:1px dashed rgba(250,204,21,.5);
-      color:#fde68a; font-size:.62rem; text-align:right; padding:3px 7px 0;
-      pointer-events:none;
-    }
-    .falling-letter {
-      position:absolute; z-index:2; display:grid; place-items:center;
-      width:38px; height:38px; margin-left:-19px; border-radius:11px;
-      border:1px solid #7dd3fc; border-bottom:4px solid #3386aa;
-      background:linear-gradient(145deg,#164e63,#15334a);
-      color:#f0f9ff; font-size:1.2rem; font-weight:950;
+    .lane-letter {
+      position:absolute; z-index:2; top:50%; display:grid; place-items:center;
+      width:56px; height:60px; margin-left:-28px; margin-top:-30px;
+      border:1px solid #7dd3fc; border-bottom:5px solid #3386aa;
+      border-radius:12px; background:linear-gradient(145deg,#164e63,#15334a);
+      color:#f0f9ff; font-size:1.55rem; font-weight:950;
       box-shadow:0 5px 15px rgba(0,0,0,.28);
       pointer-events:none;
+    }
+    .lane-letter-ready {
+      border-color:#facc15; border-bottom-color:#ca8a04;
+      background:linear-gradient(145deg,#665016,#3d3219);
+      box-shadow:0 0 0 3px rgba(250,204,21,.25),0 5px 18px rgba(0,0,0,.35);
+      transform:scale(1.08);
     }
     .player {
       position:absolute; z-index:3; bottom:7px; width:44px; height:44px;
@@ -134,7 +140,6 @@
     .skill-button strong { font-size:.78rem; }
     .skill-button span { color:#c5d2e5; font-size:.65rem; font-weight:650; }
     .enemy-attack-timer { margin-top:6px; color:#fcd34d; font-size:.67rem; font-weight:850; font-variant-numeric:tabular-nums; }
-    .lane-letter-ready { border-color:#facc15; border-bottom-color:#ca8a04; box-shadow:0 0 0 2px rgba(250,204,21,.28),0 5px 15px rgba(0,0,0,.28); }
     .stats { display:flex; justify-content:center; gap:16px; color:#a9bad0; font-size:.77rem; }
     .progression { margin-top:5px; color:#93c5fd; font-size:.68rem; font-weight:750; }
     .shop-panel[hidden] { display:none; }
@@ -165,6 +170,12 @@
       h1 { margin:2px 0 0; font-size:1.35rem; }
       .subtitle { margin:0 0 5px; font-size:.72rem; line-height:1.25; }
       .panel { padding:7px 8px; margin:5px 0; border-radius:12px; }
+      .battle-status { padding:6px 8px; margin:4px 0; }
+      .battle-status .message { margin:2px 0 4px; font-size:.68rem; line-height:1.2; }
+      .battle-status .progression { margin:1px 0 4px; font-size:.6rem; }
+      .question-panel { padding:6px 8px; margin:4px 0; }
+      .enemy-traits { max-height:1em; overflow:hidden; font-size:.58rem; margin-top:2px; }
+      .enemy-attack-timer { margin-top:2px; font-size:.6rem; }
       .panel-title h2 { font-size:.82rem; }
       .phase { padding:3px 7px; font-size:.66rem; }
       .message { margin:4px 0 6px; font-size:.72rem; line-height:1.3; }
@@ -187,9 +198,14 @@
       .shop-items { gap:5px; }
       .shop-items button { min-height:35px; padding:6px 5px; font-size:.65rem; }
 
-      .arena-wrap { padding:6px; }
-      .arena { height:clamp(210px, 34svh, 270px); min-height:210px; }
-      .falling-letter { width:34px; height:34px; margin-left:-17px; font-size:1.05rem; }
+      .arena-wrap { padding:7px; }
+      .arena { height:clamp(290px, 46svh, 390px); min-height:290px; }
+      .vitals { gap:5px; }
+      .vital { padding:5px 6px; }
+      .vital-head { margin-bottom:3px; font-size:.62rem; }
+      .bar { height:5px; }
+      .stats { gap:10px; font-size:.62rem; }
+      .lane-letter { width:48px; height:52px; margin-left:-24px; margin-top:-26px; font-size:1.28rem; }
       .player { width:40px; height:40px; margin-left:-20px; font-size:1.55rem; }
       .controls { gap:7px; margin-top:5px; }
       button { min-height:35px; padding:7px 10px; font-size:.82rem; }
@@ -207,8 +223,9 @@
     }
     @media (max-height:700px) and (max-width:480px) {
       .subtitle { display:none; }
-      .arena { height:clamp(190px, 31svh, 225px); min-height:190px; }
+      .arena { height:clamp(250px, 40svh, 330px); min-height:250px; }
       .howto { font-size:.6rem; }
+      .enemy-traits { max-height:1em; overflow:hidden; }
     }
   </style>
 </head>
@@ -219,9 +236,9 @@
       <a class="back-link" href="./index.html">STEP 1 の確認画面へ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 14 — 5レーン選択式アクションバトル</p>
+    <p class="subtitle">STEP 14 — 5レーン固定文字バトル</p>
 
-    <section class="panel">
+    <section class="panel battle-status">
       <div class="panel-title">
         <h2>バトル状況</h2>
         <span class="phase" id="phaseBadge" data-phase="title">開始前</span>
@@ -243,26 +260,6 @@
       </div>
     </section>
 
-    <section class="panel" aria-label="アイテムと装備">
-      <div class="panel-title">
-        <h2>🎒 所持品・装備</h2>
-        <strong class="inventory-value" id="equipmentSummary">ATK 1 · DEF 0</strong>
-      </div>
-      <div class="inventory-items" id="inventoryItems"></div>
-    </section>
-
-    <section class="panel" aria-label="セーブデータ">
-      <div class="panel-title">
-        <h2>💾 セーブデータ</h2>
-        <span class="inventory-label">自動保存あり</span>
-      </div>
-      <div class="save-actions">
-        <button id="saveNowButton">今すぐ保存</button>
-        <button id="loadSaveButton">ロード</button>
-        <button id="clearSaveButton">保存データ削除</button>
-      </div>
-      <p class="save-message" id="saveMessage" aria-live="polite">ゲームの進行は自動で保存されるよ。</p>
-    </section>
 
     <section class="panel shop-panel" id="shopPanel" hidden aria-label="ショップ">
       <div class="panel-title" style="grid-column:1 / -1">
@@ -273,7 +270,7 @@
       <div class="shop-items" id="shopItems"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel question-panel">
       <div class="question">
         <div class="question-label" id="questionLabel">この日本語の英単語を完成させよう</div>
         <div class="japanese" id="japanesePrompt">りんご</div>
@@ -305,14 +302,14 @@
     </section>
 
     <section class="panel arena-wrap">
-      <div class="arena" id="arena" aria-label="アルファベットを集めるゲーム画面">
+      <div class="arena" id="arena" aria-label="5レーンの固定アルファベット選択画面">
         <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
         <div id="lettersLayer"></div>
-        <div class="catch-line" aria-hidden="true">決定ライン</div>
+        
         <div class="player" id="playerSprite" aria-label="プレイヤー">🧙</div>
         <div class="arena-cover" id="arenaCover">
           <div class="cover-title" id="coverTitle">冒険の準備はできた？</div>
-          <div class="cover-note" id="coverNote">左右に移動して、必要なアルファベットを集めよう。</div>
+          <div class="cover-note" id="coverNote">左右に移動して、必要な文字のレーンで決定しよう。</div>
         </div>
       </div>
       <div class="controls">
@@ -320,13 +317,33 @@
         <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
-      <p class="howto">操作：← → / A D でレーン移動。必要な文字が決定ラインに来たら「決定」を押そう。敵は時間が経つと攻撃してくるよ。技を選ぶと単語の長さと威力が変わるよ。</p>
+      <p class="howto">操作：← → / A D でレーン移動。必要な文字を選んで「決定」。正解・ミスのあとに文字が入れ替わるよ。文字は時間で変わらず、敵は時間経過で攻撃してくるよ。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
       </div>
     </section>
 
+    <section class="panel" aria-label="アイテムと装備">
+      <div class="panel-title">
+        <h2>🎒 所持品・装備</h2>
+        <strong class="inventory-value" id="equipmentSummary">ATK 1 · DEF 0</strong>
+      </div>
+      <div class="inventory-items" id="inventoryItems"></div>
+    </section>
+
+    <section class="panel" aria-label="セーブデータ">
+      <div class="panel-title">
+        <h2>💾 セーブデータ</h2>
+        <span class="inventory-label">自動保存あり</span>
+      </div>
+      <div class="save-actions">
+        <button id="saveNowButton">今すぐ保存</button>
+        <button id="loadSaveButton">ロード</button>
+        <button id="clearSaveButton">保存データ削除</button>
+      </div>
+      <p class="save-message" id="saveMessage" aria-live="polite">ゲームの進行は自動で保存されるよ。</p>
+    </section>
     <p class="footer">WORD FALL QUEST · STEP 14 · FIVE-LANE ACTION BATTLE</p>
   </main>
 
@@ -337,7 +354,6 @@
       getSpellingProgress,
       spawnLaneWave,
       movePlayer,
-      advanceLaneWave,
       canCollectCurrentLaneLetter,
       collectCurrentLaneLetter,
       selectChallengeForSkill,
@@ -362,7 +378,7 @@
     const combat = createCombatController(store);
     const dungeon = createDungeonController(store);
     const shop = createShopController(store, dungeon);
-    const TICK_MS = 40;
+    const TICK_MS = 100;
     const SPAWN_INTERVAL_MS = 900;
     const WAVE_RESPAWN_INTERVAL_MS = 250;
     const ENEMY_ATTACK_INTERVAL_MS = 9000;
@@ -402,16 +418,18 @@
         selectedSkillId = extra.selectedSkillId ??
           (awaitingSkill ? null : "quick-strike");
         enemyAttackCount = 0;
-        if (wordState.phase === "active" && wordState.letters.length > 0) {
+        if (wordState.phase === "active") {
           const savedLetters = wordState.letters;
           const looksLikeLaneWave =
             savedLetters.length === wordState.laneCount &&
             new Set(savedLetters.map((letter) => letter.lane)).size === wordState.laneCount &&
-            savedLetters.every((letter) => Math.abs(letter.y - savedLetters[0].y) < 0.01) &&
             savedLetters.filter((letter) => letter.role === "needed").length === 1;
           if (!looksLikeLaneWave) {
             wordState = { ...wordState, letters: [] };
             spawnElapsed = 0;
+          }
+          if (wordState.letters.length === 0) {
+            wordState = spawnLaneWave(wordState);
           }
         }
       },
@@ -559,10 +577,7 @@
       $("leftButton").disabled = !canControl;
       $("rightButton").disabled = !canControl;
       $("confirmButton").disabled = !(
-        canControl && canCollectCurrentLaneLetter(wordState, {
-          catchLine: ($("arena").clientHeight || 270) - 48,
-          window: 42,
-        })
+        canControl && canCollectCurrentLaneLetter(wordState)
       );
       $("startButton").hidden = active;
       $("startButton").textContent =
@@ -642,15 +657,13 @@
 
       const layer = $("lettersLayer");
       layer.replaceChildren();
-      const catchLine = ($("arena").clientHeight || 270) - 48;
       for (const letter of wordState.letters) {
         const node = document.createElement("div");
-        const isSelectedAndReady = letter.lane === wordState.playerLane &&
-          Math.abs(letter.y - catchLine) <= 42;
-        node.className = "falling-letter" + (isSelectedAndReady ? " lane-letter-ready" : "");
+        const isSelected = letter.lane === wordState.playerLane;
+        node.className = "lane-letter" + (isSelected ? " lane-letter-ready" : "");
         node.textContent = letter.value;
         node.style.left = (((letter.lane + 0.5) / wordState.laneCount) * 100) + "%";
-        node.style.top = letter.y + "px";
+        node.style.top = "50%";
         node.setAttribute("aria-hidden", "true");
         layer.append(node);
       }
@@ -736,17 +749,19 @@
 
     function confirmLaneLetter() {
       if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
-      const boardHeight = $("arena").clientHeight || 270;
-      const picked = collectCurrentLaneLetter(wordState, {
-        catchLine: boardHeight - 64,
-        window: 42,
-      });
+      const picked = collectCurrentLaneLetter(wordState);
       if (picked.result === "waiting" || !picked.event) return;
       wordState = picked.state;
       if (picked.event.type === "word-complete") {
         picked.event.skillId = selectedSkillId;
       }
       handleWordEvents([picked.event]);
+      if (
+        wordState.phase === "active" &&
+        store.getState().phase === GAME_PHASE.BATTLE
+      ) {
+        wordState = spawnLaneWave(wordState);
+      }
       render();
       saveProgress();
     }
@@ -921,42 +936,26 @@
 
     setInterval(() => {
       const gameState = store.getState();
-      if (gameState.phase !== GAME_PHASE.BATTLE ||
-          wordState.phase !== "active" || awaitingSkill) return;
-
-      const boardHeight = $("arena").clientHeight || 270;
-      wordState = advanceLaneWave(wordState, TICK_MS, {
-        boardHeight,
-        catchLine: boardHeight - 64,
-        window: 42,
-      }).state;
-
-      if (wordState.letters.length === 0) {
-        spawnElapsed += TICK_MS;
-        if (spawnElapsed >= WAVE_RESPAWN_INTERVAL_MS) {
-          wordState = spawnLaneWave(wordState);
-          spawnElapsed = 0;
+      if (gameState.phase === GAME_PHASE.BATTLE &&
+          wordState.phase === "active" && !awaitingSkill) {
+        // The alphabet stays still. Only the enemy attack clock advances.
+        attackElapsed += TICK_MS;
+        const attackInterval = getEnemyAttackInterval(gameState);
+        if (attackElapsed >= attackInterval) {
+          attackElapsed = 0;
+          enemyAttackCount += 1;
+          const attack = combat.handle({
+            eventId: "timed-attack-" + gameState.battle.number + "-" + enemyAttackCount,
+            type: "timed-attack",
+          });
+          if (!attack.ignored) {
+            if (attack.damageTarget) flashDamage(attack.damageTarget);
+            setStatus(attack.message, attack.tone);
+            saveProgress();
+          }
         }
-      } else {
-        spawnElapsed = 0;
+        render();
       }
-
-      attackElapsed += TICK_MS;
-      const attackInterval = getEnemyAttackInterval(gameState);
-      if (attackElapsed >= attackInterval) {
-        attackElapsed = 0;
-        enemyAttackCount += 1;
-        const attack = combat.handle({
-          eventId: "timed-attack-" + gameState.battle.number + "-" + enemyAttackCount,
-          type: "timed-attack",
-        });
-        if (!attack.ignored) {
-          if (attack.damageTarget) flashDamage(attack.damageTarget);
-          setStatus(attack.message, attack.tone);
-          saveProgress();
-        }
-      }
-      render();
     }, TICK_MS);
   </script>
 </body>

@@ -2,8 +2,8 @@
  * WORD FALL QUEST - Word battle engine (Step 2)
  *
  * This module is independent from the game HP/state core.
- * It owns vocabulary, spelling progress, falling-letter creation,
- * lane movement, collision checks, and correct/incorrect pickup results.
+ * It owns vocabulary, spelling progress, fixed five-lane letter rows,
+ * lane movement, and correct/incorrect letter-selection results.
  */
 
 import { SKILL_DEFINITIONS } from "./skills.js";
@@ -89,7 +89,7 @@ export function isValidSavedWordBattleState(saved) {
       typeof letter.value !== "string" || !/^[A-Z]$/.test(letter.value) ||
       !Number.isInteger(letter.lane) || letter.lane < 0 || letter.lane >= saved.laneCount ||
       typeof letter.y !== "number" || !Number.isFinite(letter.y) ||
-      typeof letter.speed !== "number" || !Number.isFinite(letter.speed) || letter.speed <= 0 ||
+      typeof letter.speed !== "number" || !Number.isFinite(letter.speed) || letter.speed < 0 ||
       (letter.role !== undefined && typeof letter.role !== "string")
     ) return false;
     ids.add(letter.id);
@@ -105,7 +105,7 @@ export function restoreWordBattleState(saved) {
   if (!isValidSavedWordBattleState(saved)) return null;
   return {
     ...saved,
-    letters: saved.letters.map((letter) => ({ ...letter })),
+    letters: saved.letters.map((letter) => ({ ...letter, y: 0, speed: 0 })),
   };
 }
 
@@ -289,18 +289,16 @@ export function selectChallengeForSkill(
 }
 
 /**
- * Creates one moving row across all five lanes. Exactly one lane contains
+ * Creates one fixed row across all five lanes. Exactly one lane contains
  * the next required letter; the other lanes contain distinct distractors.
+ * The row is regenerated only after the player confirms a letter.
  */
 export function spawnLaneWave(
   state,
-  { random = Math.random, speed = 120 } = {},
+  { random = Math.random } = {},
 ) {
   if (state.phase !== WORD_BATTLE_PHASE.ACTIVE || state.letters.length > 0) {
     return state;
-  }
-  if (typeof speed !== "number" || !Number.isFinite(speed) || speed <= 0) {
-    throw new RangeError("speedは正の数値にしてください。");
   }
 
   const expected = getExpectedLetter(state);
@@ -326,8 +324,8 @@ export function spawnLaneWave(
       value,
       role,
       lane,
-      y: -36,
-      speed,
+      y: 0,
+      speed: 0,
     });
   }
 
@@ -338,64 +336,33 @@ export function spawnLaneWave(
   };
 }
 
-/** Move all letters in the current row at the same speed. */
-export function advanceLaneWave(
-  state,
-  deltaMs,
-  { boardHeight = 270, catchLine = boardHeight - 48, window = 42 } = {},
-) {
-  if (state.phase !== WORD_BATTLE_PHASE.ACTIVE || state.letters.length === 0) {
-    return { state, expired: false };
-  }
+/**
+ * Legacy compatibility hook. Five-lane letters are now fixed in place:
+ * elapsed time never moves, removes, or replaces them.
+ */
+export function advanceLaneWave(state, deltaMs) {
   if (!Number.isFinite(deltaMs) || deltaMs < 0) {
     throw new RangeError("deltaMsは0以上の数値にしてください。");
   }
-  if (
-    !Number.isFinite(boardHeight) || boardHeight <= 0 ||
-    !Number.isFinite(catchLine) || catchLine < 0 || catchLine >= boardHeight ||
-    !Number.isFinite(window) || window < 0
-  ) {
-    throw new RangeError("レーンの移動範囲が正しくありません。");
-  }
-
-  const letters = state.letters.map((letter) => ({
-    ...letter,
-    y: letter.y + letter.speed * (deltaMs / 1000),
-  }));
-  if (letters[0].y > catchLine + window) {
-    return { state: { ...state, letters: [] }, expired: true };
-  }
-  return { state: { ...state, letters }, expired: false };
+  return { state, expired: false };
 }
 
-/** True when the selected lane has a letter inside the decision window. */
-export function canCollectCurrentLaneLetter(
-  state,
-  { catchLine = 222, window = 42 } = {},
-) {
+/** True when the selected lane contains a letter to confirm. */
+export function canCollectCurrentLaneLetter(state) {
   if (state.phase !== WORD_BATTLE_PHASE.ACTIVE) return false;
-  return state.letters.some((letter) =>
-    letter.lane === state.playerLane &&
-    Math.abs(letter.y - catchLine) <= window,
-  );
+  return state.letters.some((letter) => letter.lane === state.playerLane);
 }
 
 /**
  * Explicitly collect the letter in the player's lane after the player presses
  * the decision button. The whole row disappears after one decision.
  */
-export function collectCurrentLaneLetter(
-  state,
-  { catchLine = 206, window = 42 } = {},
-) {
-  if (!canCollectCurrentLaneLetter(state, { catchLine, window })) {
+export function collectCurrentLaneLetter(state) {
+  if (!canCollectCurrentLaneLetter(state)) {
     return { state, result: "waiting", event: null, letter: null };
   }
 
-  const letter = state.letters.find((item) =>
-    item.lane === state.playerLane &&
-    Math.abs(item.y - catchLine) <= window,
-  );
+  const letter = state.letters.find((item) => item.lane === state.playerLane);
   const picked = collectLetter(state, letter.id);
   const nextState = { ...picked.state, letters: [] };
   const event = picked.result === "ignored" ? null : {
