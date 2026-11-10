@@ -1,6 +1,7 @@
 /**
  * WORD FALL QUEST - Data-driven enemy and ability catalog.
  */
+import { GAME_CONFIG } from "./game-config.js";
 const defineEnemy=(definition)=>Object.freeze({...definition,abilities:Object.freeze([...(definition.abilities??[])])});
 export const ENEMY_ABILITY_DEFINITIONS=Object.freeze({
   swift:Object.freeze({id:"swift",name:"すばやい反撃",description:"間違った文字への反撃が1強くなる。",counterAttackBonus:1}),
@@ -42,7 +43,7 @@ export function createEnemy(enemyId,{floor=1}={}){
   if(!Number.isSafeInteger(floor)||floor<1)throw new TypeError("floorは1以上の整数にしてください。");
   const difficulty=floor-1;
   return {...definition,abilities:[...definition.abilities],isBoss:definition.isBoss===true,
-    maxHp:definition.maxHp+difficulty,
-    attackPower:definition.attackPower+Math.floor(difficulty/3),
-    experienceReward:definition.experienceReward+difficulty*2};
+    maxHp:definition.maxHp+difficulty*GAME_CONFIG.enemyScaling.hpPerFloor,
+    attackPower:definition.attackPower+Math.floor(difficulty/GAME_CONFIG.enemyScaling.attackPowerEveryFloors)*GAME_CONFIG.enemyScaling.attackPowerPerStep,
+    experienceReward:definition.experienceReward+difficulty*GAME_CONFIG.enemyScaling.experiencePerFloor};
 }

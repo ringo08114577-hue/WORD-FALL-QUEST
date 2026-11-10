@@ -4,6 +4,7 @@
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createEnemy, getFloorEnemyIds } from "./enemies.js";
+import { getDungeonFloorReward } from "./game-config.js";
 const LEGACY_ENEMY_IDS=Object.freeze(["slime","bat","goblin"]);
 const CURRENT_ENCOUNTER_SET_VERSION=2;
 function getEncounterIds(floor,version){return version===1?[...LEGACY_ENEMY_IDS]:getFloorEnemyIds(floor);}
@@ -37,7 +38,7 @@ export function createDungeonController(store){
       const progress=this.getProgress();
       if(!progress.floorCleared)return {claimed:false,reason:"floor-not-cleared"};
       if(rewardClaimed)return {claimed:false,reason:"already-claimed"};
-      const itemId=floor%2===1?"small-potion":"large-potion",quantity=1,gold=10+floor*5;
+      const {itemId,quantity,gold}=getDungeonFloorReward(floor);
       store.dispatch({type:GAME_ACTION.ADD_ITEM,itemId,quantity});
       store.dispatch({type:GAME_ACTION.ADD_GOLD,amount:gold});
       rewardClaimed=true;

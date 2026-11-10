@@ -1,5 +1,6 @@
 import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, EQUIPMENT_SLOTS, getEquipmentBonuses, createInitialInventory } from "./items.js";
 import { ENEMY_ABILITY_DEFINITIONS } from "./enemies.js";
+import { GAME_CONFIG } from "./game-config.js";
 
 /**
  * WORD FALL QUEST - Game state core
@@ -41,12 +42,12 @@ function isNonNegativeInteger(value) {
   return Number.isSafeInteger(value) && value >= 0;
 }
 
-/** Required EXP grows by 10 for each current level. */
+/** Required EXP is derived from the centralized progression balance. */
 export function experienceRequiredForNextLevel(level) {
   if (!isPositiveInteger(level)) {
     throw new TypeError("levelは正の整数にしてください。");
   }
-  return level * 10;
+  return level * GAME_CONFIG.progression.experiencePerLevel;
 }
 
 function normalizeEnemy(enemy) {
@@ -166,8 +167,8 @@ function addPlayerExperience(player, amount, inventory) {
  * Initial HP remains 3 to match the current prototype baseline.
  */
 export function createInitialGameState({
-  playerMaxHp = 3,
-  playerAttackPower = 1,
+  playerMaxHp = GAME_CONFIG.player.startingMaxHp,
+  playerAttackPower = GAME_CONFIG.player.startingAttackPower,
 } = {}) {
   if (!isPositiveInteger(playerMaxHp) || !isPositiveInteger(playerAttackPower)) {
     throw new TypeError("playerMaxHpとplayerAttackPowerは正の整数にしてください。");
