@@ -28,6 +28,6 @@ test("mobile layout retains a single-column fallback", () => {
   assert.match(html, /\.battle-layout\s*\{\s*display:\s*grid/);
   assert.match(html, /@media\s*\(max-width:\s*480px\)/);
   assert.match(html, /\.battle-layout\s*\{\s*display:flex;\s*flex-direction:column/);
-  assert.match(html, /\.game-column,\\s*\\.info-column\\s*\\{\\s*display:contents/);
+  assert.match(html, /\.game-column,\s*\.info-column\s*\{\s*display:contents/);
   assert.match(html, /\.arena\s*\{\s*height:\s*clamp\(290px/);
 });
