@@ -71,7 +71,7 @@ test("lane movement buttons respond to touch pointer presses and remain keyboard
   assert.match(html, /button\.addEventListener\("click", \(event\) => \{\s*if \(event\.detail === 0\) move\(direction\);/);
   assert.match(html, /bindLaneMoveButton\("leftButton", -1\)/);
   assert.match(html, /bindLaneMoveButton\("rightButton", 1\)/);
-  assert.ok(html.includes(".move-button { flex:1; min-width:0; min-height:44px; touch-action:manipulation;"));
+  assert.ok(html.includes(".move-button { flex:1; min-width:0; min-height:52px; padding:9px 8px; font-size:.88rem; touch-action:manipulation;"));
 });
 
 
