@@ -1,0 +1,21 @@
+/** Content catalog: Japanese prompts and their English spellings. */
+export const WORD_CHALLENGES = Object.freeze([
+  Object.freeze({ id: "apple", japanese: "りんご", word: "APPLE" }),
+  Object.freeze({ id: "dog", japanese: "いぬ", word: "DOG" }),
+  Object.freeze({ id: "cat", japanese: "ねこ", word: "CAT" }),
+  Object.freeze({ id: "book", japanese: "ほん", word: "BOOK" }),
+  Object.freeze({ id: "water", japanese: "みず", word: "WATER" }),
+  Object.freeze({ id: "sun", japanese: "たいよう", word: "SUN" }),
+  Object.freeze({ id: "bird", japanese: "とり", word: "BIRD" }),
+  Object.freeze({ id: "fish", japanese: "さかな", word: "FISH" }),
+  Object.freeze({ id: "green", japanese: "みどり", word: "GREEN" }),
+  Object.freeze({ id: "tiger", japanese: "とら", word: "TIGER" }),
+  Object.freeze({ id: "orange", japanese: "オレンジ", word: "ORANGE" }),
+  Object.freeze({ id: "planet", japanese: "わくせい", word: "PLANET" }),
+  Object.freeze({ id: "monkey", japanese: "さる", word: "MONKEY" }),
+  Object.freeze({ id: "morning", japanese: "あさ", word: "MORNING" }),
+  Object.freeze({ id: "library", japanese: "としょかん", word: "LIBRARY" }),
+  Object.freeze({ id: "journey", japanese: "たび", word: "JOURNEY" }),
+  Object.freeze({ id: "elephant", japanese: "ぞう", word: "ELEPHANT" }),
+  Object.freeze({ id: "notebook", japanese: "ノート", word: "NOTEBOOK" }),
+]);

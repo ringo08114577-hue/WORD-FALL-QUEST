@@ -183,3 +183,24 @@ test("旧セーブの進行中フロアは旧編成で継続し、次の階か�
   assert.equal(store.getState().enemy.id, "goblin");
   assert.equal(dungeon.getSaveData().encounterSetVersion, 2);
 });
+
+
+test("ダンジョンコントローラーはカタログIDを受け取り、セーブにIDを保持する", () => {
+  const store = createGameStore();
+  assert.throws(
+    () => createDungeonController(store, { dungeonId: "unknown-dungeon" }),
+    RangeError,
+  );
+
+  const dungeon = createDungeonController(store, { dungeonId: "forest-ruins" });
+  assert.equal(dungeon.getDungeonInfo().id, "forest-ruins");
+  assert.equal(dungeon.getDungeonInfo().name, "はじまりの森");
+  dungeon.start();
+  assert.equal(dungeon.getSaveData().dungeonId, "forest-ruins");
+
+  const legacy = dungeon.getSaveData();
+  delete legacy.dungeonId;
+  assert.equal(dungeon.isValidSaveData(legacy), true);
+  assert.equal(dungeon.restoreSaveData(legacy), true);
+  assert.equal(dungeon.getDungeonInfo().id, "forest-ruins");
+});

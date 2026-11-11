@@ -1,0 +1,54 @@
+# WORD FALL QUEST — コンテンツ追加ガイド
+
+このゲームは **データ（src/data/）** と **処理（src/直下）** を分けています。
+新しい装備・敵・ダンジョン・技・英単語を追加するときは、まずデータ側のカタログを編集します。
+
+## ファイルの役割
+
+```text
+src/data/
+  items.js       アイテム・装備・価格・初期所持数
+  enemies.js     敵の種類・能力
+  dungeons.js    ダンジョン・階層ごとの敵編成・報酬
+  skills.js      プレイヤーの技
+  words.js       日本語のお題・英単語
+src/
+  items.js       装備ボーナス・初期所持品の計算
+  enemies.js     敵生成・階層補正・能力効果
+  dungeon.js     ダンジョン進行・セーブ復元
+  skills.js      技データの検索
+  word-battle.js スペル進行・レーン操作
+  game-state.js  プレイヤー・敵・所持品の状態
+  combat.js      戦闘イベント・ダメージ処理
+  save-system.js セーブ・ロード・旧データ移行
+```
+
+## アイテム・装備
+`src/data/items.js` の `ITEM_DEFINITIONS` に追加します。
+- 装備品は `slot` を指定（weapon / shield / armor / accessory）。
+- `attackBonus` / `defenseBonus` は必要なものだけ指定。
+- `shopPrice` を指定するとショップに自動登録。
+- `startingQuantity` を指定すると新規ゲームの初期所持数になる。
+- 回復薬は現在の形式（type: "consumable", effect: "heal", healAmount）で登録。
+
+## 敵と特殊能力
+`src/data/enemies.js` の `ENEMY_DEFINITIONS` に追加します。
+`id`、`name`、`maxHp`、`attackPower`、`experienceReward`、`abilities` を指定し、ボスなら `isBoss: true`。
+能力IDは同ファイルの `ENEMY_ABILITY_DEFINITIONS` に登録します。
+現在の効果キーは `counterAttackBonus`、`damageReduction`、`defensePiercing`。
+新しい種類の効果を増やす場合だけ、処理側の `combat.js` も変更します。
+
+## ダンジョンと階層
+`src/data/dungeons.js` の `DUNGEON_DEFINITIONS` に新しいIDで追加します。
+`encounterSets` は階層ごとの敵ID配列で、最後まで行くと先頭へ戻ります。
+`reward` にゴールドとアイテム報酬を指定します。参照する敵・アイテムIDは各カタログに登録済みである必要があります。
+ダンジョンを起動するときは `createDungeonController(store, { dungeonId: "追加したID" })` を使います。
+現在のゲーム画面は「はじまりの森」を初期ダンジョンにしています。ダンジョン選択画面は今後のUIステップで追加できます。
+セーブにはダンジョンIDを記録し、古いセーブ（IDなし）は「はじまりの森」として復元します。
+
+## 技と英単語
+- 技：`src/data/skills.js` に追加。対応する文字数の英単語が必要です。
+- お題：`src/data/words.js` に `id`、`japanese`、大文字の `word` を追加。
+
+## 追加後の確認
+`npm test` を実行します。カタログ間のID参照や技に合う単語が登録されているかも自動確認します。
