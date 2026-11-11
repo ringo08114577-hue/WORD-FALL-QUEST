@@ -98,10 +98,10 @@ test("enemy attack countdown shows a visible three-second warning and progress m
 
 test("battle can be paused and resumed from touch controls without showing start-game", () => {
   assert.match(html, /id="pauseButton" hidden aria-pressed="false">一時停止/);
-  assert.match(html, /\$("pauseButton")\.textContent = paused \? "再開する" : "一時停止"/);
-  assert.match(html, /\$("startButton")\.hidden = inBattle/);
+  assert.match(html, /\$\("pauseButton"\)\.textContent = paused \? "再開する" : "一時停止"/);
+  assert.match(html, /\$\("startButton"\)\.hidden = inBattle/);
   assert.match(html, /state\.phase === GAME_PHASE\.PAUSED[\s\S]*?一時停止中/);
-  assert.match(html, /\$("pauseButton")\.addEventListener\("click", toggleBattlePause\)/);
+  assert.match(html, /\$\("pauseButton"\)\.addEventListener\("click", toggleBattlePause\)/);
 });
 
 test("leaving the battle tab automatically pauses and preserves the enemy timer", () => {
