@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101827">
-  <title>WORD FALL QUEST | Step 14</title>
+  <title>WORD FALL QUEST | Battle Layout</title>
   <style>
     :root {
       color-scheme: dark;
@@ -161,6 +161,71 @@
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
+
+    /* Desktop and tablet battle composition: English gameplay owns the wide column. */
+    @media (min-width: 720px) {
+      body { padding: 18px 20px 28px; }
+      main { width: min(100%, 1500px); }
+      .battle-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(235px, .85fr);
+        gap: 14px;
+        align-items: start;
+      }
+      .game-column, .info-column { min-width: 0; }
+      .game-column > .panel { margin: 0 0 12px; }
+      .info-column > .panel { margin: 0 0 12px; }
+      .question-panel { padding: 14px 16px; }
+      .question { padding: 2px 0 10px; }
+      .question-label { font-size: .82rem; }
+      .japanese { font-size: clamp(2rem, 3vw, 2.8rem); margin: 8px 0; }
+      .spelling { gap: 8px; margin: 12px 0; }
+      .slot { width: 42px; height: 48px; font-size: 1.35rem; }
+      .stats { font-size: .88rem; }
+      .skill-panel { padding: 14px 16px; }
+      .skill-options { gap: 10px; }
+      .skill-button { min-height: 76px; }
+      .skill-button strong { font-size: .9rem; }
+      .skill-button span { font-size: .72rem; }
+      .arena-wrap { padding: 12px; }
+      .arena { height: clamp(390px, 58svh, 680px); min-height: 390px; }
+      .lane-letter { width: 66px; height: 72px; margin-left: -33px; margin-top: -36px; font-size: 1.8rem; }
+      .player { width: 52px; height: 52px; margin-left: -26px; font-size: 2.1rem; }
+      .controls { gap: 12px; margin-top: 12px; }
+      .move-button { min-width: 120px; min-height: 48px; }
+      .howto { font-size: .82rem; margin-top: 12px; }
+      .action-row { margin-top: 12px; }
+      .battle-status { padding: 14px; }
+      .battle-status > .panel-title h2 { font-size: 1rem; }
+      .battle-status .message { font-size: .82rem; line-height: 1.5; }
+      .battle-status .progression { font-size: .76rem; }
+      .vitals { display: flex; flex-direction: column; gap: 10px; }
+      .vital { padding: 12px; }
+      .vital.enemy-vital {
+        order: -1;
+        border: 1px solid rgba(249, 115, 22, .45);
+        background: linear-gradient(145deg, rgba(75, 35, 24, .52), #111d30);
+      }
+      .vital-head { font-size: .86rem; }
+      .hp-text { font-size: .84rem; }
+      .bar { height: 11px; }
+      .enemy-traits { font-size: .75rem; }
+      .enemy-attack-timer { font-size: .78rem; }
+      .inventory-items, .shop-items { grid-template-columns: 1fr; }
+      .inventory-row { padding: 10px; }
+      .inventory-value { font-size: .8rem; }
+      .inventory-row button { min-height: 38px; font-size: .74rem; }
+      .shop-panel { grid-template-columns: 1fr; padding: 14px; }
+      .shop-note { font-size: .76rem; }
+      .shop-items button { min-height: 42px; }
+      .save-actions { flex-direction: column; }
+      .save-actions button { width: 100%; }
+    }
+    @media (min-width: 1200px) {
+      .battle-layout { grid-template-columns: minmax(0, 1.85fr) minmax(290px, .8fr); gap: 18px; }
+      .arena { height: clamp(460px, 62svh, 720px); }
+      .info-column > .panel { padding: 16px; }
+    }
     @media (max-width:480px) {
       body { min-height:100svh; padding:5px 7px 8px; }
       main { width:100%; }
@@ -236,8 +301,65 @@
       <a class="back-link" href="./index.html">冒険者ホームへ</a>
     </div>
     <h1>英単語バトル</h1>
-    <p class="subtitle">STEP 14 — 5レーン固定文字バトル</p>
+    <p class="subtitle">PC・タブレットでは英単語ゲームを広く表示。スマホでは縦並びで操作しやすく表示。</p>
 
+    <div class="battle-layout">
+      <div class="game-column">
+    <section class="panel question-panel">
+      <div class="question">
+        <div class="question-label" id="questionLabel">この日本語の英単語を完成させよう</div>
+        <div class="japanese" id="japanesePrompt">りんご</div>
+        <div class="spelling" id="spellingProgress" aria-label="スペルの進み具合"></div>
+      </div>
+      <div class="stats">
+        <span>スコア <strong id="score">0</strong></span>
+        <span>ミス <strong id="mistakes">0</strong></span>
+      </div>
+    </section>
+
+        <section class="panel skill-panel" id="skillPanel" hidden aria-label="技を選択">
+      <div class="panel-title">
+        <h2>⚔️ 次に使う技を選ぼう</h2>
+        <span class="phase">選択中は時間停止</span>
+      </div>
+      <div class="skill-options">
+        <button class="skill-button" data-skill="quick-strike">
+          <strong>すばやい斬撃</strong><span>3〜4文字 · 威力 ×1</span>
+        </button>
+        <button class="skill-button" data-skill="power-strike">
+          <strong>強力な斬撃</strong><span>5〜6文字 · 威力 ×2</span>
+        </button>
+        <button class="skill-button" data-skill="ultimate-strike">
+          <strong>必殺技</strong><span>7〜8文字 · 威力 ×3</span>
+        </button>
+      </div>
+      <p class="shop-note" style="grid-column:1 / -1">長い単語ほど強力。ただし完成まで敵の攻撃を受ける可能性があるよ。</p>
+    </section>
+
+    <section class="panel arena-wrap">
+      <div class="arena" id="arena" aria-label="5レーンの固定アルファベット選択画面">
+        <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+        <div id="lettersLayer"></div>
+        
+        <div class="player" id="playerSprite" aria-label="プレイヤー">🧙</div>
+        <div class="arena-cover" id="arenaCover">
+          <div class="cover-title" id="coverTitle">冒険の準備はできた？</div>
+          <div class="cover-note" id="coverNote">左右に移動して、必要な文字のレーンで決定しよう。</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="move-button" id="leftButton" aria-label="左へ移動" disabled>◀ 左へ</button>
+        <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
+        <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
+      </div>
+      <p class="howto">操作：← → / A D でレーン移動。必要な文字を選んで「決定」。正解・ミスのあとに文字が入れ替わるよ。文字は時間で変わらず、敵は時間経過で攻撃してくるよ。</p>
+      <div class="action-row">
+        <button class="primary start-button" id="startButton">冒険を始める</button>
+        <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
+      </div>
+    </section>
+      </div>
+      <aside class="info-column" aria-label="戦闘情報">
     <section class="panel battle-status">
       <div class="panel-title">
         <h2>バトル状況</h2>
@@ -251,7 +373,7 @@
           <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill" id="playerHpFill"></div></div>
           <div class="progression" id="playerProgression">LV.1 · EXP 0 / 10</div>
         </div>
-        <div class="vital">
+        <div class="vital enemy-vital">
           <div class="vital-head"><span id="enemyName">🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
           <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
           <div class="enemy-traits" id="enemyTraits" aria-live="polite"></div>
@@ -259,8 +381,6 @@
         </div>
       </div>
     </section>
-
-
     <section class="panel shop-panel" id="shopPanel" hidden aria-label="ショップ">
       <div class="panel-title" style="grid-column:1 / -1">
         <h2>🏪 フロア間ショップ</h2>
@@ -269,12 +389,28 @@
       <p class="shop-note">宝箱を開けたあと、次の階へ進む前に買い物できるよ。</p>
       <div class="shop-items" id="shopItems"></div>
     </section>
-
-    <section class="panel question-panel">
-      <div class="question">
-        <div class="question-label" id="questionLabel">この日本語の英単語を完成させよう</div>
-        <div class="japanese" id="japanesePrompt">りんご</div>
-        <div class="spelling" id="spellingProgress" aria-label="スペルの進み具合"></div>
+    <section class="panel" aria-label="アイテムと装備">
+      <div class="panel-title">
+        <h2>🎒 所持品・装備</h2>
+        <strong class="inventory-value" id="equipmentSummary">ATK 1 · DEF 0</strong>
+      </div>
+      <div class="inventory-items" id="inventoryItems"></div>
+    </section>
+    <section class="panel" aria-label="セーブデータ">
+      <div class="panel-title">
+        <h2>💾 セーブデータ</h2>
+        <span class="inventory-label">自動保存あり</span>
+      </div>
+      <div class="save-actions">
+        <button id="saveNowButton">今すぐ保存</button>
+        <button id="loadSaveButton">ロード</button>
+        <button id="clearSaveButton">保存データ削除</button>
+      </div>
+      <p class="save-message" id="saveMessage" aria-live="polite">ゲームの進行は自動で保存されるよ。</p>
+    </section>
+      </aside>
+    </div>
+elling" id="spellingProgress" aria-label="スペルの進み具合"></div>
       </div>
       <div class="stats">
         <span>スコア <strong id="score">0</strong></span>
