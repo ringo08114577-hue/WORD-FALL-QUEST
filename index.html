@@ -52,6 +52,15 @@
     .journey-title { font-weight:900; font-size:1.04rem; }
     .journey-copy { margin-top:5px; color:#a9bad0; font-size:.78rem; line-height:1.55; }
     .journey-progress { margin-top:8px; color:#93c5fd; font-weight:800; font-size:.74rem; }
+    .dungeon-selection-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:4px 0 13px; }
+    .dungeon-choice { display:flex; flex-direction:column; align-items:flex-start; gap:7px; min-width:0; min-height:126px; padding:12px; border:1px solid #314662; border-radius:12px; text-align:left; background:#111d30; }
+    .dungeon-choice[aria-pressed="true"] { border-color:#60a5fa; background:linear-gradient(145deg,rgba(30,64,110,.72),#111d30); box-shadow:0 0 0 2px rgba(96,165,250,.16); }
+    .dungeon-choice:disabled { opacity:.62; }
+    .dungeon-choice-title { font-size:.92rem; font-weight:900; line-height:1.3; }
+    .dungeon-choice-meta { color:#93c5fd; font-size:.68rem; font-weight:850; }
+    .dungeon-choice-description { color:#a9bad0; font-size:.7rem; line-height:1.45; font-weight:600; }
+    .dungeon-choice-status { margin-top:auto; color:#86efac; font-size:.68rem; font-weight:900; }
+    .dungeon-choice:not([aria-pressed="true"]) .dungeon-choice-status { color:#9eacc2; }
     .primary-link {
       display:inline-flex; justify-content:center; align-items:center; gap:6px;
       padding:12px 15px; min-height:46px; border-radius:12px;
@@ -93,6 +102,8 @@
       .mini-stat span { font-size:.58rem; }
       .mini-stat strong { font-size:.88rem; }
       .journey { grid-template-columns:1fr; }
+      .dungeon-selection-grid { grid-template-columns:1fr; gap:7px; }
+      .dungeon-choice { min-height:0; padding:10px; }
       .primary-link { width:100%; }
       .equipment-grid { gap:7px; }
       .equipment-card { padding:9px; }
@@ -142,7 +153,8 @@
     </section>
 
     <section class="panel">
-      <div class="panel-head"><h2>🧭 ダンジョン</h2><span class="muted" id="floorLabel">地下1階</span></div>
+      <div class="panel-head"><h2>🧭 冒険先を選ぶ</h2><span class="muted" id="dungeonSelectionHint">出発前に選択</span></div>
+      <div class="dungeon-selection-grid" id="dungeonSelectionGrid" aria-label="冒険するダンジョン"></div>
       <div class="journey">
         <div>
           <div class="journey-title" id="journeyTitle">冒険の準備</div>
@@ -185,6 +197,7 @@
     import { createDungeonController } from "./src/dungeon.js";
     import { createSaveController } from "./src/save-system.js";
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
+    import { DUNGEON_DEFINITIONS } from "./src/data/dungeons.js";
 
     const $ = (id) => document.getElementById(id);
     const store = createGameStore();
@@ -217,7 +230,7 @@
       return element;
     }
 
-    function getAdventureCopy(state, progress) {
+    function getAdventureCopy(state, progress, dungeonInfo) {
       if (state.phase === GAME_PHASE.BATTLE) {
         return ["探索の途中だよ", (state.enemy?.name ?? "敵") + "とのバトル中。続きから再開しよう。"];
       }
@@ -236,7 +249,33 @@
       if (state.phase === GAME_PHASE.DEFEAT) {
         return ["冒険が中断されたよ", "もう一度ダンジョンに挑戦しよう。"];
       }
-      return ["冒険の準備", "敵を倒して経験値とゴールドを集め、少しずつ強くなろう。"];
+      return [dungeonInfo.name + "に出発しよう", dungeonInfo.description];
+    }
+
+    function renderDungeons(state, progress) {
+      const root = $("dungeonSelectionGrid");
+      root.replaceChildren();
+      const selectedId = dungeon.getDungeonInfo().id;
+      const canSelect = state.phase === GAME_PHASE.TITLE && !progress.started;
+
+      for (const info of Object.values(DUNGEON_DEFINITIONS)) {
+        const selected = info.id === selectedId;
+        const button = createText("button", "dungeon-choice", "");
+        button.type = "button";
+        button.dataset.dungeonId = info.id;
+        button.disabled = !canSelect;
+        button.setAttribute("aria-pressed", String(selected));
+        button.append(createText("span", "dungeon-choice-title", (info.icon ?? "🗺️") + " " + info.name));
+        button.append(createText("span", "dungeon-choice-meta", (info.difficulty ?? "探索") + " · 推奨 LV." + (info.recommendedLevel ?? 1)));
+        button.append(createText("span", "dungeon-choice-description", info.description));
+        button.append(createText("span", "dungeon-choice-status",
+          selected ? "✓ 選択中" : canSelect ? "このダンジョンを選ぶ" : "冒険開始後は変更できません"));
+        root.append(button);
+      }
+
+      $("dungeonSelectionHint").textContent = canSelect
+        ? "出発前ならいつでも変更できるよ"
+        : dungeon.getDungeonInfo().name + "を探索中";
     }
 
     function renderEquipment(state) {
@@ -300,6 +339,7 @@
 
     function render(state) {
       const progress = dungeon.getProgress();
+      const dungeonInfo = dungeon.getDungeonInfo();
       $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("levelLabel").textContent = "LV." + state.player.level;
@@ -313,12 +353,12 @@
       $("totalXpValue").textContent = String(state.stats.totalExperienceEarned);
       $("battleCountValue").textContent = String(state.battle.number);
 
-      const adventureCopy = getAdventureCopy(state, progress);
+      const adventureCopy = getAdventureCopy(state, progress, dungeonInfo);
       $("journeyTitle").textContent = adventureCopy[0];
       $("journeyCopy").textContent = adventureCopy[1];
       $("heroMessage").textContent = state.enemy
         ? "現在の相手：" + state.enemy.name
-        : "最初のダンジョンが待っているよ。";
+        : dungeonInfo.name + "が待っているよ。";
       $("floorLabel").textContent = "地下" + progress.floor + "階";
       $("journeyProgress").textContent = progress.started
         ? progress.floor + "階 · " + progress.enemyNumber + " / " + progress.enemiesPerFloor + "体目"
@@ -336,9 +376,27 @@
         $("adventureButton").textContent = "再挑戦する →";
       }
 
+      renderDungeons(state, progress);
       renderEquipment(state);
       renderInventory(state);
     }
+
+    $("dungeonSelectionGrid").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-dungeon-id]");
+      if (!button || button.disabled) return;
+      const result = dungeon.selectDungeon(button.dataset.dungeonId);
+      if (!result.selected) {
+        $("saveFeedback").textContent = result.reason === "unknown-dungeon"
+          ? "このダンジョンは登録されていないよ。"
+          : "冒険を開始した後は行き先を変更できないよ。";
+        return;
+      }
+      const saved = saves.save();
+      render(store.getState());
+      $("saveFeedback").textContent = saved.saved
+        ? result.dungeon.name + "を選択したよ。出発するときにこのダンジョンへ進むよ。"
+        : result.dungeon.name + "を選択したけれど、保存できなかったよ。";
+    });
 
     $("equipmentGrid").addEventListener("click", (event) => {
       const button = event.target.closest("button[data-equip-item]");

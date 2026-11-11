@@ -48,4 +48,17 @@ export const ENEMY_DEFINITIONS = Object.freeze({
     experienceReward: 55, isBoss: true,
     abilities: Object.freeze(["swift", "guard", "piercing"]),
   }),
+  "ice-wolf": Object.freeze({
+    id: "ice-wolf", name: "氷狼", maxHp: 5, attackPower: 2,
+    experienceReward: 25, abilities: Object.freeze(["swift"]),
+  }),
+  "ice-golem": Object.freeze({
+    id: "ice-golem", name: "氷のゴーレム", maxHp: 9, attackPower: 2,
+    experienceReward: 35, abilities: Object.freeze(["guard", "crushing"]),
+  }),
+  "ice-dragon": Object.freeze({
+    id: "ice-dragon", name: "氷結のドラゴン", maxHp: 13, attackPower: 3,
+    experienceReward: 70, isBoss: true,
+    abilities: Object.freeze(["swift", "guard", "piercing"]),
+  }),
 });

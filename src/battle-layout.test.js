@@ -112,3 +112,9 @@ test("leaving the battle tab automatically pauses and preserves the enemy timer"
   assert.match(html, /GAME_PHASE\.PAUSED[\s\S]*?一時停止中 · 時間停止/);
   assert.match(html, /inBattle \? attackClock\.progress \* 100 : 0/);
 });
+
+
+test("battle status displays the selected dungeon name from the saved controller state", () => {
+  assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ dungeonProgress\.floor/);
+  assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ progress\.floor/);
+});

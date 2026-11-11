@@ -49,7 +49,6 @@ export function createDungeonController(
   return {
     start() {
       if (started) return { started: false, reason: "already-started" };
-      dungeonId = initialDungeonId;
       floor = 1;
       enemyIndex = 0;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
@@ -76,8 +75,23 @@ export function createDungeonController(
       return { ...startCurrentEnemy(), floorCleared, floor, enemyNumber: enemyIndex + 1 };
     },
 
+    selectDungeon(nextDungeonId) {
+      const state = store.getState();
+      if (state.phase !== GAME_PHASE.TITLE || started) {
+        return { selected: false, reason: "adventure-already-started" };
+      }
+      if (!Object.hasOwn(DUNGEON_DEFINITIONS, nextDungeonId)) {
+        return { selected: false, reason: "unknown-dungeon" };
+      }
+      dungeonId = nextDungeonId;
+      floor = 1;
+      enemyIndex = 0;
+      rewardClaimed = false;
+      encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      return { selected: true, dungeonId, dungeon: DUNGEON_DEFINITIONS[dungeonId] };
+    },
+
     reset() {
-      dungeonId = initialDungeonId;
       floor = 1;
       enemyIndex = 0;
       started = false;
@@ -170,3 +184,4 @@ export function createDungeonController(
     },
   };
 }
+

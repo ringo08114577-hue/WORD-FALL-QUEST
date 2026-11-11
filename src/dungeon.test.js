@@ -204,3 +204,74 @@ test("ダンジョンコントローラーはカタログIDを受け取り、セ
   assert.equal(dungeon.restoreSaveData(legacy), true);
   assert.equal(dungeon.getDungeonInfo().id, "forest-ruins");
 });
+
+
+test("出発前にダンジョンを選択でき、開始後は切り替えられない", () => {
+  const store = createGameStore();
+  const dungeon = createDungeonController(store);
+
+  assert.equal(dungeon.selectDungeon("missing").reason, "unknown-dungeon");
+  const selected = dungeon.selectDungeon("frozen-cavern");
+  assert.equal(selected.selected, true);
+  assert.equal(selected.dungeon.name, "氷結の洞窟");
+  assert.equal(dungeon.getDungeonInfo().id, "frozen-cavern");
+
+  const started = dungeon.start();
+  assert.equal(started.started, true);
+  assert.equal(store.getState().enemy.id, "ice-wolf");
+  assert.equal(dungeon.getSaveData().dungeonId, "frozen-cavern");
+  assert.equal(dungeon.selectDungeon("forest-ruins").reason, "adventure-already-started");
+  assert.equal(dungeon.getDungeonInfo().id, "frozen-cavern");
+});
+
+test("選択したダンジョンIDをセーブから復元して同じ敵編成で続けられる", () => {
+  const firstStore = createGameStore();
+  const firstDungeon = createDungeonController(firstStore);
+  firstDungeon.selectDungeon("frozen-cavern");
+  firstDungeon.start();
+  const saved = firstDungeon.getSaveData();
+
+  const secondStore = createGameStore();
+  const secondDungeon = createDungeonController(secondStore);
+  assert.equal(secondDungeon.restoreSaveData(saved), true);
+  assert.equal(secondDungeon.getDungeonInfo().id, "frozen-cavern");
+  assert.equal(secondDungeon.start().reason, "already-started");
+  assert.equal(secondDungeon.getSaveData().dungeonId, "frozen-cavern");
+});
+
+test("氷結の洞窟は専用の敵編成とボスを順番に登場させる", () => {
+  const store = createGameStore();
+  const dungeon = createDungeonController(store);
+  dungeon.selectDungeon("frozen-cavern");
+  dungeon.start();
+  assert.equal(store.getState().enemy.id, "ice-wolf");
+
+  winCurrentEnemy(store);
+  assert.equal(dungeon.advance().enemy.id, "orc");
+  winCurrentEnemy(store);
+  assert.equal(dungeon.advance().enemy.id, "ice-golem");
+  winCurrentEnemy(store);
+  assert.equal(dungeon.getProgress().floorCleared, true);
+
+  const reward = dungeon.claimFloorReward();
+  assert.deepEqual(reward, {
+    claimed: true, floor: 1, itemId: "large-potion", quantity: 1, gold: 22,
+  });
+  dungeon.advance();
+  assert.equal(store.getState().enemy.id, "ice-wolf");
+});
+
+
+test("敗北後のリセットと再挑戦でも選んだダンジョンを維持する", () => {
+  const store = createGameStore({ playerMaxHp: 1 });
+  const dungeon = createDungeonController(store);
+  dungeon.selectDungeon("frozen-cavern");
+  dungeon.start();
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+
+  dungeon.reset();
+  store.dispatch({ type: GAME_ACTION.RESET_GAME });
+  assert.equal(dungeon.getDungeonInfo().id, "frozen-cavern");
+  assert.equal(dungeon.start().started, true);
+  assert.equal(store.getState().enemy.id, "ice-wolf");
+});

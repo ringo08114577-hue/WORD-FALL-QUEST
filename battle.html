@@ -618,7 +618,7 @@
 
     function renderStore(state) {
       const dungeonProgress = dungeon.getProgress();
-      $("dungeonProgress").textContent = "ダンジョン " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目 · 🪙 " + state.inventory.gold + "G";
+      $("dungeonProgress").textContent = dungeon.getDungeonInfo().name + " · " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目 · 🪙 " + state.inventory.gold + "G";
       const shopOpen = state.phase === GAME_PHASE.VICTORY &&
         dungeonProgress.floorCleared && dungeonProgress.rewardClaimed;
       $("shopPanel").hidden = !shopOpen;
@@ -822,7 +822,7 @@
       $("coverTitle").textContent = "技を選ぼう";
       $("coverNote").textContent = "使う技によって、出題される単語と攻撃力が変わるよ。";
       const progress = dungeon.getProgress();
-      setStatus(progress.floor + "階 " + progress.enemyNumber + "体目！まずは使う技を選ぼう。");
+      setStatus(dungeon.getDungeonInfo().name + " · " + progress.floor + "階 " + progress.enemyNumber + "体目！まずは使う技を選ぼう。");
       render();
       saveProgress();
     }
