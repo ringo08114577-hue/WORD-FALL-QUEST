@@ -83,3 +83,14 @@ test("lane movement buttons have reliable touch targets and a legacy touch fallb
   assert.match(html, /\{ passive: false \}/);
   assert.match(html, /event\.button !== 0 \|\| button\.disabled/);
 });
+
+
+test("enemy attack countdown shows a visible three-second warning and progress meter", () => {
+  assert.match(html, /id="enemyAttackMeter"/);
+  assert.match(html, /id="enemyAttackMeterFill"/);
+  assert.match(html, /getEnemyAttackWarningState\(attackElapsed, attackInterval\)/);
+  assert.match(html, /attackClock\.isWarning/);
+  assert.match(html, /⚠ 攻撃予告！あと /);
+  assert.match(html, /\.enemy-attack-timer\.warning/);
+  assert.match(html, /\.enemy-attack-meter\.warning/);
+});

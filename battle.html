@@ -142,7 +142,13 @@
     .skill-button { min-width:0; min-height:62px; padding:8px 5px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
     .skill-button strong { font-size:.78rem; }
     .skill-button span { color:#c5d2e5; font-size:.65rem; font-weight:650; }
-    .enemy-attack-timer { margin-top:6px; color:#fcd34d; font-size:.67rem; font-weight:850; font-variant-numeric:tabular-nums; }
+    .enemy-attack-timer { margin-top:6px; color:#fcd34d; font-size:.67rem; font-weight:850; font-variant-numeric:tabular-nums; transition:color .15s ease,background .15s ease; }
+    .enemy-attack-timer.warning { display:inline-block; padding:3px 7px; border-radius:8px; color:#fecaca; background:rgba(127,29,29,.42); animation:enemyWarningPulse .7s ease-in-out infinite; }
+    .enemy-attack-meter { height:5px; margin-top:5px; overflow:hidden; border-radius:99px; background:#26354b; }
+    .enemy-attack-meter-fill { width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#38bdf8,#facc15); transition:width .12s linear; }
+    .enemy-attack-meter.warning .enemy-attack-meter-fill { background:linear-gradient(90deg,#f97316,#fb7185); }
+    @keyframes enemyWarningPulse { 50% { background:rgba(190,24,93,.5); filter:brightness(1.25); } }
+    @media (prefers-reduced-motion: reduce) { .enemy-attack-timer.warning { animation:none; } }
     .stats { display:flex; justify-content:center; gap:16px; color:#a9bad0; font-size:.77rem; }
     .progression { margin-top:5px; color:#93c5fd; font-size:.68rem; font-weight:750; }
     .shop-panel[hidden] { display:none; }
@@ -385,6 +391,7 @@
           <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
           <div class="enemy-traits" id="enemyTraits" aria-live="polite"></div>
           <div class="enemy-attack-timer" id="enemyAttackTimer">技を選んで戦闘開始</div>
+          <div class="enemy-attack-meter" id="enemyAttackMeter" aria-hidden="true"><div class="enemy-attack-meter-fill" id="enemyAttackMeterFill"></div></div>
         </div>
       </div>
     </section>
@@ -446,6 +453,7 @@
     import { createCombatController } from "./src/combat.js";
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
     import { SKILL_DEFINITIONS } from "./src/skills.js";
+    import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
     const $ = (id) => document.getElementById(id);
     const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
@@ -672,12 +680,24 @@
       const attackInterval = state.enemy?.isBoss
         ? BOSS_ATTACK_INTERVAL_MS
         : ENEMY_ATTACK_INTERVAL_MS;
+      const attackClock = getEnemyAttackWarningState(attackElapsed, attackInterval);
+      const attackClockRunning = active && !awaitingSkill && wordState.phase === "active";
+      $("enemyAttackMeterFill").style.width =
+        (active ? attackClock.progress * 100 : 0).toFixed(1) + "%";
+      $("enemyAttackMeter").classList.toggle(
+        "warning", attackClockRunning && attackClock.isWarning,
+      );
+      $("enemyAttackTimer").classList.toggle(
+        "warning", attackClockRunning && attackClock.isWarning,
+      );
       $("enemyAttackTimer").textContent = !active
         ? "戦闘中に敵の時間攻撃が発生"
-        : awaitingSkill || wordState.phase === "word-complete"
+        : !attackClockRunning
           ? "技選択中 · 時間停止"
-          : "次の攻撃まで " +
-            Math.max(0, (attackInterval - attackElapsed) / 1000).toFixed(1) + "秒";
+          : attackClock.isWarning
+            ? "⚠ 攻撃予告！あと " + (attackClock.remainingMs / 1000).toFixed(1) + "秒"
+            : "次の攻撃まで " +
+              (attackClock.remainingMs / 1000).toFixed(1) + "秒";
 
       if (state.phase === GAME_PHASE.VICTORY) {
         const floorCleared = dungeonProgress.floorCleared;
