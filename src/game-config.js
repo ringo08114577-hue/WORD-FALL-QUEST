@@ -14,6 +14,9 @@ export const GAME_CONFIG = Object.freeze({
   progression: Object.freeze({
     experiencePerLevel: 10,
   }),
+  town: Object.freeze({
+    innRestCost: 10,
+  }),
   enemyScaling: Object.freeze({
     hpPerFloor: 1,
     attackPowerEveryFloors: 3,

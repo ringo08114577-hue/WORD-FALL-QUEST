@@ -1,6 +1,6 @@
 /**
- * WORD FALL QUEST - Between-floor shop
- * Purchases are available only after the floor reward has been claimed.
+ * WORD FALL QUEST - Town and between-floor shop.
+ * Purchases are available in safe hub phases (title, paused, victory).
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES } from "./items.js";
@@ -29,12 +29,7 @@ export function createShopController(store, dungeon) {
         return { purchased: false, reason: "unknown-item" };
       }
       const state = store.getState();
-      const progress = dungeon.getProgress();
-      if (
-        state.phase !== GAME_PHASE.VICTORY ||
-        !progress.floorCleared ||
-        !progress.rewardClaimed
-      ) {
+      if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) {
         return { purchased: false, reason: "not-at-shop" };
       }
       if (state.inventory.gold < offer.cost) {

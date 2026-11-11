@@ -30,6 +30,7 @@ export const GAME_ACTION = Object.freeze({
   ADD_ITEM: "ADD_ITEM",
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
+  REST_AT_INN: "REST_AT_INN",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
   RESET_GAME: "RESET_GAME",
@@ -90,7 +91,7 @@ function getEquippedShieldBonus(inventory) {
 function equipItem(state, action, requiredSlot = null) {
   const canEquipDuringBattle = state.phase === GAME_PHASE.BATTLE;
   const canPrepareEquipment = action.type === GAME_ACTION.PREPARE_EQUIPMENT &&
-    [GAME_PHASE.TITLE, GAME_PHASE.BATTLE, GAME_PHASE.VICTORY].includes(state.phase);
+    [GAME_PHASE.TITLE, GAME_PHASE.BATTLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase);
   if (!canEquipDuringBattle && !canPrepareEquipment) return state;
   const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
     ? ITEM_DEFINITIONS[action.itemId]
@@ -369,8 +370,23 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.REST_AT_INN: {
+      if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) return state;
+      const cost = GAME_CONFIG.town.innRestCost;
+      if (!isPositiveInteger(cost) || state.player.hp >= state.player.maxHp ||
+          state.inventory.gold < cost) return state;
+      return {
+        ...state,
+        player: { ...state.player, hp: state.player.maxHp },
+        inventory: {
+          ...state.inventory,
+          gold: state.inventory.gold - cost,
+        },
+      };
+    }
+
     case GAME_ACTION.BUY_ITEM: {
-      if (state.phase !== GAME_PHASE.VICTORY) return state;
+      if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) return state;
       const itemExists = Object.hasOwn(ITEM_DEFINITIONS, action.itemId);
       const priceExists = Object.hasOwn(ITEM_SHOP_PRICES, action.itemId);
       const item = itemExists ? ITEM_DEFINITIONS[action.itemId] : null;
