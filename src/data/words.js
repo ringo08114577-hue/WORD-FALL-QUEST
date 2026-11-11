@@ -18,4 +18,32 @@ export const WORD_CHALLENGES = Object.freeze([
   Object.freeze({ id: "journey", japanese: "たび", word: "JOURNEY", difficulty: 3 }),
   Object.freeze({ id: "elephant", japanese: "ぞう", word: "ELEPHANT", difficulty: 3 }),
   Object.freeze({ id: "notebook", japanese: "ノート", word: "NOTEBOOK", difficulty: 3 }),
+
+  // Additional working vocabulary keeps every skill-level range playable.
+  Object.freeze({ id: "game", japanese: "ゲーム", word: "GAME", difficulty: 2 }),
+  Object.freeze({ id: "kind", japanese: "親切な", word: "KIND", difficulty: 2 }),
+  Object.freeze({ id: "calm", japanese: "穏やかな", word: "CALM", difficulty: 3 }),
+  Object.freeze({ id: "rare", japanese: "珍しい", word: "RARE", difficulty: 3 }),
+  Object.freeze({ id: "keen", japanese: "鋭い", word: "KEEN", difficulty: 4 }),
+  Object.freeze({ id: "wary", japanese: "用心深い", word: "WARY", difficulty: 4 }),
+  Object.freeze({ id: "foe", japanese: "敵", word: "FOE", difficulty: 5 }),
+  Object.freeze({ id: "yore", japanese: "昔", word: "YORE", difficulty: 5 }),
+  Object.freeze({ id: "eon", japanese: "長い時代", word: "EON", difficulty: 6 }),
+  Object.freeze({ id: "ire", japanese: "怒り", word: "IRE", difficulty: 6 }),
+
+  Object.freeze({ id: "author", japanese: "著者", word: "AUTHOR", difficulty: 3 }),
+  Object.freeze({ id: "method", japanese: "方法", word: "METHOD", difficulty: 3 }),
+  Object.freeze({ id: "evolve", japanese: "進化する", word: "EVOLVE", difficulty: 4 }),
+  Object.freeze({ id: "demand", japanese: "要求する", word: "DEMAND", difficulty: 4 }),
+  Object.freeze({ id: "subtle", japanese: "微妙な", word: "SUBTLE", difficulty: 5 }),
+  Object.freeze({ id: "scarce", japanese: "不足した", word: "SCARCE", difficulty: 5 }),
+  Object.freeze({ id: "thrive", japanese: "繁栄する", word: "THRIVE", difficulty: 6 }),
+  Object.freeze({ id: "utmost", japanese: "最大限の", word: "UTMOST", difficulty: 6 }),
+
+  Object.freeze({ id: "mystery", japanese: "謎", word: "MYSTERY", difficulty: 4 }),
+  Object.freeze({ id: "fragile", japanese: "壊れやすい", word: "FRAGILE", difficulty: 4 }),
+  Object.freeze({ id: "obscure", japanese: "不明瞭な", word: "OBSCURE", difficulty: 5 }),
+  Object.freeze({ id: "diligent", japanese: "勤勉な", word: "DILIGENT", difficulty: 5 }),
+  Object.freeze({ id: "eloquent", japanese: "雄弁な", word: "ELOQUENT", difficulty: 6 }),
+  Object.freeze({ id: "arduous", japanese: "骨の折れる", word: "ARDUOUS", difficulty: 6 }),
 ]);

@@ -678,3 +678,81 @@ test("一時停止と再開を繰り返してもHP・敵・ダンジョン進行
   assert.equal(state.player.hp, beforePause.player.hp);
   assert.equal(state.enemy.hp, beforePause.enemy.hp);
 });
+
+
+test("スキルはゴールドで強化でき、レベルごとの出題範囲も保存される", () => {
+  let state = createInitialGameState();
+  assert.deepEqual(state.skillLevels, {
+    "quick-strike": 1,
+    "power-strike": 1,
+    "ultimate-strike": 1,
+  });
+
+  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 50 });
+  state = gameReducer(state, {
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "quick-strike",
+  });
+
+  assert.equal(state.skillLevels["quick-strike"], 2);
+  assert.equal(state.skillLevels["power-strike"], 1);
+  assert.equal(state.inventory.gold, 0);
+});
+
+test("スキル強化は50・100・200・400Gで上昇し、Lv.5が上限", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 750 });
+
+  for (let expectedLevel = 2; expectedLevel <= 5; expectedLevel += 1) {
+    state = gameReducer(state, {
+      type: GAME_ACTION.UPGRADE_SKILL,
+      skillId: "power-strike",
+    });
+    assert.equal(state.skillLevels["power-strike"], expectedLevel);
+  }
+
+  const atMax = gameReducer(state, {
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "power-strike",
+  });
+  assert.equal(atMax, state);
+  assert.equal(state.inventory.gold, 0);
+});
+
+test("ゴールド不足・未登録スキル・戦闘中の強化は拒否する", () => {
+  const poor = createInitialGameState();
+  assert.equal(gameReducer(poor, {
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "quick-strike",
+  }), poor);
+
+  const invalid = gameReducer(
+    gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
+    { type: GAME_ACTION.UPGRADE_SKILL, skillId: "unknown-skill" },
+  );
+  assert.equal(invalid.inventory.gold, 500);
+  assert.equal(invalid.skillLevels["quick-strike"], 1);
+
+  let battle = gameReducer(
+    gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
+    { type: GAME_ACTION.START_BATTLE, enemy: slime },
+  );
+  const rejected = gameReducer(battle, {
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "quick-strike",
+  });
+  assert.equal(rejected, battle);
+  assert.equal(rejected.inventory.gold, 500);
+});
+
+test("ゲームをリセットするとスキルレベルも初期状態に戻る", () => {
+  let state = gameReducer(createInitialGameState(), { type: GAME_ACTION.ADD_GOLD, amount: 50 });
+  state = gameReducer(state, {
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "ultimate-strike",
+  });
+  assert.equal(state.skillLevels["ultimate-strike"], 2);
+
+  state = gameReducer(state, { type: GAME_ACTION.RESET_GAME });
+  assert.equal(state.skillLevels["ultimate-strike"], 1);
+});

@@ -3,6 +3,7 @@
  * Versioned, validated snapshots of game, dungeon, and optional UI progress.
  */
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
+import { normalizeSkillLevels } from "./skills.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
 export const SAVE_VERSION = 4;
@@ -98,6 +99,7 @@ function migrateSnapshot(snapshot) {
       ...migrated,
       gameState: {
         ...gameState,
+        skillLevels: normalizeSkillLevels(gameState.skillLevels),
         inventory: {
           ...gameState.inventory,
           items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map((itemId) => [

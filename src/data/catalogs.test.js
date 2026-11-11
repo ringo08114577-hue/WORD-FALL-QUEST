@@ -8,6 +8,7 @@ import { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS } from "../enemies.js";
 import { DUNGEON_DEFINITIONS, DEFAULT_DUNGEON_ID } from "./dungeons.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_CHALLENGES } from "./words.js";
+import { getSkillLevelDifficultyRange } from "../word-difficulty.js";
 
 test("アイテム定義を増やすと初期所持品とショップ価格へ自動で反映される", () => {
   for (const [id, item] of Object.entries(ITEM_DEFINITIONS)) {
@@ -64,6 +65,22 @@ test("各技の文字数範囲に合う英単語のお題が必ずある", () =>
         challenge.word.length <= skill.maxWordLength),
       skill.id,
     );
+  }
+});
+
+test("全スキル・全レベルに文字数と難易度が合う単語候補がある", () => {
+  for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+    for (let level = 1; level <= skill.maxLevel; level += 1) {
+      const range = getSkillLevelDifficultyRange(level);
+      assert.ok(
+        WORD_CHALLENGES.some((challenge) =>
+          challenge.word.length >= skill.minWordLength &&
+          challenge.word.length <= skill.maxWordLength &&
+          challenge.difficulty >= range.min &&
+          challenge.difficulty <= range.max),
+        skillId + " Lv." + level,
+      );
+    }
   }
 });
 

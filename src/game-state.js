@@ -1,6 +1,9 @@
 import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, EQUIPMENT_SLOTS, getEquipmentBonuses, createInitialInventory } from "./items.js";
 import { ENEMY_ABILITY_DEFINITIONS } from "./enemies.js";
 import { GAME_CONFIG } from "./game-config.js";
+import {
+  SKILL_DEFINITIONS, createInitialSkillLevels, isValidSkillLevels, getSkillUpgradeCost,
+} from "./skills.js";
 
 /**
  * WORD FALL QUEST - Game state core
@@ -30,6 +33,7 @@ export const GAME_ACTION = Object.freeze({
   ADD_ITEM: "ADD_ITEM",
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
+  UPGRADE_SKILL: "UPGRADE_SKILL",
   REST_AT_INN: "REST_AT_INN",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
@@ -196,6 +200,7 @@ export function createInitialGameState({
       nextLevelXp: experienceRequiredForNextLevel(1),
     },
     enemy: null,
+    skillLevels: createInitialSkillLevels(),
     inventory: { ...createInitialInventory(), gold: 0 },
     battle: {
       number: 0,
@@ -414,6 +419,26 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.UPGRADE_SKILL: {
+      if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) return state;
+      const skillId = action.skillId;
+      if (!Object.hasOwn(SKILL_DEFINITIONS, skillId)) return state;
+      const currentLevel = state.skillLevels?.[skillId];
+      const cost = getSkillUpgradeCost(skillId, currentLevel);
+      if (cost === null || state.inventory.gold < cost) return state;
+      return {
+        ...state,
+        skillLevels: {
+          ...state.skillLevels,
+          [skillId]: currentLevel + 1,
+        },
+        inventory: {
+          ...state.inventory,
+          gold: state.inventory.gold - cost,
+        },
+      };
+    }
+
     case GAME_ACTION.PAUSE_BATTLE:
       if (state.phase !== GAME_PHASE.BATTLE) return state;
       return {
@@ -499,6 +524,7 @@ export function isValidSavedGameState(saved) {
     p.attackPower !== p.baseAttackPower + equipmentBonuses.attackBonus ||
     p.defensePower !== p.baseDefensePower + equipmentBonuses.defenseBonus ||
     !items || typeof items !== "object" || Array.isArray(items) ||
+    !isValidSkillLevels(saved.skillLevels) ||
     !equipmentValid ||
     !isNonNegativeInteger(inv.gold)
   ) return false;
@@ -553,6 +579,7 @@ function copySavedGameState(saved) {
   return {
     phase: saved.phase,
     pausedFrom: saved.pausedFrom,
+    skillLevels: { ...saved.skillLevels },
     player: {
       hp: saved.player.hp,
       maxHp: saved.player.maxHp,

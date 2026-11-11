@@ -380,3 +380,55 @@ test("同じセーブ形式のままアイテムや装備枠が追加されて�
   assert.equal(second.store.getState().inventory.equipment.accessory, null);
   assert.equal(second.store.getState().inventory.items["small-potion"], 5);
 });
+
+
+test("スキル強化レベルと支払ったゴールドを保存・ロードで引き継ぐ", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  first.store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 150 });
+  first.store.dispatch({
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "quick-strike",
+  });
+  first.store.dispatch({
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "quick-strike",
+  });
+  assert.equal(first.store.getState().skillLevels["quick-strike"], 3);
+  assert.equal(first.store.getState().inventory.gold, 0);
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.store.getState().skillLevels["quick-strike"], 3);
+  assert.equal(second.store.getState().inventory.gold, 0);
+});
+
+test("以前のセーブにスキルレベルがなくてもLv.1で補完してロードできる", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(first.controller.save().saved, true);
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  delete legacy.gameState.skillLevels;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().skillLevels, {
+    "quick-strike": 1,
+    "power-strike": 1,
+    "ultimate-strike": 1,
+  });
+});

@@ -52,7 +52,7 @@
     .journey-title { font-weight:900; font-size:1.04rem; }
     .journey-copy { margin-top:5px; color:#a9bad0; font-size:.78rem; line-height:1.55; }
     .journey-progress { margin-top:8px; color:#93c5fd; font-weight:800; font-size:.74rem; }
-    .town-facilities { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:9px; margin:10px 0; }
+    .town-facilities { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; margin:10px 0; }
     .facility-card { display:flex; flex-direction:column; align-items:flex-start; gap:6px; min-width:0; min-height:112px; padding:12px; border:1px solid #314662; border-radius:13px; background:linear-gradient(145deg,#1a2b43,#111d30); color:#eef4ff; text-decoration:none; }
     .facility-card:hover { border-color:#60a5fa; background:linear-gradient(145deg,#203958,#14243b); }
     .facility-icon { font-size:1.55rem; line-height:1; }
@@ -189,6 +189,11 @@
           <strong>武器・防具屋</strong>
           <small>装備を買って能力を強化</small>
         </a>
+        <a class="facility-card" href="#skillWorkshopPanel">
+          <span class="facility-icon" aria-hidden="true">⚔️</span>
+          <strong>スキル工房</strong>
+          <small>ゴールドで技を強化</small>
+        </a>
         <a class="facility-card" href="#dungeonPanel">
           <span class="facility-icon" aria-hidden="true">🌀</span>
           <strong>ダンジョン入口</strong>
@@ -220,6 +225,15 @@
         <strong id="equipmentShopGold" class="facility-cost">0 G</strong>
       </div>
       <div class="shop-grid" id="equipmentShopGrid"></div>
+    </section>
+
+    <section class="panel" id="skillWorkshopPanel">
+      <div class="facility-heading">
+        <h2>⚔️ スキル工房</h2>
+        <strong id="skillWorkshopGold" class="facility-cost">0 G</strong>
+      </div>
+      <p class="muted">ゴールドを使ってスキルを強化しよう。レベルが上がると、より難しい英単語が出題候補に加わるよ。</p>
+      <div class="shop-grid" id="skillUpgradeGrid"></div>
     </section>
 
     <section class="panel" id="dungeonPanel">
@@ -259,7 +273,7 @@
       </div>
     </section>
 
-    <p class="footer">WORD FALL QUEST · STEP 20 · ADVENTURER TOWN</p>
+    <p class="footer">WORD FALL QUEST · STEP 22 · SKILL UPGRADES</p>
   </main>
 
   <script type="module">
@@ -270,6 +284,9 @@
     import { DUNGEON_DEFINITIONS } from "./src/data/dungeons.js";
     import { createShopController, SHOP_CATALOG } from "./src/shop.js";
     import { createTownController, INN_REST_COST } from "./src/town.js";
+    import {
+      SKILL_DEFINITIONS, getSkillUpgradeCost, getSkillLevelDifficultyRange,
+    } from "./src/skills.js";
 
     const $ = (id) => document.getElementById(id);
     const store = createGameStore();
@@ -443,6 +460,41 @@
       renderOffers("equipmentShopGrid", true, "equipmentShopGold");
     }
 
+    function renderSkillWorkshop(state) {
+      const root = $("skillUpgradeGrid");
+      root.replaceChildren();
+      $("skillWorkshopGold").textContent = state.inventory.gold + " G";
+      const canUseTown = [
+        GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY,
+      ].includes(state.phase);
+
+      for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+        const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
+        const range = getSkillLevelDifficultyRange(level);
+        const card = createText("div", "shop-offer", "");
+        card.append(createText("div", "shop-offer-name", skill.name));
+        card.append(createText("div", "shop-offer-note",
+          "現在 Lv." + level + " · 出題難易度 " + range.min + "〜" + range.max));
+
+        const cost = getSkillUpgradeCost(skillId, level);
+        if (cost === null) {
+          card.append(createText("div", "shop-offer-note", "最大レベルに到達！"));
+          const maxLabel = createText("button", "", "MAX");
+          maxLabel.disabled = true;
+          card.append(maxLabel);
+        } else {
+          card.append(createText("div", "shop-offer-note",
+            "次のレベル：Lv." + (level + 1) + " · " + cost + "G"));
+          const button = createText("button", "", "スキルを強化（" + cost + "G）");
+          button.type = "button";
+          button.dataset.skillUpgrade = skillId;
+          button.disabled = !canUseTown || state.inventory.gold < cost;
+          card.append(button);
+        }
+        root.append(card);
+      }
+    }
+
     function renderInventory(state) {
       const root = $("inventoryGrid");
       root.replaceChildren();
@@ -502,6 +554,7 @@
 
       renderDungeons(state, progress);
       renderTownServices(state);
+      renderSkillWorkshop(state);
       renderEquipment(state);
       renderInventory(state);
     }
@@ -562,6 +615,27 @@
 
     $("itemShopGrid").addEventListener("click", handleTownShopPurchase);
     $("equipmentShopGrid").addEventListener("click", handleTownShopPurchase);
+
+    $("skillUpgradeGrid").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-skill-upgrade]");
+      if (!button || button.disabled) return;
+      const skillId = button.dataset.skillUpgrade;
+      const before = store.getState();
+      const after = store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId });
+      if (after === before) {
+        $("saveFeedback").textContent = "スキルを強化できなかったよ。ゴールドやレベルを確認してね。";
+        return;
+      }
+
+      const saved = saves.save();
+      const skill = SKILL_DEFINITIONS[skillId];
+      const level = after.skillLevels[skillId];
+      const range = getSkillLevelDifficultyRange(level);
+      $("saveFeedback").textContent = skill.name + "がLv." + level +
+        "になったよ！出題難易度が" + range.min + "〜" + range.max +
+        "に広がったよ。" + (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
+      render(after);
+    });
 
     $("equipmentGrid").addEventListener("click", (event) => {
       const button = event.target.closest("button[data-equip-item]");

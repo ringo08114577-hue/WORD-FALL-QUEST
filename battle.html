@@ -428,7 +428,7 @@
       </aside>
     </div>
 
-    <p class="footer">WORD FALL QUEST · STEP 21 · WORD DIFFICULTY SYSTEM</p>
+    <p class="footer">WORD FALL QUEST · STEP 22 · SKILL UPGRADES</p>
   </main>
 
   <script type="module">
@@ -475,30 +475,11 @@
     let enemyAttackCount = 0;
     let awaitingSkill = false;
     let selectedSkillId = null;
-    const DEFAULT_SKILL_LEVELS = Object.freeze(Object.fromEntries(
-      Object.entries(SKILL_DEFINITIONS).map(([id, skill]) => [id, skill.startingLevel ?? 1]),
-    ));
-    function normalizeSkillLevels(value) {
-      return Object.fromEntries(Object.entries(SKILL_DEFINITIONS).map(([id, skill]) => [
-        id,
-        value?.[id] ?? skill.startingLevel ?? 1,
-      ]));
-    }
-    function isValidSkillLevels(value) {
-      return Boolean(value && typeof value === "object" && !Array.isArray(value) &&
-        Object.keys(value).length === Object.keys(SKILL_DEFINITIONS).length &&
-        Object.entries(SKILL_DEFINITIONS).every(([id, skill]) =>
-          Number.isInteger(value[id]) &&
-          value[id] >= 1 &&
-          value[id] <= (skill.maxLevel ?? 5),
-        ));
-    }
-    let skillLevels = { ...DEFAULT_SKILL_LEVELS };
     const saveController = createSaveController({
       store,
       dungeon,
       getExtraData: () => ({
-        wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId, skillLevels,
+        wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId,
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -512,8 +493,7 @@
             extra.attackElapsed < ENEMY_ATTACK_INTERVAL_MS)) &&
         (extra.awaitingSkill === undefined || typeof extra.awaitingSkill === "boolean") &&
         (extra.selectedSkillId === undefined || extra.selectedSkillId === null ||
-          Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)) &&
-        (extra.skillLevels === undefined || isValidSkillLevels(extra.skillLevels)),
+          Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
@@ -522,7 +502,6 @@
           (wordState.phase === "word-complete");
         selectedSkillId = extra.selectedSkillId ??
           (awaitingSkill ? null : "quick-strike");
-        skillLevels = normalizeSkillLevels(extra.skillLevels);
         enemyAttackCount = 0;
         if (wordState.phase === "active") {
           const savedLetters = wordState.letters;
@@ -703,7 +682,7 @@
       for (const button of $("skillPanel").querySelectorAll("[data-skill]")) {
         button.disabled = !(active && awaitingSkill);
         const skillId = button.dataset.skill;
-        const level = skillLevels[skillId] ?? SKILL_DEFINITIONS[skillId].startingLevel;
+        const level = state.skillLevels[skillId] ?? SKILL_DEFINITIONS[skillId].startingLevel;
         const range = getSkillLevelDifficultyRange(level);
         button.querySelector("span").textContent =
           "Lv." + level + " · 単語難易度 " + range.min + "〜" + range.max;
@@ -891,7 +870,7 @@
       if (store.getState().phase !== GAME_PHASE.BATTLE || !awaitingSkill) return;
       const skill = SKILL_DEFINITIONS[skillId];
       if (!skill) return;
-      const skillLevel = skillLevels[skillId] ?? skill.startingLevel ?? 1;
+      const skillLevel = store.getState().skillLevels[skillId] ?? skill.startingLevel ?? 1;
       wordState = selectChallengeForSkill(wordState, skillId, { skillLevel });
       wordState = spawnLaneWave(wordState);
       selectedSkillId = skillId;
