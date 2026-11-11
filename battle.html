@@ -428,7 +428,7 @@
       </aside>
     </div>
 
-    <p class="footer">WORD FALL QUEST · STEP 14 · FIVE-LANE ACTION BATTLE</p>
+    <p class="footer">WORD FALL QUEST · STEP 21 · WORD DIFFICULTY SYSTEM</p>
   </main>
 
   <script type="module">
@@ -455,7 +455,7 @@
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
-    import { SKILL_DEFINITIONS } from "./src/skills.js";
+    import { SKILL_DEFINITIONS, getSkillLevelDifficultyRange } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
     const $ = (id) => document.getElementById(id);
@@ -475,11 +475,30 @@
     let enemyAttackCount = 0;
     let awaitingSkill = false;
     let selectedSkillId = null;
+    const DEFAULT_SKILL_LEVELS = Object.freeze(Object.fromEntries(
+      Object.entries(SKILL_DEFINITIONS).map(([id, skill]) => [id, skill.startingLevel ?? 1]),
+    ));
+    function normalizeSkillLevels(value) {
+      return Object.fromEntries(Object.entries(SKILL_DEFINITIONS).map(([id, skill]) => [
+        id,
+        value?.[id] ?? skill.startingLevel ?? 1,
+      ]));
+    }
+    function isValidSkillLevels(value) {
+      return Boolean(value && typeof value === "object" && !Array.isArray(value) &&
+        Object.keys(value).length === Object.keys(SKILL_DEFINITIONS).length &&
+        Object.entries(SKILL_DEFINITIONS).every(([id, skill]) =>
+          Number.isInteger(value[id]) &&
+          value[id] >= 1 &&
+          value[id] <= (skill.maxLevel ?? 5),
+        ));
+    }
+    let skillLevels = { ...DEFAULT_SKILL_LEVELS };
     const saveController = createSaveController({
       store,
       dungeon,
       getExtraData: () => ({
-        wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId,
+        wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId, skillLevels,
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -493,7 +512,8 @@
             extra.attackElapsed < ENEMY_ATTACK_INTERVAL_MS)) &&
         (extra.awaitingSkill === undefined || typeof extra.awaitingSkill === "boolean") &&
         (extra.selectedSkillId === undefined || extra.selectedSkillId === null ||
-          Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)),
+          Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)) &&
+        (extra.skillLevels === undefined || isValidSkillLevels(extra.skillLevels)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
@@ -502,6 +522,7 @@
           (wordState.phase === "word-complete");
         selectedSkillId = extra.selectedSkillId ??
           (awaitingSkill ? null : "quick-strike");
+        skillLevels = normalizeSkillLevels(extra.skillLevels);
         enemyAttackCount = 0;
         if (wordState.phase === "active") {
           const savedLetters = wordState.letters;
@@ -681,6 +702,11 @@
       $("skillPanel").hidden = !(active && awaitingSkill);
       for (const button of $("skillPanel").querySelectorAll("[data-skill]")) {
         button.disabled = !(active && awaitingSkill);
+        const skillId = button.dataset.skill;
+        const level = skillLevels[skillId] ?? SKILL_DEFINITIONS[skillId].startingLevel;
+        const range = getSkillLevelDifficultyRange(level);
+        button.querySelector("span").textContent =
+          "Lv." + level + " · 単語難易度 " + range.min + "〜" + range.max;
       }
       $("arenaCover").hidden =
         active && !awaitingSkill && wordState.phase === "active";
@@ -745,7 +771,7 @@
       const choosingSkill = awaitingSkill && store.getState().phase === GAME_PHASE.BATTLE;
       $("questionLabel").textContent = choosingSkill
         ? "技を選ぶと、出題される英単語が決まるよ"
-        : "この日本語の英単語を完成させよう";
+        : "単語難易度 Lv." + challenge.difficulty + " · この日本語の英単語を完成させよう";
       $("japanesePrompt").textContent = choosingSkill ? "技を選択" : challenge.japanese;
       $("spellingProgress").replaceChildren();
       const parts = choosingSkill ? [] : getSpellingProgress(wordState).split(" ");
@@ -865,13 +891,15 @@
       if (store.getState().phase !== GAME_PHASE.BATTLE || !awaitingSkill) return;
       const skill = SKILL_DEFINITIONS[skillId];
       if (!skill) return;
-      wordState = selectChallengeForSkill(wordState, skillId);
+      const skillLevel = skillLevels[skillId] ?? skill.startingLevel ?? 1;
+      wordState = selectChallengeForSkill(wordState, skillId, { skillLevel });
       wordState = spawnLaneWave(wordState);
       selectedSkillId = skillId;
       awaitingSkill = false;
       spawnElapsed = 0;
       setStatus(
-        skill.name + "を選択！「" + getCurrentChallenge(wordState).japanese +
+        skill.name + " Lv." + skillLevel + "を選択！難易度Lv." +
+        getCurrentChallenge(wordState).difficulty + "の「" + getCurrentChallenge(wordState).japanese +
         "」を英語にしよう。必要な文字のレーンで決定を押してね。",
       );
       render();
@@ -885,6 +913,7 @@
       wordState = picked.state;
       if (picked.event.type === "word-complete") {
         picked.event.skillId = selectedSkillId;
+        picked.event.wordDifficulty = getCurrentChallenge(wordState).difficulty;
       }
       handleWordEvents([picked.event]);
       if (

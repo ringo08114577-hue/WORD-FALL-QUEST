@@ -277,6 +277,29 @@ test("技の種類によって単語完成時のダメージが変わる", () =>
   }
 });
 
+test("単語難易度が高いほど攻撃ダメージが大きくなる", () => {
+  const store = startBattle({ playerAttackPower: 2 });
+  const result = createCombatController(store).handle({
+    eventId: "difficulty-six",
+    type: "word-complete",
+    skillId: "ultimate-strike",
+    wordDifficulty: 6,
+  });
+  assert.equal(result.damage, 42);
+  assert.equal(store.getState().enemy.hp, 0);
+  assert.match(result.message, /難易度Lv.6/);
+});
+
+test("難易度が省略された旧形式の戦闘イベントは難易度1として処理する", () => {
+  const store = startBattle();
+  const result = createCombatController(store).handle({
+    eventId: "legacy-word-complete",
+    type: "word-complete",
+    skillId: "quick-strike",
+  });
+  assert.equal(result.damage, 1);
+});
+
 test("時間経過の敵攻撃は防御力を適用してプレイヤーにダメージを与える", () => {
   const store = startBattle({
     enemy: { ...createEnemy("slime"), attackPower: 2 },

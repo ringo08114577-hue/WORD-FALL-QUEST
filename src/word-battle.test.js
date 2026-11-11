@@ -271,6 +271,33 @@ test("技を選ぶと対応する文字数の英単語に切り替わる", () =>
   assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
 });
 
+test("スキルLv.1では対応する文字数と難易度1〜2の単語が選ばれる", () => {
+  for (const skillId of ["quick-strike", "power-strike", "ultimate-strike"]) {
+    const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
+      skillLevel: 1, random: () => 0,
+    });
+    const challenge = getCurrentChallenge(selected);
+    assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 2);
+  }
+});
+
+test("出題候補が複数難易度にまたがる場合、難易度ウェイトに沿って段階を選ぶ", () => {
+  const easy = selectChallengeForSkill(createWordBattleState(), "power-strike", {
+    skillLevel: 1, random: () => 0,
+  });
+  const harder = selectChallengeForSkill(createWordBattleState(), "power-strike", {
+    skillLevel: 1, random: () => 0.99,
+  });
+  assert.equal(getCurrentChallenge(easy).difficulty, 1);
+  assert.equal(getCurrentChallenge(harder).difficulty, 2);
+});
+
+test("未登録のスキルや無効なスキルレベルを拒否する", () => {
+  const state = createWordBattleState();
+  assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
+  assert.throws(() => selectChallengeForSkill(state, "power-strike", { skillLevel: 6 }), RangeError);
+});
+
 test("5レーンに固定された文字が出て、必要な文字は1レーンだけに配置される", () => {
   const state = createWordBattleState();
   const wave = spawnLaneWave(state, { random: () => 0 });

@@ -7,6 +7,7 @@
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ENEMY_ABILITY_DEFINITIONS, getEnemyAbilityEffects } from "./enemies.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
+import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
 
 export const COMBAT_EVENT = Object.freeze({
   CORRECT: "correct",
@@ -64,8 +65,15 @@ export function resolveCombatEvent(gameState, event) {
   const skill = Object.hasOwn(SKILL_DEFINITIONS, event.skillId)
     ? SKILL_DEFINITIONS[event.skillId]
     : null;
+  const wordDifficulty = Number.isInteger(event.wordDifficulty) &&
+    Object.hasOwn(WORD_DIFFICULTY_DEFINITIONS, event.wordDifficulty)
+    ? event.wordDifficulty
+    : 1;
+  const difficultyMultiplier = WORD_DIFFICULTY_DEFINITIONS[wordDifficulty].damageMultiplier;
   const baseDamage = Math.ceil(
-    positivePower(gameState.player.attackPower) * (skill?.damageMultiplier ?? 1),
+    positivePower(gameState.player.attackPower) *
+    (skill?.damageMultiplier ?? 1) *
+    difficultyMultiplier,
   );
   const amount = Math.max(1, baseDamage - effects.damageReduction);
   const guardAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.damageReduction>0);
@@ -73,7 +81,7 @@ export function resolveCombatEvent(gameState, event) {
   const skillNote = skill ? "「" + skill.name + "」！" : "";
   return {
     ignored:false, action:{type:GAME_ACTION.DAMAGE_ENEMY,amount}, damageTarget:"enemy", damage:amount,
-    message:skillNote + "単語完成！"+gameState.enemy.name+"に"+amount+"ダメージ！"+abilityNote,
+    message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+abilityNote,
     tone:"good",
   };
 }

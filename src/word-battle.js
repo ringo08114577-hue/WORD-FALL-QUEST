@@ -8,6 +8,7 @@
 
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_CHALLENGES } from "./data/words.js";
+import { getSkillLevelDifficultyRange, getWordDifficultyWeight } from "./word-difficulty.js";
 
 export { WORD_CHALLENGES };
 
@@ -242,24 +243,56 @@ export function setPlayerLane(state, lane) {
 export function selectChallengeForSkill(
   state,
   skillId,
-  { random = Math.random } = {},
+  { skillLevel, random = Math.random } = {},
 ) {
   const skill = Object.hasOwn(SKILL_DEFINITIONS, skillId)
     ? SKILL_DEFINITIONS[skillId]
     : null;
   if (!skill) throw new RangeError("登録されていない技です: " + skillId);
 
+  const currentSkillLevel = skillLevel ?? skill.startingLevel ?? 1;
+  const difficultyRange = getSkillLevelDifficultyRange(currentSkillLevel);
   const candidates = WORD_CHALLENGES
     .map((challenge, index) => ({ challenge, index }))
     .filter(({ challenge }) =>
       challenge.word.length >= skill.minWordLength &&
-      challenge.word.length <= skill.maxWordLength,
+      challenge.word.length <= skill.maxWordLength &&
+      Number.isInteger(challenge.difficulty) &&
+      challenge.difficulty >= difficultyRange.min &&
+      challenge.difficulty <= difficultyRange.max,
     );
+
   if (candidates.length === 0) {
-    throw new Error("この技に対応する英単語が登録されていません。");
+    throw new Error(
+      skill.name + " Lv." + currentSkillLevel +
+      "に対応する単語がありません。単語データを追加してください。",
+    );
   }
 
-  const selected = candidates[Math.floor(randomUnit(random) * candidates.length)];
+  // Choose a difficulty tier by its shared weight, then choose a word
+  // uniformly within that tier. Missing tiers are excluded and weights renormalize.
+  const buckets = [];
+  for (let difficulty = difficultyRange.min; difficulty <= difficultyRange.max; difficulty += 1) {
+    const words = candidates.filter(({ challenge }) => challenge.difficulty === difficulty);
+    if (words.length > 0) {
+      buckets.push({ difficulty, words, weight: getWordDifficultyWeight(difficulty) });
+    }
+  }
+
+  const totalWeight = buckets.reduce((sum, bucket) => sum + bucket.weight, 0);
+  let ticket = randomUnit(random) * totalWeight;
+  let selectedBucket = buckets[buckets.length - 1];
+  for (const bucket of buckets) {
+    ticket -= bucket.weight;
+    if (ticket < 0) {
+      selectedBucket = bucket;
+      break;
+    }
+  }
+  const selected = selectedBucket.words[
+    Math.floor(randomUnit(random) * selectedBucket.words.length)
+  ];
+
   return {
     ...state,
     phase: WORD_BATTLE_PHASE.ACTIVE,
