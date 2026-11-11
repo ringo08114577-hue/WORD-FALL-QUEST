@@ -278,7 +278,7 @@
       .player { width:40px; height:40px; margin-left:-20px; font-size:1.55rem; }
       .controls { gap:7px; margin-top:5px; }
       button { min-height:35px; padding:7px 10px; font-size:.82rem; }
-      .move-button { flex:1; min-width:0; }
+      .move-button { flex:1; min-width:0; min-height:44px; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
       .skill-options { gap:5px; }
       .skill-button { min-height:58px; padding:6px 3px; }
       .skill-button strong { font-size:.68rem; }
@@ -954,8 +954,22 @@
       if (!button || button.disabled) return;
       selectSkill(button.dataset.skill);
     });
-    $("leftButton").addEventListener("click", () => move(-1));
-    $("rightButton").addEventListener("click", () => move(1));
+    function bindLaneMoveButton(buttonId, direction) {
+      const button = $(buttonId);
+      // Touch, pen, and mouse input move immediately on pointer press.
+      button.addEventListener("pointerdown", (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        move(direction);
+      });
+      // Keep keyboard and assistive-technology activation working.
+      button.addEventListener("click", (event) => {
+        if (event.detail === 0) move(direction);
+      });
+    }
+
+    bindLaneMoveButton("leftButton", -1);
+    bindLaneMoveButton("rightButton", 1);
     $("confirmButton").addEventListener("click", confirmLaneLetter);
 
     window.addEventListener("keydown", (event) => {

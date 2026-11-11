@@ -62,3 +62,14 @@ test("battle arena is compact at short-phone, phone, tablet, and desktop sizes",
   assert.ok(html.includes("height:clamp(205px, 34svh, 280px); min-height:205px;"));
   assert.ok(html.includes("height:clamp(230px, 38svh, 340px); min-height:230px;"));
 });
+
+
+test("lane movement buttons respond to touch pointer presses and remain keyboard accessible", () => {
+  assert.match(html, /function bindLaneMoveButton\(buttonId, direction\)/);
+  assert.match(html, /button\.addEventListener\("pointerdown"/);
+  assert.match(html, /event\.preventDefault\(\);\s*move\(direction\);/);
+  assert.match(html, /button\.addEventListener\("click", \(event\) => \{\s*if \(event\.detail === 0\) move\(direction\);/);
+  assert.match(html, /bindLaneMoveButton\("leftButton", -1\)/);
+  assert.match(html, /bindLaneMoveButton\("rightButton", 1\)/);
+  assert.ok(html.includes(".move-button { flex:1; min-width:0; min-height:44px; touch-action:manipulation;"));
+});
