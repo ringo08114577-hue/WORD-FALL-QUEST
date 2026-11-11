@@ -630,7 +630,7 @@ test("冒険者ホームでは冒険前に装備を整え、同じ枠の旧装�
   assert.equal(state.player.attackPower, 3);
 });
 
-test("事前装備アクションは一時停止・敗北状態では使えない", () => {
+test("事前装備アクションは一時停止中に使え、敗北状態では使えない", () => {
   let state = gameReducer(createInitialGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
@@ -640,7 +640,9 @@ test("事前装備アクションは一時停止・敗北状態では使えな�
     type: GAME_ACTION.PREPARE_EQUIPMENT,
     itemId: "wooden-sword",
   });
-  assert.equal(paused, state);
+  assert.notEqual(paused, state);
+  assert.equal(paused.inventory.equipment.weapon, "wooden-sword");
+  assert.equal(paused.player.attackPower, 2);
 
   state = gameReducer(gameReducer(createInitialGameState(), {
     type: GAME_ACTION.START_BATTLE,
