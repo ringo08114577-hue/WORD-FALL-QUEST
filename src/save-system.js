@@ -86,7 +86,35 @@ function migrateSnapshot(snapshot) {
       }:gameState.enemy??null},
       dungeonState:{...dungeonState,encounterSetVersion:dungeonState.encounterSetVersion??1}};
   }
-  return migrated.version===SAVE_VERSION?migrated:null;
+  if (migrated.version === SAVE_VERSION) {
+    const gameState = migrated.gameState;
+    if (!isRecord(gameState) || !isRecord(gameState.inventory) ||
+        !isRecord(gameState.inventory.items) ||
+        !isRecord(gameState.inventory.equipment)) return null;
+
+    // Catalogs can grow after a save was created. Fill newly introduced
+    // item keys and equipment slots without disturbing existing quantities.
+    migrated = {
+      ...migrated,
+      gameState: {
+        ...gameState,
+        inventory: {
+          ...gameState.inventory,
+          items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map((itemId) => [
+            itemId,
+            gameState.inventory.items[itemId] ??
+              ITEM_DEFINITIONS[itemId].startingQuantity ?? 0,
+          ])),
+          equipment: Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [
+            slot,
+            gameState.inventory.equipment[slot] ?? null,
+          ])),
+        },
+      },
+    };
+  }
+
+  return migrated.version === SAVE_VERSION ? migrated : null;
 }
 
 export function createSaveController({

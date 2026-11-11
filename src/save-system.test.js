@@ -354,3 +354,29 @@ test("一時停止中のバトルを保存・ロードしても停止状態と�
   assert.equal(second.getRestoredExtra().attackElapsed, 4200);
   assert.equal(second.getRestoredExtra().selectedSkillId, "quick-strike");
 });
+
+
+test("同じセーブ形式のままアイテムや装備枠が追加されても不足分を自動補完する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "small-potion", quantity: 3 });
+  assert.equal(first.controller.save().saved, true);
+
+  const oldSnapshot = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  delete oldSnapshot.gameState.inventory.items["copper-charm"];
+  delete oldSnapshot.gameState.inventory.equipment.accessory;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(oldSnapshot));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.store.getState().inventory.items["copper-charm"], 0);
+  assert.equal(second.store.getState().inventory.equipment.accessory, null);
+  assert.equal(second.store.getState().inventory.items["small-potion"], 5);
+});
