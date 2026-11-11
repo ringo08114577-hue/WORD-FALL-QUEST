@@ -75,7 +75,7 @@
     .slot.filled { color:#86efac; border-color:#277c5a; background:#123629; }
     .arena-wrap { padding:10px; margin:6px 0; }
     .arena {
-      position:relative; height:clamp(320px, 48svh, 460px); overflow:hidden; border-radius:14px;
+      position:relative; height:clamp(230px, 38svh, 340px); min-height:230px; overflow:hidden; border-radius:14px;
       border:1px solid #344963;
       background:
         linear-gradient(180deg, rgba(20,45,73,.75), rgba(13,25,43,.96)),
@@ -169,10 +169,10 @@
     /* Desktop and tablet battle composition: English gameplay owns the wide column. */
     @media (min-width: 720px) {
       body { padding: 18px 20px 28px; }
-      main { width: min(100%, 1500px); }
+      main { width: min(100%, 1280px); }
       .battle-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1.7fr) minmax(235px, .85fr);
+        grid-template-columns: minmax(0, 1.55fr) minmax(270px, 1fr);
         gap: 14px;
         align-items: start;
       }
@@ -192,7 +192,7 @@
       .skill-button strong { font-size: .9rem; }
       .skill-button span { font-size: .72rem; }
       .arena-wrap { padding: 12px; }
-      .arena { height: clamp(300px, 42svh, 460px); min-height: 300px; }
+      .arena { height: clamp(230px, 34svh, 350px); min-height: 230px; }
       .lane-letter { width: 66px; height: 72px; margin-left: -33px; margin-top: -36px; font-size: 1.8rem; }
       .player { width: 52px; height: 52px; margin-left: -26px; font-size: 2.1rem; }
       .controls { gap: 12px; margin-top: 12px; }
@@ -226,8 +226,8 @@
       .save-actions button { width: 100%; }
     }
     @media (min-width: 1200px) {
-      .battle-layout { grid-template-columns: minmax(0, 1.85fr) minmax(290px, .8fr); gap: 18px; }
-      .arena { height: clamp(340px, 46svh, 500px); min-height: 340px; }
+      .battle-layout { grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); gap: 18px; }
+      .arena { height: clamp(250px, 36svh, 380px); min-height: 250px; }
       .info-column > .panel { padding: 16px; }
     }
     @media (max-width:480px) {
@@ -268,7 +268,7 @@
       .shop-items button { min-height:35px; padding:6px 5px; font-size:.65rem; }
 
       .arena-wrap { padding:7px; }
-      .arena { height:clamp(290px, 46svh, 390px); min-height:290px; }
+      .arena { height:clamp(205px, 34svh, 280px); min-height:205px; }
       .vitals { gap:5px; }
       .vital { padding:5px 6px; }
       .vital-head { margin-bottom:3px; font-size:.62rem; }
@@ -292,7 +292,7 @@
     }
     @media (max-height:700px) and (max-width:480px) {
       .subtitle { display:none; }
-      .arena { height:clamp(250px, 40svh, 330px); min-height:250px; }
+      .arena { height:clamp(180px, 30svh, 225px); min-height:180px; }
       .howto { font-size:.6rem; }
       .enemy-traits { max-height:1em; overflow:hidden; }
     }
@@ -414,76 +414,7 @@
     </section>
       </aside>
     </div>
-elling" id="spellingProgress" aria-label="スペルの進み具合"></div>
-      </div>
-      <div class="stats">
-        <span>スコア <strong id="score">0</strong></span>
-        <span>ミス <strong id="mistakes">0</strong></span>
-      </div>
-    </section>
 
-        <section class="panel skill-panel" id="skillPanel" hidden aria-label="技を選択">
-      <div class="panel-title">
-        <h2>⚔️ 次に使う技を選ぼう</h2>
-        <span class="phase">選択中は時間停止</span>
-      </div>
-      <div class="skill-options">
-        <button class="skill-button" data-skill="quick-strike">
-          <strong>すばやい斬撃</strong><span>3〜4文字 · 威力 ×1</span>
-        </button>
-        <button class="skill-button" data-skill="power-strike">
-          <strong>強力な斬撃</strong><span>5〜6文字 · 威力 ×2</span>
-        </button>
-        <button class="skill-button" data-skill="ultimate-strike">
-          <strong>必殺技</strong><span>7〜8文字 · 威力 ×3</span>
-        </button>
-      </div>
-      <p class="shop-note" style="grid-column:1 / -1">長い単語ほど強力。ただし完成まで敵の攻撃を受ける可能性があるよ。</p>
-    </section>
-
-    <section class="panel arena-wrap">
-      <div class="arena" id="arena" aria-label="5レーンの固定アルファベット選択画面">
-        <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-        <div id="lettersLayer"></div>
-        
-        <div class="player" id="playerSprite" aria-label="プレイヤー">🧙</div>
-        <div class="arena-cover" id="arenaCover">
-          <div class="cover-title" id="coverTitle">冒険の準備はできた？</div>
-          <div class="cover-note" id="coverNote">左右に移動して、必要な文字のレーンで決定しよう。</div>
-        </div>
-      </div>
-      <div class="controls">
-        <button class="move-button" id="leftButton" aria-label="左へ移動" disabled>◀ 左へ</button>
-        <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
-        <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
-      </div>
-      <p class="howto">操作：← → / A D でレーン移動。必要な文字を選んで「決定」。正解・ミスのあとに文字が入れ替わるよ。文字は時間で変わらず、敵は時間経過で攻撃してくるよ。</p>
-      <div class="action-row">
-        <button class="primary start-button" id="startButton">冒険を始める</button>
-        <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
-      </div>
-    </section>
-
-    <section class="panel" aria-label="アイテムと装備">
-      <div class="panel-title">
-        <h2>🎒 所持品・装備</h2>
-        <strong class="inventory-value" id="equipmentSummary">ATK 1 · DEF 0</strong>
-      </div>
-      <div class="inventory-items" id="inventoryItems"></div>
-    </section>
-
-    <section class="panel" aria-label="セーブデータ">
-      <div class="panel-title">
-        <h2>💾 セーブデータ</h2>
-        <span class="inventory-label">自動保存あり</span>
-      </div>
-      <div class="save-actions">
-        <button id="saveNowButton">今すぐ保存</button>
-        <button id="loadSaveButton">ロード</button>
-        <button id="clearSaveButton">保存データ削除</button>
-      </div>
-      <p class="save-message" id="saveMessage" aria-live="polite">ゲームの進行は自動で保存されるよ。</p>
-    </section>
     <p class="footer">WORD FALL QUEST · STEP 14 · FIVE-LANE ACTION BATTLE</p>
   </main>
 
