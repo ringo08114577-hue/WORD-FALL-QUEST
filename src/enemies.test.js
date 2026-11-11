@@ -6,8 +6,11 @@ import {
 } from "./enemies.js";
 
 test("敵カタログには基本敵・追加敵・ボスが登録されている", () => {
-  assert.deepEqual(Object.keys(ENEMY_DEFINITIONS), [
+  assert.deepEqual(Object.keys(ENEMY_DEFINITIONS).slice(0, 6), [
     "slime", "bat", "goblin", "orc", "moss-golem", "forest-dragon",
+  ]);
+  assert.deepEqual(Object.keys(ENEMY_DEFINITIONS).slice(6), [
+    "ice-wolf", "ice-golem", "ice-dragon",
   ]);
   assert.equal(ENEMY_DEFINITIONS["forest-dragon"].isBoss, true);
   assert.equal(Object.isFrozen(ENEMY_DEFINITIONS), true);

@@ -232,6 +232,10 @@ test("選択したダンジョンIDをセーブから復元して同じ敵編成
   const saved = firstDungeon.getSaveData();
 
   const secondStore = createGameStore();
+  secondStore.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: createEnemy("ice-wolf"),
+  });
   const secondDungeon = createDungeonController(secondStore);
   assert.equal(secondDungeon.restoreSaveData(saved), true);
   assert.equal(secondDungeon.getDungeonInfo().id, "frozen-cavern");
