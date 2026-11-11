@@ -161,6 +161,10 @@
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
+    /* Narrow screens keep the vertical flow and show battle status first. */
+    .battle-layout { display:flex; flex-direction:column; }
+    .game-column, .info-column { display:contents; }
+    .battle-status { order:-1; }
 
     /* Desktop and tablet battle composition: English gameplay owns the wide column. */
     @media (min-width: 720px) {
