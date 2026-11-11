@@ -33,7 +33,7 @@ test("mobile layout retains a single-column fallback", () => {
 });
 
 test("tablet and desktop columns remain real grid items with a compact lane frame", () => {
-  assert.match(html, /\.game-column,\s*\.info-column\s*\{\s*display:block;\s*min-width:0;\s*\}/);
+  assert.match(html, /\.game-column,\s*\.info-column\s*\{\s*display:\s*block;\s*min-width:\s*0;\s*\}/);
   assert.match(html, /height: clamp\(230px, 34svh, 350px\); min-height: 230px;/);
   assert.match(html, /height: clamp\(250px, 36svh, 380px\); min-height: 250px;/);
 });
