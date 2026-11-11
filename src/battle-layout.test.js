@@ -73,3 +73,13 @@ test("lane movement buttons respond to touch pointer presses and remain keyboard
   assert.match(html, /bindLaneMoveButton\("rightButton", 1\)/);
   assert.ok(html.includes(".move-button { flex:1; min-width:0; min-height:44px; touch-action:manipulation;"));
 });
+
+
+test("lane movement buttons have reliable touch targets and a legacy touch fallback", () => {
+  assert.match(html, /\.move-button \{ min-height:48px; \}/);
+  assert.match(html, /min-height:52px; padding:9px 8px/);
+  assert.match(html, /if \(!\("PointerEvent" in window\)\) \{/);
+  assert.match(html, /button\.addEventListener\("touchstart"/);
+  assert.match(html, /\{ passive: false \}/);
+  assert.match(html, /event\.button !== 0 \|\| button\.disabled/);
+});
