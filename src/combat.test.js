@@ -278,7 +278,10 @@ test("技の種類によって単語完成時のダメージが変わる", () =>
 });
 
 test("単語難易度が高いほど攻撃ダメージが大きくなる", () => {
-  const store = startBattle({ playerAttackPower: 2 });
+  const store = startBattle({
+    playerAttackPower: 2,
+    enemy: { ...createEnemy("slime"), maxHp: 100 },
+  });
   const result = createCombatController(store).handle({
     eventId: "difficulty-six",
     type: "word-complete",
@@ -286,7 +289,7 @@ test("単語難易度が高いほど攻撃ダメージが大きくなる", () =>
     wordDifficulty: 6,
   });
   assert.equal(result.damage, 42);
-  assert.equal(store.getState().enemy.hp, 0);
+  assert.equal(store.getState().enemy.hp, 58);
   assert.match(result.message, /難易度Lv.6/);
 });
 
