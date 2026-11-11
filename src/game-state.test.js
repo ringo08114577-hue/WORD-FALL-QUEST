@@ -652,3 +652,27 @@ test("事前装備アクションは一時停止・敗北状態では使えな�
   });
   assert.equal(defeated, state);
 });
+
+
+test("一時停止と再開を繰り返してもHP・敵・ダンジョン進行は変化しない", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, maxHp: 7, attackPower: 2 },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 2 });
+  const beforePause = structuredClone(state);
+
+  state = gameReducer(state, { type: GAME_ACTION.PAUSE_BATTLE });
+  assert.equal(state.phase, GAME_PHASE.PAUSED);
+  assert.equal(state.pausedFrom, GAME_PHASE.BATTLE);
+  assert.equal(state.player.hp, beforePause.player.hp);
+  assert.equal(state.enemy.hp, beforePause.enemy.hp);
+  assert.equal(state.battle.number, beforePause.battle.number);
+
+  state = gameReducer(state, { type: GAME_ACTION.RESUME_BATTLE });
+  assert.equal(state.phase, GAME_PHASE.BATTLE);
+  assert.equal(state.pausedFrom, null);
+  assert.equal(state.player.hp, beforePause.player.hp);
+  assert.equal(state.enemy.hp, beforePause.enemy.hp);
+});

@@ -136,6 +136,8 @@
     .move-button { min-width:95px; font-size:.95rem; }
     .action-row { position:relative; z-index:10; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:8px; pointer-events:auto; }
     .action-row button { min-width:130px; }
+    .pause-button { background:#58421c; border-color:#8b6b2d; }
+    .pause-button:hover:not(:disabled) { background:#705526; }
     .next-button[hidden], .start-button[hidden] { display:none; }
     .skill-panel[hidden] { display:none; }
     .skill-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-top:9px; }
@@ -369,6 +371,7 @@
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
+        <button class="pause-button" id="pauseButton" hidden aria-pressed="false">一時停止</button>
       </div>
     </section>
       </div>
@@ -655,13 +658,18 @@
       $("enemyTraits").className = "enemy-traits" + (enemy?.isBoss ? " boss" : "");
 
       const active = state.phase === GAME_PHASE.BATTLE;
+      const paused = state.phase === GAME_PHASE.PAUSED;
+      const inBattle = active || paused;
       const canControl = active && !awaitingSkill && wordState.phase === "active";
+      $("pauseButton").hidden = !inBattle;
+      $("pauseButton").textContent = paused ? "再開する" : "一時停止";
+      $("pauseButton").setAttribute("aria-pressed", String(paused));
       $("leftButton").disabled = !canControl;
       $("rightButton").disabled = !canControl;
       $("confirmButton").disabled = !(
         canControl && canCollectCurrentLaneLetter(wordState)
       );
-      $("startButton").hidden = active;
+      $("startButton").hidden = inBattle;
       $("startButton").textContent =
         state.phase === GAME_PHASE.VICTORY
           ? (dungeonProgress.floorCleared
@@ -683,23 +691,28 @@
       const attackClock = getEnemyAttackWarningState(attackElapsed, attackInterval);
       const attackClockRunning = active && !awaitingSkill && wordState.phase === "active";
       $("enemyAttackMeterFill").style.width =
-        (active ? attackClock.progress * 100 : 0).toFixed(1) + "%";
+        (inBattle ? attackClock.progress * 100 : 0).toFixed(1) + "%";
       $("enemyAttackMeter").classList.toggle(
         "warning", attackClockRunning && attackClock.isWarning,
       );
       $("enemyAttackTimer").classList.toggle(
         "warning", attackClockRunning && attackClock.isWarning,
       );
-      $("enemyAttackTimer").textContent = !active
+      $("enemyAttackTimer").textContent = !inBattle
         ? "戦闘中に敵の時間攻撃が発生"
-        : !attackClockRunning
-          ? "技選択中 · 時間停止"
+        : paused
+          ? "一時停止中 · 時間停止"
+          : !attackClockRunning
+            ? "技選択中 · 時間停止"
           : attackClock.isWarning
             ? "⚠ 攻撃予告！あと " + (attackClock.remainingMs / 1000).toFixed(1) + "秒"
             : "次の攻撃まで " +
               (attackClock.remainingMs / 1000).toFixed(1) + "秒";
 
-      if (state.phase === GAME_PHASE.VICTORY) {
+      if (state.phase === GAME_PHASE.PAUSED) {
+        $("coverTitle").textContent = "一時停止中";
+        $("coverNote").textContent = "再開するまで敵の攻撃時間は止まっているよ。下の「再開する」を押して続けよう。";
+      } else if (state.phase === GAME_PHASE.VICTORY) {
         const floorCleared = dungeonProgress.floorCleared;
         $("coverTitle").textContent = (state.enemy?.name ?? "敵") + "を倒した！";
         $("coverNote").textContent = floorCleared
@@ -812,6 +825,30 @@
       setStatus(progress.floor + "階 " + progress.enemyNumber + "体目！まずは使う技を選ぼう。");
       render();
       saveProgress();
+    }
+
+    function toggleBattlePause() {
+      const phase = store.getState().phase;
+      if (phase === GAME_PHASE.BATTLE) {
+        setStatus("バトルを一時停止したよ。準備ができたら「再開する」を押そう。");
+        store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
+      } else if (phase === GAME_PHASE.PAUSED) {
+        store.dispatch({ type: GAME_ACTION.RESUME_BATTLE });
+        setStatus("バトル再開！敵の攻撃までの時間は一時停止したところから続くよ。");
+      } else {
+        return;
+      }
+      render();
+      saveProgress();
+    }
+
+    function pauseBattleForInterruption(message) {
+      if (store.getState().phase !== GAME_PHASE.BATTLE) return false;
+      setStatus(message);
+      store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
+      render();
+      saveProgress();
+      return true;
     }
 
     function move(direction) {
@@ -964,6 +1001,7 @@
       buyShopItem(button.dataset.shopItem);
     });
 
+    $("pauseButton").addEventListener("click", toggleBattlePause);
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE ||
           wordState.phase !== "word-complete") return;
@@ -1009,6 +1047,10 @@
       }
       if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") move(-1);
       if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") move(1);
+      if ((event.key === "p" || event.key === "P") && !event.repeat) {
+        event.preventDefault();
+        toggleBattlePause();
+      }
       if (event.key === "Enter") {
         event.preventDefault();
         confirmLaneLetter();
@@ -1023,6 +1065,9 @@
     render();
     if (initialSave.loaded) {
       updateSaveMessage("前回のセーブデータをロードしたよ。");
+      if (store.getState().phase === GAME_PHASE.PAUSED) {
+        setStatus("前回のバトルは一時停止中だよ。「再開する」を押すと続きから戦えるよ。");
+      }
     } else if (initialSave.reason === "invalid-save") {
       updateSaveMessage("保存データを読み込めなかったよ。新しく冒険を始めてね。");
     }
@@ -1048,7 +1093,15 @@
         ? "保存データを削除したよ。自動保存は停止中。「今すぐ保存」で再開できるよ。"
         : "保存データを削除できなかったよ。");
     });
-    window.addEventListener("pagehide", () => saveProgress());
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        pauseBattleForInterruption("画面を離れたためバトルを一時停止したよ。戻ったら「再開する」を押してね。");
+      }
+    });
+    window.addEventListener("pagehide", () => {
+      pauseBattleForInterruption("画面を離れたためバトルを一時停止して保存したよ。");
+      saveProgress();
+    });
 
     setInterval(() => {
       const gameState = store.getState();

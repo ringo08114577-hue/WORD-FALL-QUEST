@@ -325,3 +325,32 @@ test("バージョン3のセーブは旧敵編成を保ったまま能力デー�
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 4);
 });
+
+
+test("一時停止中のバトルを保存・ロードしても停止状態と進行を保持する", () => {
+  const storage = memoryStorage();
+  const extra = {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+    attackElapsed: 4200,
+    awaitingSkill: false,
+    selectedSkillId: "quick-strike",
+  };
+  const first = setup(storage, extra);
+  first.dungeon.start();
+  first.store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+  first.store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  const loaded = second.controller.load();
+  assert.equal(loaded.loaded, true);
+  assert.equal(second.store.getState().phase, GAME_PHASE.PAUSED);
+  assert.equal(second.store.getState().pausedFrom, GAME_PHASE.BATTLE);
+  assert.equal(second.store.getState().player.hp, 2);
+  assert.equal(second.getRestoredExtra().attackElapsed, 4200);
+  assert.equal(second.getRestoredExtra().selectedSkillId, "quick-strike");
+});
