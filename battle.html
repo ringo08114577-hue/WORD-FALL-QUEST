@@ -176,7 +176,7 @@
         gap: 14px;
         align-items: start;
       }
-      .game-column, .info-column { min-width: 0; }
+      .game-column, .info-column { display: block; min-width: 0; }
       .game-column > .panel { margin: 0 0 12px; }
       .info-column > .panel { margin: 0 0 12px; }
       .question-panel { padding: 14px 16px; }
@@ -192,7 +192,7 @@
       .skill-button strong { font-size: .9rem; }
       .skill-button span { font-size: .72rem; }
       .arena-wrap { padding: 12px; }
-      .arena { height: clamp(390px, 58svh, 680px); min-height: 390px; }
+      .arena { height: clamp(300px, 42svh, 460px); min-height: 300px; }
       .lane-letter { width: 66px; height: 72px; margin-left: -33px; margin-top: -36px; font-size: 1.8rem; }
       .player { width: 52px; height: 52px; margin-left: -26px; font-size: 2.1rem; }
       .controls { gap: 12px; margin-top: 12px; }
@@ -227,7 +227,7 @@
     }
     @media (min-width: 1200px) {
       .battle-layout { grid-template-columns: minmax(0, 1.85fr) minmax(290px, .8fr); gap: 18px; }
-      .arena { height: clamp(460px, 62svh, 720px); }
+      .arena { height: clamp(340px, 46svh, 500px); min-height: 340px; }
       .info-column > .panel { padding: 16px; }
     }
     @media (max-width:480px) {

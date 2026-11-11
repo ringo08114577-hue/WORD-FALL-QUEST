@@ -31,3 +31,9 @@ test("mobile layout retains a single-column fallback", () => {
   assert.match(html, /\.game-column,\s*\.info-column\s*\{\s*display:contents/);
   assert.match(html, /\.arena\s*\{\s*height:\s*clamp\(290px/);
 });
+
+test("desktop columns remain real grid items and the lane frame stays compact", () => {
+  assert.match(html, /\.game-column,\s*\.info-column\s*\{\s*display:\s*block;\s*min-width:\s*0;\s*\}/);
+  assert.match(html, /\.arena\s*\{\s*height:\s*clamp\(300px,\s*42svh,\s*460px\);\s*min-height:\s*300px;\s*\}/);
+  assert.match(html, /\.arena\s*\{\s*height:\s*clamp\(340px,\s*46svh,\s*500px\);\s*min-height:\s*340px;\s*\}/);
+});
