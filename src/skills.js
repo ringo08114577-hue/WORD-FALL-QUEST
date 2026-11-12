@@ -6,7 +6,10 @@ export { SKILL_DEFINITIONS, getSkillLevelDifficultyRange };
 
 export const SKILL_EQUIP_SLOT_COUNT = 4;
 export function createInitialEquippedSkillIds() {
-  const equipped = Object.keys(SKILL_DEFINITIONS).slice(0, SKILL_EQUIP_SLOT_COUNT);
+  const equipped = Object.values(SKILL_DEFINITIONS)
+    .filter((skill) => skill.initiallyEquipped === true)
+    .map((skill) => skill.id)
+    .slice(0, SKILL_EQUIP_SLOT_COUNT);
   return [...equipped, ...Array(SKILL_EQUIP_SLOT_COUNT - equipped.length).fill(null)];
 }
 export function isValidEquippedSkillIds(skillIds) {
@@ -38,6 +41,44 @@ export function getSkillDefinition(skillId) {
   return Object.hasOwn(SKILL_DEFINITIONS, skillId)
     ? SKILL_DEFINITIONS[skillId]
     : null;
+}
+
+export const SKILL_CATEGORY_LABELS = Object.freeze({
+  attack: "攻撃",
+  heal: "回復",
+  defense: "防御",
+  support: "補助",
+});
+
+/** Return the difficulty range for a skill; support skills can stay deliberately easy. */
+export function getSkillWordDifficultyRange(skillId, currentLevel) {
+  const skill = getSkillDefinition(skillId);
+  if (!skill) return null;
+  const level = currentLevel ?? skill.startingLevel ?? 1;
+  const progressionRange = getSkillLevelDifficultyRange(level);
+  const range = skill.wordDifficultyRange ?? progressionRange;
+  return { min: range.min, max: range.max };
+}
+
+/** Read the effect a skill has at its current level. */
+export function getSkillEffectForLevel(skillId, currentLevel) {
+  const skill = getSkillDefinition(skillId);
+  if (!skill) return null;
+  const level = currentLevel ?? skill.startingLevel ?? 1;
+  if (!Number.isInteger(level) || level < 1 || level > (skill.maxLevel ?? 5)) return null;
+  const index = level - 1;
+  const effect = skill.effect;
+  if (!effect) return { type: "attack", damageMultiplier: skill.damageMultiplier ?? 1 };
+  if (effect.type === "heal") {
+    return { type: "heal", amount: effect.amountByLevel[index] };
+  }
+  if (effect.type === "defense") {
+    return { type: "defense", bonus: effect.bonusByLevel[index], hits: effect.hits };
+  }
+  if (effect.type === "attack-buff") {
+    return { type: "attack-buff", multiplier: effect.multiplierByLevel[index], uses: effect.uses };
+  }
+  return null;
 }
 
 export function createInitialSkillLevels() {

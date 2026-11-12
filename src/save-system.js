@@ -7,7 +7,7 @@ import { normalizeSkillLevels, normalizeEquippedSkillIds } from "./skills.js";
 import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -24,7 +24,7 @@ function createInitialDungeonProgress() {
 }
 
 function migrateSnapshot(snapshot) {
-  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, SAVE_VERSION].includes(snapshot.version)) return null;
   let migrated = snapshot;
 
   if (migrated.version === 1) {
@@ -148,6 +148,24 @@ function migrateSnapshot(snapshot) {
       gameState: {
         ...gameState,
         actionLog: Array.isArray(gameState.actionLog) ? gameState.actionLog : [],
+      },
+    };
+  }
+
+  if (migrated.version === 7) {
+    const gameState = migrated.gameState;
+    if (!isRecord(gameState)) return null;
+    migrated = {
+      ...migrated,
+      version: 8,
+      gameState: {
+        ...gameState,
+        battleEffects: gameState.battleEffects ?? {
+          attackMultiplier: 1,
+          attackUsesRemaining: 0,
+          defenseBonus: 0,
+          defenseHitsRemaining: 0,
+        },
       },
     };
   }

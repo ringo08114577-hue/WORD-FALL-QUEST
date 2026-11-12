@@ -276,6 +276,80 @@ test("技の種類によって単語完成時のダメージが変わる", () =>
     assert.equal(store.getState().enemy.hp, 3 - expectedDamage);
   }
 });
+test("いやしの光は簡単な単語の完成でHPを回復し、敵にはダメージを与えない", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "healing-light" });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: createEnemy("slime") });
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
+  const result = createCombatController(store).handle({
+    eventId: "healing-light-word", type: "word-complete",
+    skillId: "healing-light", wordDifficulty: 2,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(result.damageTarget, null);
+  assert.equal(store.getState().player.hp, 3);
+  assert.equal(store.getState().enemy.hp, 3);
+  assert.match(result.message, /回復/);
+});
+
+test("鉄壁の構えは次の2回の敵攻撃を軽減する", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "iron-guard" });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...createEnemy("slime"), attackPower: 3 },
+  });
+  const combat = createCombatController(store);
+  const guard = combat.handle({
+    eventId: "iron-guard-word", type: "word-complete",
+    skillId: "iron-guard", wordDifficulty: 1,
+  });
+  assert.equal(guard.ignored, false);
+  assert.equal(store.getState().battleEffects.defenseBonus, 2);
+  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 2);
+
+  const firstHit = combat.handle({ eventId: "iron-guard-hit-1", type: "timed-attack" });
+  assert.equal(firstHit.damage, 1);
+  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 1);
+
+  const secondHit = combat.handle({ eventId: "iron-guard-hit-2", type: "timed-attack" });
+  assert.equal(secondHit.damage, 1);
+  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 0);
+  assert.equal(store.getState().battleEffects.defenseBonus, 0);
+});
+
+test("力の咆哮は次の2回の攻撃を強化し、回数を使い切ると解除される", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "battle-cry" });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...createEnemy("slime"), maxHp: 20 },
+  });
+  const combat = createCombatController(store);
+  const buff = combat.handle({
+    eventId: "battle-cry-word", type: "word-complete",
+    skillId: "battle-cry", wordDifficulty: 1,
+  });
+  assert.equal(buff.ignored, false);
+  assert.equal(store.getState().battleEffects.attackMultiplier, 1.2);
+  assert.equal(store.getState().battleEffects.attackUsesRemaining, 2);
+
+  const firstAttack = combat.handle({
+    eventId: "battle-cry-hit-1", type: "word-complete",
+    skillId: "quick-strike", wordDifficulty: 1,
+  });
+  assert.equal(firstAttack.damage, 2);
+  assert.equal(store.getState().battleEffects.attackUsesRemaining, 1);
+
+  const secondAttack = combat.handle({
+    eventId: "battle-cry-hit-2", type: "word-complete",
+    skillId: "quick-strike", wordDifficulty: 1,
+  });
+  assert.equal(secondAttack.damage, 2);
+  assert.equal(store.getState().battleEffects.attackUsesRemaining, 0);
+  assert.equal(store.getState().battleEffects.attackMultiplier, 1);
+});
+
 
 test("単語難易度が高いほど攻撃ダメージが大きくなる", () => {
   const store = startBattle({

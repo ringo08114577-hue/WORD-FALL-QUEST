@@ -8,7 +8,7 @@ import { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS } from "../enemies.js";
 import { DUNGEON_DEFINITIONS, DEFAULT_DUNGEON_ID } from "./dungeons.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_CHALLENGES } from "./words.js";
-import { getSkillLevelDifficultyRange } from "../word-difficulty.js";
+import { getSkillWordDifficultyRange } from "../skills.js";
 
 test("アイテム定義を増やすと初期所持品とショップ価格へ自動で反映される", () => {
   for (const [id, item] of Object.entries(ITEM_DEFINITIONS)) {
@@ -83,7 +83,7 @@ test("各技の文字数範囲に合う英単語のお題が必ずある", () =>
 test("全スキル・全レベルに文字数と難易度が合う単語候補がある", () => {
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
     for (let level = 1; level <= skill.maxLevel; level += 1) {
-      const range = getSkillLevelDifficultyRange(level);
+      const range = getSkillWordDifficultyRange(skillId, level);
       assert.ok(
         WORD_CHALLENGES.some((challenge) =>
           challenge.word.length >= skill.minWordLength &&
@@ -92,6 +92,13 @@ test("全スキル・全レベルに文字数と難易度が合う単語候補�
           challenge.difficulty <= range.max),
         skillId + " Lv." + level,
       );
+    }
+  }
+});
+test("補助スキルは全レベルで難易度1〜2の単語だけを出題する", () => {
+  for (const skillId of ["healing-light", "iron-guard", "battle-cry"]) {
+    for (let level = 1; level <= 5; level += 1) {
+      assert.deepEqual(getSkillWordDifficultyRange(skillId, level), { min: 1, max: 2 });
     }
   }
 });

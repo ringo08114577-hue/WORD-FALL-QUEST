@@ -687,6 +687,9 @@ test("スキルはゴールドで強化でき、レベルごとの出題範囲�
     "quick-strike": 1,
     "power-strike": 1,
     "ultimate-strike": 1,
+    "healing-light": 1,
+    "iron-guard": 1,
+    "battle-cry": 1,
   });
 
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 50 });
@@ -916,4 +919,52 @@ test("行動ログは最大200件に制限され、新しい記録を優先す�
   assert.equal(log.length, 200);
   assert.equal(log[0].message, "記録 11");
   assert.equal(log.at(-1).message, "記録 210");
+});
+
+
+test("戦闘中の一時効果は敵への攻撃・被攻撃で回数を消費する", () => {
+  let state = createInitialGameState();
+  assert.deepEqual(state.battleEffects, {
+    attackMultiplier: 1, attackUsesRemaining: 0,
+    defenseBonus: 0, defenseHitsRemaining: 0,
+  });
+  state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
+  state = gameReducer(state, {
+    type: GAME_ACTION.APPLY_ATTACK_BUFF, multiplier: 1.4, uses: 2,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.APPLY_DEFENSE_BUFF, bonus: 2, hits: 2,
+  });
+  assert.equal(isValidSavedGameState(state), true);
+  assert.equal(state.battleEffects.attackMultiplier, 1.4);
+  assert.equal(state.battleEffects.defenseBonus, 2);
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.DAMAGE_ENEMY, amount: 1, consumeAttackBuff: true,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.DAMAGE_PLAYER, amount: 1, consumeDefenseBuff: true,
+  });
+  assert.equal(state.battleEffects.attackUsesRemaining, 1);
+  assert.equal(state.battleEffects.defenseHitsRemaining, 1);
+  assert.equal(isValidSavedGameState(state), true);
+});
+
+test("勝利または街への帰還で戦闘中だけの一時効果を解除する", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE, enemy: slime,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.APPLY_ATTACK_BUFF, multiplier: 1.2, uses: 2,
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
+  assert.deepEqual(state.battleEffects, {
+    attackMultiplier: 1, attackUsesRemaining: 0,
+    defenseBonus: 0, defenseHitsRemaining: 0,
+  });
+  state = gameReducer(state, { type: GAME_ACTION.RETURN_TO_TOWN });
+  assert.deepEqual(state.battleEffects, {
+    attackMultiplier: 1, attackUsesRemaining: 0,
+    defenseBonus: 0, defenseHitsRemaining: 0,
+  });
 });

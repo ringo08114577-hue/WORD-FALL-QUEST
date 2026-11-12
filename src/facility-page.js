@@ -2,7 +2,10 @@ import { createAppSession } from "./app-session.js";
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS } from "./items.js";
 import { createShopController, SHOP_CATALOG } from "./shop.js";
-import { SKILL_DEFINITIONS, getSkillUpgradeCost, getSkillLevelDifficultyRange } from "./skills.js";
+import {
+  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillUpgradeCost,
+  getSkillWordDifficultyRange, getSkillEffectForLevel,
+} from "./skills.js";
 
 const $ = (id) => document.getElementById(id);
 const session = createAppSession();
@@ -13,7 +16,7 @@ const page = document.body.dataset.facility;
 const titleByPage = {
   items: ["道具屋", "回復薬など、冒険に必要なアイテムを購入しよう。"],
   equipment: ["武器・防具屋", "装備を購入して、持っている装備を付け替えよう。"],
-  skills: ["スキル工房", "ゴールドを使って攻撃スキルを強化しよう。"],
+  skills: ["スキル工房", "ゴールドを使って攻撃・回復・防御・補助スキルを強化しよう。"],
 };
 const [title, subtitle] = titleByPage[page] ?? titleByPage.items;
 $("pageTitle").textContent = title;
@@ -114,7 +117,16 @@ function renderSkills(state) {
   const grid = node("div", "offer-grid");
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
     const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
-    const range = getSkillLevelDifficultyRange(level);
+    const range = getSkillWordDifficultyRange(skillId, level);
+    const effect = getSkillEffectForLevel(skillId, level);
+    const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
+    const effectText = effect.type === "attack"
+      ? "攻撃威力 ×" + effect.damageMultiplier
+      : effect.type === "heal"
+        ? "HPを " + effect.amount + " 回復"
+        : effect.type === "defense"
+          ? "防御力 +" + effect.bonus + "（次の" + effect.hits + "回）"
+          : "攻撃倍率 ×" + effect.multiplier + "（次の攻撃" + effect.uses + "回）";
     const cost = getSkillUpgradeCost(skillId, level);
     const button = node("button", cost === null ? "secondary-button" : "primary-button",
       cost === null ? "最大レベル" : "スキルを強化（" + cost + "G）");
@@ -123,8 +135,8 @@ function renderSkills(state) {
     if (cost !== null) button.dataset.skillUpgrade = skillId;
     addCard(
       grid,
-      skill.name + " · Lv." + level,
-      "出題される単語の難易度：" + range.min + "〜" + range.max,
+      skill.name + " · Lv." + level + " · " + category,
+      "単語難易度 " + range.min + "〜" + range.max + " · " + effectText,
       cost === null ? "これ以上強化できないよ。" : "次はLv." + (level + 1) + " · " + cost + "G",
       button,
     );
@@ -187,10 +199,18 @@ $("facilityContent").addEventListener("click", (event) => {
       return;
     }
     const level = after.skillLevels[skillId];
-    const range = getSkillLevelDifficultyRange(level);
+    const range = getSkillWordDifficultyRange(skillId, level);
+    const effect = getSkillEffectForLevel(skillId, level);
     const saved = saves.save();
+    const effectText = effect.type === "attack"
+      ? "攻撃威力 ×" + effect.damageMultiplier
+      : effect.type === "heal"
+        ? "回復量 " + effect.amount + " HP"
+        : effect.type === "defense"
+          ? "防御力 +" + effect.bonus
+          : "攻撃倍率 ×" + effect.multiplier;
     $("feedback").textContent = SKILL_DEFINITIONS[skillId].name + "がLv." + level +
-      "になったよ。出題難易度は" + range.min + "〜" + range.max + "だよ。" +
+      "になったよ。単語難易度 " + range.min + "〜" + range.max + " · " + effectText + "。" +
       (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
     render();
   }

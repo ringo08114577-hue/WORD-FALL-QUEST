@@ -6,9 +6,9 @@
  * lane movement, and correct/incorrect letter-selection results.
  */
 
-import { SKILL_DEFINITIONS } from "./skills.js";
+import { SKILL_DEFINITIONS, getSkillWordDifficultyRange } from "./skills.js";
 import { WORD_CHALLENGES } from "./data/words.js";
-import { getSkillLevelDifficultyRange, getWordDifficultyWeight } from "./word-difficulty.js";
+import { getWordDifficultyWeight } from "./word-difficulty.js";
 
 export { WORD_CHALLENGES };
 
@@ -251,7 +251,7 @@ export function selectChallengeForSkill(
   if (!skill) throw new RangeError("登録されていない技です: " + skillId);
 
   const currentSkillLevel = skillLevel ?? skill.startingLevel ?? 1;
-  const difficultyRange = getSkillLevelDifficultyRange(currentSkillLevel);
+  const difficultyRange = getSkillWordDifficultyRange(skillId, currentSkillLevel);
   const candidates = WORD_CHALLENGES
     .map((challenge, index) => ({ challenge, index }))
     .filter(({ challenge }) =>

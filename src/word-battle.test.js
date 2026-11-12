@@ -280,6 +280,16 @@ test("スキルLv.1では対応する文字数と難易度1〜2の単語が選�
     assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 2);
   }
 });
+test("回復・防御・補助スキルは強化後も簡単な単語を選ぶ", () => {
+  for (const skillId of ["healing-light", "iron-guard", "battle-cry"]) {
+    const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
+      skillLevel: 5, random: () => 0.99,
+    });
+    const challenge = getCurrentChallenge(selected);
+    assert.ok(challenge.word.length >= 3 && challenge.word.length <= 4);
+    assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 2);
+  }
+});
 
 test("出題候補が複数難易度にまたがる場合、難易度ウェイトに沿って段階を選ぶ", () => {
   const easy = selectChallengeForSkill(createWordBattleState(), "power-strike", {

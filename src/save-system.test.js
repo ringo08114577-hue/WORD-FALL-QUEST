@@ -322,7 +322,7 @@ test("バージョン3のセーブは旧敵編成を保ったまま能力デー�
   assert.equal(second.store.getState().enemy.isBoss, false);
   assert.equal(second.dungeon.getSaveData().encounterSetVersion, 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 8);
 });
 
 
@@ -429,6 +429,9 @@ test("以前のセーブにスキルレベルがなくてもLv.1で補完して�
     "quick-strike": 1,
     "power-strike": 1,
     "ultimate-strike": 1,
+    "healing-light": 1,
+    "iron-guard": 1,
+    "battle-cry": 1,
   });
 });
 
@@ -478,7 +481,7 @@ test("旧バージョン4のセーブはダンジョン進行マップを追加�
   assert.equal(second.dungeon.getUnlockedFloor("forest-ruins"), 1);
   assert.equal(second.dungeon.getUnlockedFloor("frozen-cavern"), 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 8);
 });
 
 
@@ -538,7 +541,7 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 8);
 });
 
 
@@ -586,5 +589,54 @@ test("バージョン6のセーブデータには空の行動ログを追加し�
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().actionLog, []);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 8);
+});
+
+
+test("バージョン7のセーブへ一時効果の空状態を追加して移行する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  assert.equal(first.controller.save().saved, true);
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 7;
+  delete legacy.gameState.battleEffects;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().battleEffects, {
+    attackMultiplier: 1, attackUsesRemaining: 0,
+    defenseBonus: 0, defenseHitsRemaining: 0,
+  });
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 8);
+});
+
+test("攻撃・防御の一時効果はセーブとロードで維持される", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  first.store.dispatch({
+    type: GAME_ACTION.APPLY_ATTACK_BUFF, multiplier: 1.4, uses: 2,
+  });
+  first.store.dispatch({
+    type: GAME_ACTION.APPLY_DEFENSE_BUFF, bonus: 3, hits: 2,
+  });
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().battleEffects, {
+    attackMultiplier: 1.4, attackUsesRemaining: 2,
+    defenseBonus: 3, defenseHitsRemaining: 2,
+  });
 });

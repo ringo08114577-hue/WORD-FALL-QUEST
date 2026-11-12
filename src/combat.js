@@ -6,7 +6,7 @@
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ENEMY_ABILITY_DEFINITIONS, getEnemyAbilityEffects } from "./enemies.js";
-import { SKILL_DEFINITIONS } from "./skills.js";
+import { SKILL_DEFINITIONS, getSkillEffectForLevel } from "./skills.js";
 import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
 
 export const COMBAT_EVENT = Object.freeze({
@@ -48,7 +48,9 @@ export function resolveCombatEvent(gameState, event) {
     const defensePower = Number.isSafeInteger(gameState.player?.defensePower) && gameState.player.defensePower >= 0
       ? gameState.player.defensePower : 0;
     const effects = getEnemyAbilityEffects(gameState.enemy);
-    const effectiveDefense = Math.max(0, defensePower - effects.defensePiercing);
+    const battleDefenseBonus = gameState.battleEffects?.defenseHitsRemaining > 0
+      ? gameState.battleEffects.defenseBonus : 0;
+    const effectiveDefense = Math.max(0, defensePower - effects.defensePiercing) + battleDefenseBonus;
     const amount = Math.max(1, enemyPower + effects.counterAttackBonus - effectiveDefense);
     const counterAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.counterAttackBonus>0);
     const abilityNote = counterAbility ? "（"+counterAbility.name+"）" : "";
@@ -57,6 +59,7 @@ export function resolveCombatEvent(gameState, event) {
       ignored:false, action:{
         type:GAME_ACTION.DAMAGE_PLAYER,
         amount,
+        consumeDefenseBuff: battleDefenseBonus > 0,
         logReason: event.type === COMBAT_EVENT.TIMED_ATTACK ? "時間攻撃" : "反撃",
       }, damageTarget:"player", damage:amount,
       message: event.type === COMBAT_EVENT.TIMED_ATTACK
@@ -80,20 +83,80 @@ export function resolveCombatEvent(gameState, event) {
       !Object.hasOwn(WORD_DIFFICULTY_DEFINITIONS, wordDifficulty)) {
     return { ignored: true, reason: "invalid-word-difficulty" };
   }
+
+  const skillLevel = gameState.skillLevels?.[skillId] ?? skill.startingLevel ?? 1;
+  const skillEffect = getSkillEffectForLevel(skillId, skillLevel);
+  const skillNote = "「" + skill.name + "」！";
+
+  if (skillEffect?.type === "heal") {
+    const actualHeal = Math.min(skillEffect.amount, gameState.player.maxHp - gameState.player.hp);
+    return {
+      ignored: false,
+      action: { type: GAME_ACTION.HEAL_PLAYER, amount: skillEffect.amount, skillId },
+      damageTarget: null,
+      message: actualHeal > 0
+        ? skillNote + "HPを " + actualHeal + " 回復！"
+        : skillNote + "HPは満タンだ！",
+      tone: "good",
+    };
+  }
+
+  if (skillEffect?.type === "defense") {
+    return {
+      ignored: false,
+      action: {
+        type: GAME_ACTION.APPLY_DEFENSE_BUFF,
+        bonus: skillEffect.bonus,
+        hits: skillEffect.hits,
+        skillId,
+      },
+      damageTarget: null,
+      message: skillNote + "防御力 +" + skillEffect.bonus +
+        "！次の敵の攻撃 " + skillEffect.hits + "回を軽減するよ。",
+      tone: "good",
+    };
+  }
+
+  if (skillEffect?.type === "attack-buff") {
+    return {
+      ignored: false,
+      action: {
+        type: GAME_ACTION.APPLY_ATTACK_BUFF,
+        multiplier: skillEffect.multiplier,
+        uses: skillEffect.uses,
+        skillId,
+      },
+      damageTarget: null,
+      message: skillNote + "攻撃倍率 ×" + skillEffect.multiplier +
+        "！次の攻撃 " + skillEffect.uses + "回が強化されるよ。",
+      tone: "good",
+    };
+  }
+
   const effects = getEnemyAbilityEffects(gameState.enemy);
   const difficultyMultiplier = WORD_DIFFICULTY_DEFINITIONS[wordDifficulty].damageMultiplier;
+  const activeAttackMultiplier = gameState.battleEffects?.attackUsesRemaining > 0
+    ? gameState.battleEffects.attackMultiplier : 1;
   const baseDamage = Math.ceil(
     positivePower(gameState.player.attackPower) *
     (skill?.damageMultiplier ?? 1) *
-    difficultyMultiplier,
+    difficultyMultiplier *
+    activeAttackMultiplier,
   );
   const amount = Math.max(1, baseDamage - effects.damageReduction);
   const guardAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.damageReduction>0);
   const abilityNote = guardAbility ? "（"+guardAbility.name+"でダメージ軽減）" : "";
-  const skillNote = skill ? "「" + skill.name + "」！" : "";
   return {
-    ignored:false, action:{type:GAME_ACTION.DAMAGE_ENEMY,amount}, damageTarget:"enemy", damage:amount,
-    message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+abilityNote,
+    ignored:false,
+    action: {
+      type: GAME_ACTION.DAMAGE_ENEMY,
+      amount,
+      consumeAttackBuff: activeAttackMultiplier > 1,
+    },
+    damageTarget:"enemy",
+    damage:amount,
+    message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+
+      (activeAttackMultiplier > 1 ? " 攻撃強化が発動！" : "") + abilityNote,
     tone:"good",
   };
 }

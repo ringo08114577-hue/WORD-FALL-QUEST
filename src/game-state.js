@@ -26,6 +26,8 @@ export const GAME_ACTION = Object.freeze({
   DAMAGE_PLAYER: "DAMAGE_PLAYER",
   DAMAGE_ENEMY: "DAMAGE_ENEMY",
   HEAL_PLAYER: "HEAL_PLAYER",
+  APPLY_ATTACK_BUFF: "APPLY_ATTACK_BUFF",
+  APPLY_DEFENSE_BUFF: "APPLY_DEFENSE_BUFF",
   USE_ITEM: "USE_ITEM",
   EQUIP_ITEM: "EQUIP_ITEM",
   PREPARE_EQUIPMENT: "PREPARE_EQUIPMENT",
@@ -95,6 +97,31 @@ function normalizeEnemy(enemy) {
 
 function normalizeAmount(amount) {
   return amount === undefined ? 1 : amount;
+}
+
+function createEmptyBattleEffects() {
+  return {
+    attackMultiplier: 1,
+    attackUsesRemaining: 0,
+    defenseBonus: 0,
+    defenseHitsRemaining: 0,
+  };
+}
+
+function isValidBattleEffects(effects) {
+  if (!effects || typeof effects !== "object" || Array.isArray(effects)) return false;
+  if (
+    !Number.isFinite(effects.attackMultiplier) ||
+    effects.attackMultiplier < 1 || effects.attackMultiplier > 2 ||
+    !Number.isInteger(effects.attackUsesRemaining) ||
+    effects.attackUsesRemaining < 0 || effects.attackUsesRemaining > 5 ||
+    !isNonNegativeInteger(effects.defenseBonus) || effects.defenseBonus > 10 ||
+    !Number.isInteger(effects.defenseHitsRemaining) ||
+    effects.defenseHitsRemaining < 0 || effects.defenseHitsRemaining > 5
+  ) return false;
+  if ((effects.attackUsesRemaining === 0) !== (effects.attackMultiplier === 1)) return false;
+  if ((effects.defenseHitsRemaining === 0) !== (effects.defenseBonus === 0)) return false;
+  return true;
 }
 
 /**
@@ -217,6 +244,7 @@ export function createInitialGameState({
       nextLevelXp: experienceRequiredForNextLevel(1),
     },
     enemy: null,
+    battleEffects: createEmptyBattleEffects(),
     skillLevels: createInitialSkillLevels(),
     equippedSkillIds: createInitialEquippedSkillIds(),
     inventory: { ...createInitialInventory(), gold: 0 },
@@ -255,6 +283,7 @@ export function gameReducer(state, action) {
         phase: GAME_PHASE.BATTLE,
         pausedFrom: null,
         enemy,
+        battleEffects: createEmptyBattleEffects(),
         battle: {
           number: state.battle.number + 1,
           startedAt: action.at ?? null,
@@ -271,10 +300,23 @@ export function gameReducer(state, action) {
 
       const hp = Math.max(0, state.player.hp - amount);
       const defeated = hp === 0;
+      const currentEffects = state.battleEffects ?? createEmptyBattleEffects();
+      const consumesDefense = action.consumeDefenseBuff === true &&
+        currentEffects.defenseHitsRemaining > 0;
+      const battleEffects = defeated
+        ? createEmptyBattleEffects()
+        : consumesDefense
+          ? {
+              ...currentEffects,
+              defenseBonus: currentEffects.defenseHitsRemaining <= 1 ? 0 : currentEffects.defenseBonus,
+              defenseHitsRemaining: Math.max(0, currentEffects.defenseHitsRemaining - 1),
+            }
+          : currentEffects;
       return {
         ...state,
         phase: defeated ? GAME_PHASE.DEFEAT : GAME_PHASE.BATTLE,
         player: { ...state.player, hp },
+        battleEffects,
         battle: {
           ...state.battle,
           endedAt: defeated ? (action.at ?? null) : state.battle.endedAt,
@@ -294,12 +336,25 @@ export function gameReducer(state, action) {
       const player = defeated
         ? addPlayerExperience(state.player, experienceReward, state.inventory)
         : state.player;
+      const currentEffects = state.battleEffects ?? createEmptyBattleEffects();
+      const consumesAttack = action.consumeAttackBuff === true &&
+        currentEffects.attackUsesRemaining > 0;
+      const battleEffects = defeated
+        ? createEmptyBattleEffects()
+        : consumesAttack
+          ? {
+              ...currentEffects,
+              attackMultiplier: currentEffects.attackUsesRemaining <= 1 ? 1 : currentEffects.attackMultiplier,
+              attackUsesRemaining: Math.max(0, currentEffects.attackUsesRemaining - 1),
+            }
+          : currentEffects;
 
       return {
         ...state,
         phase: defeated ? GAME_PHASE.VICTORY : GAME_PHASE.BATTLE,
         player,
         enemy: { ...state.enemy, hp },
+        battleEffects,
         battle: {
           ...state.battle,
           endedAt: defeated ? (action.at ?? null) : state.battle.endedAt,
@@ -322,6 +377,40 @@ export function gameReducer(state, action) {
       const hp = Math.min(state.player.maxHp, state.player.hp + amount);
       if (hp === state.player.hp) return state;
       return { ...state, player: { ...state.player, hp } };
+    }
+
+    case GAME_ACTION.APPLY_ATTACK_BUFF: {
+      if (state.phase !== GAME_PHASE.BATTLE) return state;
+      const multiplier = action.multiplier;
+      const uses = action.uses;
+      if (!Number.isFinite(multiplier) || multiplier <= 1 || multiplier > 2 ||
+          !Number.isInteger(uses) || uses < 1 || uses > 5) return state;
+      const current = state.battleEffects ?? createEmptyBattleEffects();
+      const battleEffects = {
+        ...current,
+        attackMultiplier: Math.max(current.attackMultiplier, multiplier),
+        attackUsesRemaining: Math.max(current.attackUsesRemaining, uses),
+      };
+      if (battleEffects.attackMultiplier === current.attackMultiplier &&
+          battleEffects.attackUsesRemaining === current.attackUsesRemaining) return state;
+      return { ...state, battleEffects };
+    }
+
+    case GAME_ACTION.APPLY_DEFENSE_BUFF: {
+      if (state.phase !== GAME_PHASE.BATTLE) return state;
+      const bonus = action.bonus;
+      const hits = action.hits;
+      if (!Number.isInteger(bonus) || bonus < 1 || bonus > 10 ||
+          !Number.isInteger(hits) || hits < 1 || hits > 5) return state;
+      const current = state.battleEffects ?? createEmptyBattleEffects();
+      const battleEffects = {
+        ...current,
+        defenseBonus: Math.max(current.defenseBonus, bonus),
+        defenseHitsRemaining: Math.max(current.defenseHitsRemaining, hits),
+      };
+      if (battleEffects.defenseBonus === current.defenseBonus &&
+          battleEffects.defenseHitsRemaining === current.defenseHitsRemaining) return state;
+      return { ...state, battleEffects };
     }
 
     case GAME_ACTION.USE_ITEM: {
@@ -473,6 +562,7 @@ export function gameReducer(state, action) {
         pausedFrom: null,
         player: { ...state.player, hp: state.player.maxHp },
         enemy: null,
+        battleEffects: createEmptyBattleEffects(),
         lastBattleResult: null,
       };
     }
@@ -575,10 +665,32 @@ function describeActionLog(action, before, after) {
     }
     case GAME_ACTION.HEAL_PLAYER: {
       const amount = after.player.hp - before.player.hp;
-      return amount > 0 ? {
-        category: ACTION_LOG_CATEGORY.ITEM,
-        message: "HPを " + amount + " 回復（" + after.player.hp + " / " + after.player.maxHp + "）",
-      } : null;
+      if (amount <= 0) return null;
+      const skill = action.skillId ? SKILL_DEFINITIONS[action.skillId] : null;
+      return {
+        category: skill ? ACTION_LOG_CATEGORY.SKILL : ACTION_LOG_CATEGORY.ITEM,
+        message: skill
+          ? skill.name + "でHPを " + amount + " 回復（" + after.player.hp + " / " + after.player.maxHp + "）"
+          : "HPを " + amount + " 回復（" + after.player.hp + " / " + after.player.maxHp + "）",
+      };
+    }
+    case GAME_ACTION.APPLY_ATTACK_BUFF: {
+      const skill = action.skillId ? SKILL_DEFINITIONS[action.skillId] : null;
+      return {
+        category: ACTION_LOG_CATEGORY.SKILL,
+        message: (skill?.name ?? "攻撃強化") + "！攻撃倍率 ×" +
+          after.battleEffects.attackMultiplier + "（あと" +
+          after.battleEffects.attackUsesRemaining + "回）",
+      };
+    }
+    case GAME_ACTION.APPLY_DEFENSE_BUFF: {
+      const skill = action.skillId ? SKILL_DEFINITIONS[action.skillId] : null;
+      return {
+        category: ACTION_LOG_CATEGORY.SKILL,
+        message: (skill?.name ?? "防御強化") + "！防御力 +" +
+          after.battleEffects.defenseBonus + "（あと" +
+          after.battleEffects.defenseHitsRemaining + "回）",
+      };
     }
     case GAME_ACTION.USE_ITEM: {
       const amount = after.player.hp - before.player.hp;
@@ -707,6 +819,7 @@ export function isValidSavedGameState(saved) {
     !items || typeof items !== "object" || Array.isArray(items) ||
     !isValidSkillLevels(saved.skillLevels) ||
     !isValidEquippedSkillIds(saved.equippedSkillIds) ||
+    !isValidBattleEffects(saved.battleEffects) ||
     !isValidActionLog(saved.actionLog) ||
     !equipmentValid ||
     !isNonNegativeInteger(inv.gold)
@@ -764,6 +877,7 @@ function copySavedGameState(saved) {
     pausedFrom: saved.pausedFrom,
     skillLevels: { ...saved.skillLevels },
     equippedSkillIds: [...saved.equippedSkillIds],
+    battleEffects: { ...saved.battleEffects },
     player: {
       hp: saved.player.hp,
       maxHp: saved.player.maxHp,

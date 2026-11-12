@@ -1,6 +1,9 @@
 import { createAppSession } from "./app-session.js";
 import { GAME_ACTION } from "./game-state.js";
-import { SKILL_DEFINITIONS, getSkillLevelDifficultyRange } from "./skills.js";
+import {
+  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillWordDifficultyRange,
+  getSkillEffectForLevel,
+} from "./skills.js";
 
 const $ = (id) => document.getElementById(id);
 const session = createAppSession();
@@ -49,11 +52,20 @@ function renderSkills(state) {
   root.replaceChildren();
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
     const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
-    const range = getSkillLevelDifficultyRange(level);
+    const range = getSkillWordDifficultyRange(skillId, level);
+    const effect = getSkillEffectForLevel(skillId, level);
+    const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
+    const effectText = effect.type === "attack"
+      ? "威力倍率 ×" + effect.damageMultiplier
+      : effect.type === "heal"
+        ? "回復量 " + effect.amount + " HP"
+        : effect.type === "defense"
+          ? "防御力 +" + effect.bonus + " · 次の" + effect.hits + "回"
+          : "攻撃倍率 ×" + effect.multiplier + " · 次の攻撃" + effect.uses + "回";
     const card = node("article", "skill-card");
     card.append(node("strong", "", skill.name + " · Lv." + level));
-    card.append(node("p", "", skill.description));
-    card.append(node("p", "skill-meta", "単語難易度 " + range.min + "〜" + range.max + " · 威力倍率 ×" + skill.damageMultiplier));
+    card.append(node("p", "", category + " · " + skill.description));
+    card.append(node("p", "skill-meta", "単語難易度 " + range.min + "〜" + range.max + " · " + effectText));
     root.append(card);
   }
 }

@@ -669,10 +669,20 @@
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
       setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
+      const activeBuffs = [];
+      if (state.battleEffects?.attackUsesRemaining > 0) {
+        activeBuffs.push("攻撃×" + state.battleEffects.attackMultiplier +
+          " あと" + state.battleEffects.attackUsesRemaining + "回");
+      }
+      if (state.battleEffects?.defenseHitsRemaining > 0) {
+        activeBuffs.push("防御+" + state.battleEffects.defenseBonus +
+          " あと" + state.battleEffects.defenseHitsRemaining + "回");
+      }
       $("playerProgression").textContent =
         "LV." + state.player.level + " · EXP " +
         state.player.experience + " / " + state.player.nextLevelXp +
-        " · DEF " + state.player.defensePower;
+        " · DEF " + state.player.defensePower +
+        (activeBuffs.length > 0 ? " · " + activeBuffs.join(" / ") : "");
 
       renderInventory(state);
 

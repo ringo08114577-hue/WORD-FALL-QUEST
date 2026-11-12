@@ -146,3 +146,10 @@ test("バトル画面に最新の行動を表示するログ欄があり、報�
   assert.match(html, /root\.scrollTop = root\.scrollHeight/);
   assert.match(html, /に遭遇した！/);
 });
+
+
+test("プレイヤー欄に攻撃・防御バフの残り回数を表示する", () => {
+  assert.match(html, /state\.battleEffects\?\.attackUsesRemaining > 0/);
+  assert.match(html, /state\.battleEffects\?\.defenseHitsRemaining > 0/);
+  assert.match(html, /activeBuffs\.join\(" \/ "\)/);
+});
