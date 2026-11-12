@@ -13,16 +13,21 @@ test("battle page gives English gameplay more than half of the desktop and table
   assert.match(html, /@media\s*\(min-width:\s*720px\)/);
 });
 
-test("battle layout keeps all gameplay, HP, inventory, and save controls available", () => {
+test("battle layout keeps gameplay, HP, and inventory while hiding manual save controls", () => {
   for (const id of [
     "japanesePrompt", "spellingProgress", "arena", "lettersLayer",
     "leftButton", "confirmButton", "rightButton", "startButton",
     "nextButton", "enemyHp", "enemyHpFill", "playerHp", "playerHpFill",
-    "enemyAttackTimer", "inventoryItems", "townBackLink", "saveNowButton",
-    "loadSaveButton", "clearSaveButton",
+    "enemyAttackTimer", "inventoryItems", "townBackLink",
   ]) {
     assert.match(html, new RegExp('id="' + id + '"'));
   }
+  for (const id of ["saveNowButton", "loadSaveButton", "clearSaveButton", "saveMessage"]) {
+    assert.doesNotMatch(html, new RegExp('id="' + id + '"'));
+  }
+  assert.doesNotMatch(html, /aria-label="セーブデータ"|💾 セーブデータ/);
+  assert.match(html, /const initialSave = saveController\.load\(\)/);
+  assert.match(html, /function saveProgress\(\)\s*\{\s*return saveController\.save\(\);\s*\}/);
 });
 
 test("mobile layout retains a single-column fallback", () => {
