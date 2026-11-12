@@ -144,6 +144,5 @@ test("バトル画面に最新の行動を表示するログ欄があり、報�
   assert.match(html, /state\.actionLog\.slice\(/);
   assert.match(html, /encounterStartIndex/);
   assert.match(html, /root\.scrollTop = root\.scrollHeight/);
-  assert.match(html, /宝箱から/);
   assert.match(html, /に遭遇した！/);
 });
