@@ -22,21 +22,37 @@ test("ホームへ戻るとHPが全回復し、挑戦中の階層は最初の敵
   assert.equal(dungeon.start().enemy.id, "slime");
 });
 
-test("ホーム帰還はレベル・所持品・装備・スキルを消さず、敗北状態も回復する", () => {
+test("敗北から街へ戻っても育成・所持品を保持し、同じ階を再挑戦できる", () => {
   const store = createGameStore({ playerMaxHp: 1 });
   const dungeon = createDungeonController(store);
   const town = createTownController(store, dungeon);
-  dungeon.start();
   store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 70 });
-  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+  store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
+  store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "large-potion", quantity: 2 });
+  dungeon.start();
+
+  // Defeat the first enemy to gain one level, then lose the next encounter.
+  store.dispatch({ type: GAME_ACTION.DAMAGE_ENEMY, amount: store.getState().enemy.hp });
+  assert.equal(store.getState().player.level, 2);
+  assert.equal(dungeon.advance().started, true);
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: store.getState().player.hp });
 
   const result = town.returnToTown();
+  const state = store.getState();
   assert.equal(result.fromPhase, GAME_PHASE.DEFEAT);
-  assert.equal(store.getState().phase, GAME_PHASE.TITLE);
-  assert.equal(store.getState().player.hp, 1);
-  assert.equal(store.getState().inventory.gold, 70);
-  assert.equal(store.getState().stats.enemiesDefeated, 0);
+  assert.equal(state.phase, GAME_PHASE.TITLE);
+  assert.equal(state.player.hp, state.player.maxHp);
+  assert.equal(state.player.level, 2);
+  assert.equal(state.player.maxHp, 2);
+  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.skillLevels["quick-strike"], 2);
+  assert.equal(state.inventory.gold, 20);
+  assert.equal(state.inventory.items["large-potion"], 2);
+  assert.equal(state.stats.enemiesDefeated, 1);
+  assert.equal(state.stats.totalExperienceEarned, 10);
   assert.equal(dungeon.getProgress().started, false);
+  assert.equal(dungeon.getProgress().enemyNumber, 1);
+  assert.equal(dungeon.start().enemy.id, "slime");
 });
 
 test("ホームにいるときに戻ってもデータを不必要に変更しない", () => {

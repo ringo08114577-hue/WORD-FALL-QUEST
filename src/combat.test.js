@@ -317,3 +317,45 @@ test("時間経過の敵攻撃は防御力を適用してプレイヤーにダ�
   assert.equal(store.getState().player.hp, 2);
   assert.match(result.message, /時間攻撃/);
 });
+
+
+test("未装備のスキルや登録外スキルでは攻撃できない", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: null });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: createEnemy("slime"),
+  });
+  const combat = createCombatController(store);
+
+  const unequipped = combat.handle({
+    eventId: "unequipped-skill",
+    type: "word-complete",
+    skillId: "power-strike",
+  });
+  assert.equal(unequipped.ignored, true);
+  assert.equal(unequipped.reason, "skill-not-equipped");
+  assert.equal(store.getState().enemy.hp, 3);
+
+  const unknown = combat.handle({
+    eventId: "unknown-skill",
+    type: "word-complete",
+    skillId: "not-a-skill",
+  });
+  assert.equal(unknown.ignored, true);
+  assert.equal(unknown.reason, "skill-not-equipped");
+  assert.equal(store.getState().enemy.hp, 3);
+});
+
+test("範囲外の単語難易度では攻撃ダメージを発生させない", () => {
+  const store = startBattle();
+  const result = createCombatController(store).handle({
+    eventId: "invalid-difficulty",
+    type: "word-complete",
+    skillId: "quick-strike",
+    wordDifficulty: 7,
+  });
+  assert.equal(result.ignored, true);
+  assert.equal(result.reason, "invalid-word-difficulty");
+  assert.equal(store.getState().enemy.hp, 3);
+});

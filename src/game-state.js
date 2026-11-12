@@ -356,14 +356,15 @@ export function gameReducer(state, action) {
         ? ITEM_DEFINITIONS[action.itemId]
         : null;
       const quantity = action.quantity === undefined ? 1 : action.quantity;
-      if (!item || !isPositiveInteger(quantity)) return state;
+      const nextQuantity = (state.inventory.items[action.itemId] ?? 0) + quantity;
+      if (!item || !isPositiveInteger(quantity) || !isNonNegativeInteger(nextQuantity)) return state;
       return {
         ...state,
         inventory: {
           ...state.inventory,
           items: {
             ...state.inventory.items,
-            [action.itemId]: (state.inventory.items[action.itemId] ?? 0) + quantity,
+            [action.itemId]: nextQuantity,
           },
         },
       };
@@ -371,10 +372,11 @@ export function gameReducer(state, action) {
 
     case GAME_ACTION.ADD_GOLD: {
       const amount = action.amount;
-      if (!isPositiveInteger(amount)) return state;
+      const nextGold = state.inventory.gold + amount;
+      if (!isPositiveInteger(amount) || !isNonNegativeInteger(nextGold)) return state;
       return {
         ...state,
-        inventory: { ...state.inventory, gold: state.inventory.gold + amount },
+        inventory: { ...state.inventory, gold: nextGold },
       };
     }
 
@@ -385,12 +387,14 @@ export function gameReducer(state, action) {
       const item = itemExists ? ITEM_DEFINITIONS[action.itemId] : null;
       const cost = action.cost;
       const expectedCost = priceExists ? ITEM_SHOP_PRICES[action.itemId] : null;
+      const nextQuantity = (state.inventory.items[action.itemId] ?? 0) + 1;
       if (
         !item ||
         expectedCost === null ||
         cost !== expectedCost ||
         !isPositiveInteger(cost) ||
-        state.inventory.gold < cost
+        state.inventory.gold < cost ||
+        !isNonNegativeInteger(nextQuantity)
       ) {
         return state;
       }
@@ -401,7 +405,7 @@ export function gameReducer(state, action) {
           gold: state.inventory.gold - cost,
           items: {
             ...state.inventory.items,
-            [action.itemId]: (state.inventory.items[action.itemId] ?? 0) + 1,
+            [action.itemId]: nextQuantity,
           },
         },
       };
@@ -535,6 +539,7 @@ export function isValidSavedGameState(saved) {
     !isPositiveInteger(p.baseAttackPower) ||
     !isNonNegativeInteger(p.baseDefensePower) ||
     !isPositiveInteger(p.startingAttackPower) ||
+    p.baseAttackPower !== p.startingAttackPower + p.level - 1 ||
     p.maxHp !== p.baseMaxHp + p.level - 1 ||
     !isNonNegativeInteger(p.hp) || p.hp > p.maxHp ||
     p.attackPower !== p.baseAttackPower + equipmentBonuses.attackBonus ||

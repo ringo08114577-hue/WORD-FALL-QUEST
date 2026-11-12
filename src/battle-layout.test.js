@@ -129,3 +129,9 @@ test("battle status displays the selected dungeon name from the saved controller
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ dungeonProgress\.floor/);
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ progress\.floor/);
 });
+
+
+test("敗北してもプレイヤーの育成データを消さず、現在の階から再挑戦する", () => {
+  assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \? "この階から再挑戦"/);
+  assert.match(html, /if \(previousPhase === GAME_PHASE\.DEFEAT\) \{\s*\/\/ Defeat abandons[\s\S]*?GAME_ACTION\.RETURN_TO_TOWN[\s\S]*?dungeon\.reset\(\);\s*\}/);
+});

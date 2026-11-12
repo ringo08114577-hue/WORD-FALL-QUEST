@@ -5,6 +5,7 @@ import {
   createGameStore,
   createInitialGameState,
   gameReducer,
+  isValidSavedGameState,
   GAME_ACTION,
   GAME_PHASE,
 } from "./game-state.js";
@@ -807,4 +808,42 @@ test("スキル装備の変更は街でのみ行え、登録外の技は装備�
   const battle = gameReducer(title, { type: GAME_ACTION.START_BATTLE, enemy: slime });
   const duringBattle = gameReducer(battle, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike" });
   assert.equal(duringBattle, battle);
+});
+
+
+test("保存データの攻撃力はレベルに応じた成長値と一致する必要がある", () => {
+  const valid = createInitialGameState();
+  assert.equal(isValidSavedGameState(valid), true);
+
+  const invalid = structuredClone(valid);
+  invalid.player.baseAttackPower += 1;
+  invalid.player.attackPower += 1;
+  assert.equal(isValidSavedGameState(invalid), false);
+});
+
+test("所持品数とゴールドが安全な整数の上限を超える加算は拒否する", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "large-potion",
+    quantity: Number.MAX_SAFE_INTEGER,
+  });
+  assert.equal(state.inventory.items["large-potion"], Number.MAX_SAFE_INTEGER);
+  const itemOverflow = gameReducer(state, {
+    type: GAME_ACTION.ADD_ITEM,
+    itemId: "large-potion",
+    quantity: 1,
+  });
+  assert.equal(itemOverflow, state);
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.ADD_GOLD,
+    amount: Number.MAX_SAFE_INTEGER,
+  });
+  assert.equal(state.inventory.gold, Number.MAX_SAFE_INTEGER);
+  const goldOverflow = gameReducer(state, {
+    type: GAME_ACTION.ADD_GOLD,
+    amount: 1,
+  });
+  assert.equal(goldOverflow, state);
 });

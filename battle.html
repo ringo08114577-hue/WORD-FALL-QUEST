@@ -625,7 +625,7 @@
           ? (dungeonProgress.floorCleared
               ? (dungeonProgress.rewardClaimed ? "次の階へ" : "宝箱を開ける")
               : "次の敵へ")
-          : state.phase === GAME_PHASE.DEFEAT ? "最初からやり直す" : "冒険を始める";
+          : state.phase === GAME_PHASE.DEFEAT ? "この階から再挑戦" : "冒険を始める";
       $("nextButton").hidden = !(active && wordState.phase === "word-complete" && !awaitingSkill);
       $("nextButton").textContent = "次の技を選ぶ";
       $("skillPanel").hidden = !(active && awaitingSkill);
@@ -755,7 +755,9 @@
       const previousPhase = store.getState().phase;
       combat.reset();
       if (previousPhase === GAME_PHASE.DEFEAT) {
-        store.dispatch({ type: GAME_ACTION.RESET_GAME });
+        // Defeat abandons the current attempt, but keeps level, gold, items,
+        // equipment, skill levels, and permanent dungeon unlocks.
+        store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
         dungeon.reset();
       }
       const result = previousPhase === GAME_PHASE.VICTORY

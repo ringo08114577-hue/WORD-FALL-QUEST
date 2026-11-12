@@ -61,14 +61,22 @@ export function resolveCombatEvent(gameState, event) {
       tone:"bad",
     };
   }
-  const effects = getEnemyAbilityEffects(gameState.enemy);
-  const skill = Object.hasOwn(SKILL_DEFINITIONS, event.skillId)
-    ? SKILL_DEFINITIONS[event.skillId]
+  const skillId = event.skillId === undefined ? "quick-strike" : event.skillId;
+  const skill = typeof skillId === "string" &&
+    Object.hasOwn(SKILL_DEFINITIONS, skillId)
+    ? SKILL_DEFINITIONS[skillId]
     : null;
-  const wordDifficulty = Number.isInteger(event.wordDifficulty) &&
-    Object.hasOwn(WORD_DIFFICULTY_DEFINITIONS, event.wordDifficulty)
-    ? event.wordDifficulty
-    : 1;
+  if (!skill || !Array.isArray(gameState.equippedSkillIds) ||
+      !gameState.equippedSkillIds.includes(skillId)) {
+    return { ignored: true, reason: "skill-not-equipped" };
+  }
+
+  const wordDifficulty = event.wordDifficulty === undefined ? 1 : event.wordDifficulty;
+  if (!Number.isInteger(wordDifficulty) ||
+      !Object.hasOwn(WORD_DIFFICULTY_DEFINITIONS, wordDifficulty)) {
+    return { ignored: true, reason: "invalid-word-difficulty" };
+  }
+  const effects = getEnemyAbilityEffects(gameState.enemy);
   const difficultyMultiplier = WORD_DIFFICULTY_DEFINITIONS[wordDifficulty].damageMultiplier;
   const baseDamage = Math.ceil(
     positivePower(gameState.player.attackPower) *
