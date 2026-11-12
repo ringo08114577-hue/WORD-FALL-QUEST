@@ -54,7 +54,11 @@ export function resolveCombatEvent(gameState, event) {
     const abilityNote = counterAbility ? "（"+counterAbility.name+"）" : "";
     const piercingNote = effects.defensePiercing>0 ? " 防御力を一部無視！" : "";
     return {
-      ignored:false, action:{type:GAME_ACTION.DAMAGE_PLAYER,amount}, damageTarget:"player", damage:amount,
+      ignored:false, action:{
+        type:GAME_ACTION.DAMAGE_PLAYER,
+        amount,
+        logReason: event.type === COMBAT_EVENT.TIMED_ATTACK ? "時間攻撃" : "反撃",
+      }, damageTarget:"player", damage:amount,
       message: event.type === COMBAT_EVENT.TIMED_ATTACK
         ? gameState.enemy.name + "の時間攻撃！ HP -" + amount + "。" + abilityNote + piercingNote
         : gameState.enemy.name + "の反撃" + abilityNote + "！「" + (event.letter || "?") + "」は違う文字。HP -" + amount + "。" + piercingNote,
@@ -128,6 +132,25 @@ export function createCombatController(store) {
       }
 
       const state = store.getState();
+      if (event.type === COMBAT_EVENT.WRONG) {
+        store.dispatch({
+          type: GAME_ACTION.LOG_EVENT,
+          category: "combat",
+          message: "文字選択ミス：" + (event.letter || "?") +
+            (event.expected ? "（正解は " + event.expected + "）" : ""),
+        });
+      } else if (event.type === COMBAT_EVENT.WORD_COMPLETE) {
+        const skill = SKILL_DEFINITIONS[event.skillId ?? "quick-strike"];
+        store.dispatch({
+          type: GAME_ACTION.LOG_EVENT,
+          category: "skill",
+          message: (event.japanese ? "「" + event.japanese + "」" : "単語") +
+            (event.word ? "（" + event.word + "）" : "") +
+            "を完成：" + (skill?.name ?? "スキル") +
+            "・難易度Lv." + (event.wordDifficulty ?? 1),
+        });
+      }
+
       let message = resolution.message;
       let tone = resolution.tone;
       let experienceGained = 0;

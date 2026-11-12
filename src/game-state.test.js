@@ -860,3 +860,58 @@ test("型が不正な所持品・ゴールド加算は例外を出さず無視�
     state,
   );
 });
+
+
+test("有効な行動は内容と時刻を行動ログへ記録する", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 25, timestamp: 1000 });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: slime, timestamp: 2000 });
+  store.dispatch({
+    type: GAME_ACTION.DAMAGE_PLAYER,
+    amount: 1,
+    logReason: "時間攻撃",
+    timestamp: 3000,
+  });
+  store.dispatch({ type: GAME_ACTION.DAMAGE_ENEMY, amount: 3, timestamp: 4000 });
+
+  const log = store.getState().actionLog;
+  assert.equal(log.length, 4);
+  assert.equal(log[0].message, "ゴールド +25G");
+  assert.equal(log[1].message, "スライムとのバトル開始");
+  assert.equal(log[2].message, "時間攻撃でHP -1（残り 2）");
+  assert.match(log[3].message, /スライムを撃破！ EXP/);
+  assert.deepEqual(log.map((entry) => entry.timestamp), [1000, 2000, 3000, 4000]);
+});
+
+test("明示的なログ追加と全消去ができ、無効な行動は記録しない", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
+  assert.equal(store.getState().actionLog.length, 0);
+
+  store.dispatch({
+    type: GAME_ACTION.LOG_EVENT,
+    category: "skill",
+    message: "強力な斬撃を選択",
+    timestamp: 5000,
+  });
+  assert.equal(store.getState().actionLog[0].message, "強力な斬撃を選択");
+  store.dispatch({ type: GAME_ACTION.CLEAR_ACTION_LOG });
+  assert.deepEqual(store.getState().actionLog, []);
+});
+
+
+test("行動ログは最大200件に制限され、新しい記録を優先する", () => {
+  const store = createGameStore();
+  for (let index = 1; index <= 210; index += 1) {
+    store.dispatch({
+      type: GAME_ACTION.LOG_EVENT,
+      category: "system",
+      message: "記録 " + index,
+      timestamp: index,
+    });
+  }
+  const log = store.getState().actionLog;
+  assert.equal(log.length, 200);
+  assert.equal(log[0].message, "記録 11");
+  assert.equal(log.at(-1).message, "記録 210");
+});

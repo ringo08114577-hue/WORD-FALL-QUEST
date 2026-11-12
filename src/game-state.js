@@ -1,4 +1,4 @@
-import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, EQUIPMENT_SLOTS, getEquipmentBonuses, createInitialInventory } from "./items.js";
+import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS, getEquipmentBonuses, createInitialInventory } from "./items.js";
 import { ENEMY_ABILITY_DEFINITIONS } from "./enemies.js";
 import { GAME_CONFIG } from "./game-config.js";
 import {
@@ -40,7 +40,22 @@ export const GAME_ACTION = Object.freeze({
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
   RESET_GAME: "RESET_GAME",
+  LOG_EVENT: "LOG_EVENT",
+  CLEAR_ACTION_LOG: "CLEAR_ACTION_LOG",
 });
+
+export const ACTION_LOG_CATEGORY = Object.freeze({
+  BATTLE: "battle",
+  COMBAT: "combat",
+  SKILL: "skill",
+  ITEM: "item",
+  EQUIPMENT: "equipment",
+  REWARD: "reward",
+  PROGRESS: "progress",
+  SYSTEM: "system",
+});
+export const ACTION_LOG_MAX_ENTRIES = 200;
+const ACTION_LOG_CATEGORIES = new Set(Object.values(ACTION_LOG_CATEGORY));
 
 function isPositiveInteger(value) {
   return Number.isSafeInteger(value) && value > 0;
@@ -214,6 +229,7 @@ export function createInitialGameState({
       enemiesDefeated: 0,
       totalExperienceEarned: 0,
     },
+    actionLog: [],
     lastBattleResult: null,
   };
 }
@@ -477,6 +493,10 @@ export function gameReducer(state, action) {
         pausedFrom: null,
       };
 
+    case GAME_ACTION.CLEAR_ACTION_LOG:
+      if (state.actionLog.length === 0) return state;
+      return { ...state, actionLog: [] };
+
     case GAME_ACTION.RESET_GAME:
       return createInitialGameState({
         playerMaxHp: state.player.baseMaxHp ?? state.player.maxHp,
@@ -485,6 +505,141 @@ export function gameReducer(state, action) {
 
     default:
       return state;
+  }
+}
+
+function isValidActionLog(entries) {
+  if (!Array.isArray(entries) || entries.length > ACTION_LOG_MAX_ENTRIES) return false;
+  let previousId = 0;
+  return entries.every((entry) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry) ||
+        !isPositiveInteger(entry.id) || entry.id <= previousId ||
+        !isNonNegativeInteger(entry.timestamp) || entry.timestamp > 8_640_000_000_000_000 ||
+        !ACTION_LOG_CATEGORIES.has(entry.category) ||
+        typeof entry.message !== "string" || entry.message.trim() === "" ||
+        entry.message.length > 180) return false;
+    previousId = entry.id;
+    return true;
+  });
+}
+
+function appendActionLog(state, payload, timestamp = Date.now()) {
+  const previous = Array.isArray(state.actionLog) ? state.actionLog : [];
+  const lastId = previous.at(-1)?.id ?? 0;
+  const safeTimestamp = isNonNegativeInteger(timestamp) ? timestamp : Date.now();
+  const entry = {
+    id: lastId + 1,
+    timestamp: safeTimestamp,
+    category: payload.category,
+    message: payload.message.trim().slice(0, 180),
+  };
+  return {
+    ...state,
+    actionLog: [...previous, entry].slice(-ACTION_LOG_MAX_ENTRIES),
+  };
+}
+
+function describeActionLog(action, before, after) {
+  if (!action || before === after) return null;
+  const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
+    ? ITEM_DEFINITIONS[action.itemId]
+    : null;
+  switch (action.type) {
+    case GAME_ACTION.START_BATTLE: {
+      const context = action.context && typeof action.context === "object" ? action.context : {};
+      const location = typeof context.dungeonName === "string"
+        ? context.dungeonName + " " + context.floor + "階 · "
+        : "";
+      const number = Number.isSafeInteger(context.enemyNumber) ? context.enemyNumber + "体目 · " : "";
+      return { category: ACTION_LOG_CATEGORY.BATTLE,
+        message: location + number + (after.enemy?.name ?? "敵") + "とのバトル開始" };
+    }
+    case GAME_ACTION.DAMAGE_PLAYER: {
+      const amount = before.player.hp - after.player.hp;
+      if (amount <= 0) return null;
+      const reason = typeof action.logReason === "string" && action.logReason.trim()
+        ? action.logReason.trim() + "で"
+        : "";
+      return { category: ACTION_LOG_CATEGORY.COMBAT,
+        message: reason + "HP -" + amount + "（残り " + after.player.hp + "）" };
+    }
+    case GAME_ACTION.DAMAGE_ENEMY: {
+      const amount = before.enemy?.hp - after.enemy?.hp;
+      if (!Number.isSafeInteger(amount) || amount <= 0) return null;
+      return {
+        category: ACTION_LOG_CATEGORY.COMBAT,
+        message: after.enemy?.hp === 0
+          ? (before.enemy?.name ?? "敵") + "を撃破！ EXP +" + (after.enemy?.experienceReward ?? 0)
+          : (before.enemy?.name ?? "敵") + "に " + amount + " ダメージ",
+      };
+    }
+    case GAME_ACTION.HEAL_PLAYER: {
+      const amount = after.player.hp - before.player.hp;
+      return amount > 0 ? {
+        category: ACTION_LOG_CATEGORY.ITEM,
+        message: "HPを " + amount + " 回復（" + after.player.hp + " / " + after.player.maxHp + "）",
+      } : null;
+    }
+    case GAME_ACTION.USE_ITEM: {
+      const amount = after.player.hp - before.player.hp;
+      return item && amount > 0 ? {
+        category: ACTION_LOG_CATEGORY.ITEM,
+        message: item.name + "を使用（HP +" + amount + "）",
+      } : null;
+    }
+    case GAME_ACTION.EQUIP_ITEM:
+    case GAME_ACTION.PREPARE_EQUIPMENT:
+    case GAME_ACTION.EQUIP_WEAPON:
+    case GAME_ACTION.EQUIP_SHIELD: {
+      const slot = item?.slot;
+      return slot && after.inventory.equipment[slot] === action.itemId ? {
+        category: ACTION_LOG_CATEGORY.EQUIPMENT,
+        message: item.name + "を" + (EQUIPMENT_SLOT_LABELS[slot] ?? "装備") + "に装備",
+      } : null;
+    }
+    case GAME_ACTION.ADD_ITEM:
+      return item ? {
+        category: ACTION_LOG_CATEGORY.REWARD,
+        message: item.name + " ×" + (action.quantity ?? 1) + " を入手",
+      } : null;
+    case GAME_ACTION.ADD_GOLD:
+      return isPositiveInteger(action.amount) ? {
+        category: ACTION_LOG_CATEGORY.REWARD,
+        message: "ゴールド +" + action.amount + "G",
+      } : null;
+    case GAME_ACTION.BUY_ITEM:
+      return item ? {
+        category: ACTION_LOG_CATEGORY.ITEM,
+        message: item.name + "を購入（-" + action.cost + "G）",
+      } : null;
+    case GAME_ACTION.UPGRADE_SKILL: {
+      const skill = SKILL_DEFINITIONS[action.skillId];
+      return skill ? {
+        category: ACTION_LOG_CATEGORY.SKILL,
+        message: skill.name + "をLv." + after.skillLevels[action.skillId] + "に強化（-" +
+          (before.inventory.gold - after.inventory.gold) + "G）",
+      } : null;
+    }
+    case GAME_ACTION.EQUIP_SKILL: {
+      const skill = action.skillId ? SKILL_DEFINITIONS[action.skillId] : null;
+      return {
+        category: ACTION_LOG_CATEGORY.SKILL,
+        message: "スキル枠 " + (action.slotIndex + 1) + " を" + (skill?.name ?? "未装備") + "に変更",
+      };
+    }
+    case GAME_ACTION.RETURN_TO_TOWN: {
+      const healed = after.player.hp - before.player.hp;
+      return {
+        category: ACTION_LOG_CATEGORY.PROGRESS,
+        message: "街に帰還" + (healed > 0 ? "（HP +" + healed + "）" : ""),
+      };
+    }
+    case GAME_ACTION.PAUSE_BATTLE:
+      return { category: ACTION_LOG_CATEGORY.BATTLE, message: "バトルを一時停止" };
+    case GAME_ACTION.RESUME_BATTLE:
+      return { category: ACTION_LOG_CATEGORY.BATTLE, message: "バトルを再開" };
+    default:
+      return null;
   }
 }
 
@@ -549,6 +704,7 @@ export function isValidSavedGameState(saved) {
     !items || typeof items !== "object" || Array.isArray(items) ||
     !isValidSkillLevels(saved.skillLevels) ||
     !isValidEquippedSkillIds(saved.equippedSkillIds) ||
+    !isValidActionLog(saved.actionLog) ||
     !equipmentValid ||
     !isNonNegativeInteger(inv.gold)
   ) return false;
@@ -647,6 +803,7 @@ function copySavedGameState(saved) {
       enemiesDefeated: saved.stats.enemiesDefeated,
       totalExperienceEarned: saved.stats.totalExperienceEarned,
     },
+    actionLog: saved.actionLog.map((entry) => ({ ...entry })),
     lastBattleResult: saved.lastBattleResult,
   };
 }
@@ -676,9 +833,25 @@ export function createGameStore(options = {}) {
     },
 
     dispatch(action) {
+      if (action?.type === GAME_ACTION.LOG_EVENT) {
+        const category = action.category;
+        const message = action.message;
+        if (!ACTION_LOG_CATEGORIES.has(category) ||
+            typeof message !== "string" || message.trim() === "") return state;
+        state = deepFreeze(appendActionLog(state, { category, message },
+          action.timestamp ?? Date.now()));
+        for (const listener of listeners) listener(state, action);
+        return state;
+      }
+
+      const previousState = state;
       const nextState = gameReducer(state, action);
       if (nextState !== state) {
-        state = deepFreeze(nextState);
+        const entry = describeActionLog(action, previousState, nextState);
+        const withLog = entry
+          ? appendActionLog(nextState, entry, action?.timestamp ?? Date.now())
+          : nextState;
+        state = deepFreeze(withLog);
         for (const listener of listeners) {
           listener(state, action);
         }

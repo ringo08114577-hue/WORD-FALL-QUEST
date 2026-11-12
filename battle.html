@@ -839,8 +839,11 @@
       if (picked.result === "waiting" || !picked.event) return;
       wordState = picked.state;
       if (picked.event.type === "word-complete") {
+        const challenge = getCurrentChallenge(wordState);
         picked.event.skillId = selectedSkillId;
-        picked.event.wordDifficulty = getCurrentChallenge(wordState).difficulty;
+        picked.event.wordDifficulty = challenge.difficulty;
+        picked.event.word = challenge.word;
+        picked.event.japanese = challenge.japanese;
       }
       handleWordEvents([picked.event]);
       if (

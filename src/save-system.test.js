@@ -202,7 +202,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 6,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7,
   );
 });
 
@@ -322,7 +322,7 @@ test("バージョン3のセーブは旧敵編成を保ったまま能力デー�
   assert.equal(second.store.getState().enemy.isBoss, false);
   assert.equal(second.dungeon.getSaveData().encounterSetVersion, 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 6);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
 });
 
 
@@ -478,7 +478,7 @@ test("旧バージョン4のセーブはダンジョン進行マップを追加�
   assert.equal(second.dungeon.getUnlockedFloor("forest-ruins"), 1);
   assert.equal(second.dungeon.getUnlockedFloor("frozen-cavern"), 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 6);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
 });
 
 
@@ -538,5 +538,53 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 6);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
+});
+
+
+test("行動ログもゲームのセーブデータに保存・復元される", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  first.store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 1, logReason: "時間攻撃" });
+  first.store.dispatch({
+    type: GAME_ACTION.LOG_EVENT,
+    category: "skill",
+    message: "必殺技を選択",
+    timestamp: 123456,
+  });
+  const originalLog = structuredClone(first.store.getState().actionLog);
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().actionLog, originalLog);
+});
+
+test("バージョン6のセーブデータには空の行動ログを追加して移行する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(first.controller.save().saved, true);
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 6;
+  delete legacy.gameState.actionLog;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().actionLog, []);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7);
 });

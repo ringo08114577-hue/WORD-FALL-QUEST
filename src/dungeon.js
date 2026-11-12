@@ -87,6 +87,11 @@ export function createDungeonController(
     store.dispatch({
       type: GAME_ACTION.START_BATTLE,
       enemy: createEnemy(ids[enemyIndex], { floor }),
+      context: {
+        dungeonName: DUNGEON_DEFINITIONS[dungeonId].name,
+        floor,
+        enemyNumber: enemyIndex + 1,
+      },
     });
     started = true;
     return {
@@ -122,10 +127,20 @@ export function createDungeonController(
       if (floorCleared) {
         if (floor >= getFloorCount(dungeonId)) {
           completedDungeons[dungeonId] = true;
+          store.dispatch({
+            type: GAME_ACTION.LOG_EVENT,
+            category: "progress",
+            message: DUNGEON_DEFINITIONS[dungeonId].name + "を制覇！",
+          });
           return { started: false, reason: "dungeon-cleared", floor, dungeonId };
         }
         floor += 1;
         unlockedFloors[dungeonId] = Math.max(unlockedFloors[dungeonId], floor);
+        store.dispatch({
+          type: GAME_ACTION.LOG_EVENT,
+          category: "progress",
+          message: DUNGEON_DEFINITIONS[dungeonId].name + " " + floor + "階が解放された",
+        });
         enemyIndex = 0;
         rewardClaimed = false;
         encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
@@ -148,6 +163,11 @@ export function createDungeonController(
       enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      store.dispatch({
+        type: GAME_ACTION.LOG_EVENT,
+        category: "progress",
+        message: DUNGEON_DEFINITIONS[dungeonId].name + "を探索先に選択",
+      });
       return { selected: true, dungeonId, dungeon: DUNGEON_DEFINITIONS[dungeonId] };
     },
 
@@ -167,6 +187,11 @@ export function createDungeonController(
       enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      store.dispatch({
+        type: GAME_ACTION.LOG_EVENT,
+        category: "progress",
+        message: DUNGEON_DEFINITIONS[dungeonId].name + " " + floor + "階を選択",
+      });
       return { selected: true, dungeonId, floor };
     },
 
@@ -181,6 +206,13 @@ export function createDungeonController(
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
       if (floor > getFloorCount(dungeonId)) floor = getFloorCount(dungeonId);
+      if (previous.started) {
+        store.dispatch({
+          type: GAME_ACTION.LOG_EVENT,
+          category: "progress",
+          message: DUNGEON_DEFINITIONS[dungeonId].name + " " + previous.floor + "階への挑戦を中断",
+        });
+      }
       return { exited: true, ...previous, dungeonId, floor };
     },
 

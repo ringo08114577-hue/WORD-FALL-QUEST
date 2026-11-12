@@ -7,7 +7,7 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
   const html = read("index.html");
-  for (const link of ["status.html", "items.html", "equipment.html", "skills.html", "dungeons.html"]) {
+  for (const link of ["status.html", "items.html", "equipment.html", "skills.html", "dungeons.html", "logs.html"]) {
     assert.ok(html.includes('href="./' + link + '"'), link);
   }
   assert.match(html, /createAppSession/);
@@ -61,4 +61,15 @@ test("ホームには開発用画面へのリンクを表示せず、開発用�
   assert.ok(!html.includes("debug-state.html"));
   assert.doesNotMatch(html, /開発用画面/);
   assert.throws(() => read("debug-state.html"), { code: "ENOENT" });
+});
+
+
+test("行動ログ画面は保存済みログを表示し、消去操作を提供する", () => {
+  const html = read("logs.html");
+  const script = read("src/logs-page.js");
+  assert.match(html, /行動ログ/);
+  assert.match(html, /logs-page\.js/);
+  assert.match(script, /createAppSession/);
+  assert.match(script, /actionLog/);
+  assert.match(script, /CLEAR_ACTION_LOG/);
 });
