@@ -318,6 +318,25 @@ test("鉄壁の構えは次の2回の敵攻撃を軽減する", () => {
   assert.equal(store.getState().battleEffects.defenseBonus, 0);
 });
 
+test("鉄壁の構えは弱い敵の攻撃を0ダメージにして、使用回数を消費する", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "iron-guard" });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: createEnemy("slime") });
+  const combat = createCombatController(store);
+  combat.handle({
+    eventId: "iron-guard-block-word", type: "word-complete",
+    skillId: "iron-guard", wordDifficulty: 1,
+  });
+
+  const blocked = combat.handle({
+    eventId: "iron-guard-block-hit", type: "timed-attack",
+  });
+  assert.equal(blocked.damage, 0);
+  assert.match(blocked.message, /完全に防いだ/);
+  assert.equal(store.getState().player.hp, 3);
+  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 1);
+});
+
 test("力の咆哮は次の2回の攻撃を強化し、回数を使い切ると解除される", () => {
   const store = createGameStore();
   store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "battle-cry" });

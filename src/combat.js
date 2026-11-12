@@ -51,7 +51,11 @@ export function resolveCombatEvent(gameState, event) {
     const battleDefenseBonus = gameState.battleEffects?.defenseHitsRemaining > 0
       ? gameState.battleEffects.defenseBonus : 0;
     const effectiveDefense = Math.max(0, defensePower - effects.defensePiercing) + battleDefenseBonus;
-    const amount = Math.max(1, enemyPower + effects.counterAttackBonus - effectiveDefense);
+    const minimumDamage = battleDefenseBonus > 0 ? 0 : 1;
+    const amount = Math.max(
+      minimumDamage,
+      enemyPower + effects.counterAttackBonus - effectiveDefense,
+    );
     const counterAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.counterAttackBonus>0);
     const abilityNote = counterAbility ? "（"+counterAbility.name+"）" : "";
     const piercingNote = effects.defensePiercing>0 ? " 防御力を一部無視！" : "";
@@ -62,9 +66,11 @@ export function resolveCombatEvent(gameState, event) {
         consumeDefenseBuff: battleDefenseBonus > 0,
         logReason: event.type === COMBAT_EVENT.TIMED_ATTACK ? "時間攻撃" : "反撃",
       }, damageTarget:"player", damage:amount,
-      message: event.type === COMBAT_EVENT.TIMED_ATTACK
-        ? gameState.enemy.name + "の時間攻撃！ HP -" + amount + "。" + abilityNote + piercingNote
-        : gameState.enemy.name + "の反撃" + abilityNote + "！「" + (event.letter || "?") + "」は違う文字。HP -" + amount + "。" + piercingNote,
+      message: amount === 0
+        ? gameState.enemy.name + "の攻撃を「鉄壁の構え」で完全に防いだ！ダメージ0。"
+        : event.type === COMBAT_EVENT.TIMED_ATTACK
+          ? gameState.enemy.name + "の時間攻撃！ HP -" + amount + "。" + abilityNote + piercingNote
+          : gameState.enemy.name + "の反撃" + abilityNote + "！「" + (event.letter || "?") + "」は違う文字。HP -" + amount + "。" + piercingNote,
       tone:"bad",
     };
   }

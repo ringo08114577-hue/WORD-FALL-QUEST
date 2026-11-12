@@ -968,3 +968,20 @@ test("勝利または街への帰還で戦闘中だけの一時効果を解除�
     defenseBonus: 0, defenseHitsRemaining: 0,
   });
 });
+
+
+test("鉄壁の構えは0ダメージで攻撃を防いだ場合も回数を消費する", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.START_BATTLE, enemy: slime,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.APPLY_DEFENSE_BUFF, bonus: 2, hits: 2,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.DAMAGE_PLAYER, amount: 0, consumeDefenseBuff: true,
+  });
+  assert.equal(state.player.hp, 3);
+  assert.equal(state.battleEffects.defenseHitsRemaining, 1);
+  assert.equal(state.battleEffects.defenseBonus, 2);
+  assert.equal(isValidSavedGameState(state), true);
+});

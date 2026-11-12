@@ -296,13 +296,13 @@ export function gameReducer(state, action) {
     case GAME_ACTION.DAMAGE_PLAYER: {
       if (state.phase !== GAME_PHASE.BATTLE) return state;
       const amount = normalizeAmount(action.amount);
-      if (!isPositiveInteger(amount)) return state;
-
-      const hp = Math.max(0, state.player.hp - amount);
-      const defeated = hp === 0;
       const currentEffects = state.battleEffects ?? createEmptyBattleEffects();
       const consumesDefense = action.consumeDefenseBuff === true &&
         currentEffects.defenseHitsRemaining > 0;
+      if (!isNonNegativeInteger(amount) || (amount === 0 && !consumesDefense)) return state;
+
+      const hp = Math.max(0, state.player.hp - amount);
+      const defeated = hp === 0;
       const battleEffects = defeated
         ? createEmptyBattleEffects()
         : consumesDefense
@@ -646,7 +646,11 @@ function describeActionLog(action, before, after) {
     }
     case GAME_ACTION.DAMAGE_PLAYER: {
       const amount = before.player.hp - after.player.hp;
-      if (amount <= 0) return null;
+      if (amount <= 0) {
+        return action.consumeDefenseBuff === true
+          ? { category: ACTION_LOG_CATEGORY.SKILL, message: "鉄壁の構えで敵の攻撃を完全に防いだ！" }
+          : null;
+      }
       const reason = typeof action.logReason === "string" && action.logReason.trim()
         ? action.logReason.trim() + "で"
         : "";
