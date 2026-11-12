@@ -135,3 +135,15 @@ test("敗北してもプレイヤーの育成データを消さず、現在の�
   assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \? "この階から再挑戦"/);
   assert.match(html, /if \(previousPhase === GAME_PHASE\.DEFEAT\) \{\s*\/\/ Defeat abandons[\s\S]*?GAME_ACTION\.RETURN_TO_TOWN[\s\S]*?dungeon\.reset\(\);\s*\}/);
 });
+
+
+test("バトル画面に最新の行動を表示するログ欄があり、報酬や遭遇も表示できる", () => {
+  assert.match(html, /aria-label="バトルログ"/);
+  assert.match(html, /id="battleLogList"/);
+  assert.match(html, /function renderActionLog\(state\)/);
+  assert.match(html, /state\.actionLog\.slice\(/);
+  assert.match(html, /encounterStartIndex/);
+  assert.match(html, /root\.scrollTop = root\.scrollHeight/);
+  assert.match(html, /宝箱から/);
+  assert.match(html, /に遭遇した！/);
+});

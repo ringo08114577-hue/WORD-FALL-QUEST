@@ -165,6 +165,30 @@
     .inventory-row button { min-height:34px; padding:6px 8px; font-size:.67rem; white-space:nowrap; }
     .shop-items { grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
     .shop-items button { width:100%; min-width:0; white-space:normal; font-size:.76rem; }
+    .battle-log-list {
+      display:grid; gap:6px; margin-top:9px; max-height:190px;
+      overflow-y:auto; padding-right:3px; overscroll-behavior:contain;
+    }
+    .battle-log-entry {
+      display:flex; align-items:flex-start; gap:8px; padding:7px 8px;
+      border-radius:9px; background:#111d30; color:#d6e2f2;
+      font-size:.72rem; line-height:1.4;
+    }
+    .battle-log-entry[data-category="reward"] { color:#bbf7d0; background:#142d29; }
+    .battle-log-entry[data-category="battle"] { color:#bae6fd; }
+    .battle-log-entry[data-category="combat"] { color:#fecaca; }
+    .battle-log-entry[data-category="skill"] { color:#ddd6fe; }
+    .battle-log-entry time {
+      flex:0 0 auto; color:#7186a3; font-size:.59rem;
+      font-variant-numeric:tabular-nums; white-space:nowrap;
+    }
+    .battle-log-message { min-width:0; overflow-wrap:anywhere; }
+    .battle-log-empty { color:#91a4be; font-size:.7rem; padding:8px 2px; }
+    @media (max-width:480px) {
+      .battle-log-list { max-height:125px; gap:4px; margin-top:6px; }
+      .battle-log-entry { padding:5px 7px; gap:6px; font-size:.66rem; }
+      .battle-log-entry time { font-size:.55rem; }
+    }
 
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
@@ -398,6 +422,15 @@
       </div>
       <div class="inventory-items" id="inventoryItems"></div>
     </section>
+    <section class="panel" aria-label="バトルログ">
+      <div class="panel-title">
+        <h2>📜 バトルログ</h2>
+        <span class="phase">最新8件</span>
+      </div>
+      <div class="battle-log-list" id="battleLogList" aria-live="polite" aria-relevant="additions text">
+        <div class="battle-log-empty">冒険を始めると、ここに行動が記録されるよ。</div>
+      </div>
+    </section>
       </aside>
     </div>
 
@@ -574,7 +607,62 @@
       }
     }
 
+    let lastRenderedActionLog = null;
+    const actionLogCategoryLabels = {
+      battle: "遭遇",
+      combat: "戦闘",
+      skill: "スキル",
+      item: "アイテム",
+      equipment: "装備",
+      reward: "報酬",
+      progress: "進行",
+      system: "記録",
+    };
+
+    function renderActionLog(state) {
+      if (state.actionLog === lastRenderedActionLog) return;
+      lastRenderedActionLog = state.actionLog;
+      const root = $("battleLogList");
+      root.replaceChildren();
+      let encounterStartIndex = -1;
+      for (let index = state.actionLog.length - 1; index >= 0; index -= 1) {
+        if (state.actionLog[index].category === "battle" &&
+            state.actionLog[index].message.includes("に遭遇した！")) {
+          encounterStartIndex = index;
+          break;
+        }
+      }
+      const entries = state.actionLog.slice(
+        encounterStartIndex >= 0 ? encounterStartIndex : Math.max(0, state.actionLog.length - 8),
+      ).slice(-8);
+      if (entries.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "battle-log-empty";
+        empty.textContent = "冒険を始めると、ここに行動が記録されるよ。";
+        root.append(empty);
+        return;
+      }
+      for (const entry of entries) {
+        const row = document.createElement("div");
+        row.className = "battle-log-entry";
+        row.dataset.category = entry.category;
+        const time = document.createElement("time");
+        time.dateTime = new Date(entry.timestamp).toISOString();
+        time.textContent = new Date(entry.timestamp).toLocaleTimeString("ja-JP", {
+          hour: "2-digit", minute: "2-digit",
+        });
+        const message = document.createElement("span");
+        message.className = "battle-log-message";
+        message.textContent = entry.message;
+        message.setAttribute("aria-label", actionLogCategoryLabels[entry.category] ?? "記録");
+        row.append(time, message);
+        root.append(row);
+      }
+      root.scrollTop = root.scrollHeight;
+    }
+
     function renderStore(state) {
+      renderActionLog(state);
       const dungeonProgress = dungeon.getProgress();
       $("dungeonProgress").textContent = dungeon.getDungeonInfo().name + " · " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目 · 🪙 " + state.inventory.gold + "G";
       $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;

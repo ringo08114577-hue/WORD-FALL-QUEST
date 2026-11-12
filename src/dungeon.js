@@ -231,8 +231,12 @@ export function createDungeonController(
       }
       if (rewardClaimed) return { claimed: false, reason: "already-claimed" };
       const { itemId, quantity, gold } = getDungeonFloorReward(floor, dungeonId);
-      store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId, quantity });
-      store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: gold });
+      store.dispatch({
+        type: GAME_ACTION.ADD_ITEM, itemId, quantity, sourceLabel: "宝箱から",
+      });
+      store.dispatch({
+        type: GAME_ACTION.ADD_GOLD, amount: gold, sourceLabel: "宝箱から",
+      });
 
       // The dungeon clear bonus is awarded once per dungeon, after the final
       // floor's boss treasure is claimed. Ordinary floor rewards remain repeatable.
@@ -246,9 +250,14 @@ export function createDungeonController(
           type: GAME_ACTION.ADD_ITEM,
           itemId: clearReward.itemId,
           quantity: clearReward.quantity,
+          sourceLabel: "初回制覇報酬",
         });
         if (clearReward.gold > 0) {
-          store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: clearReward.gold });
+          store.dispatch({
+            type: GAME_ACTION.ADD_GOLD,
+            amount: clearReward.gold,
+            sourceLabel: "初回制覇報酬",
+          });
         }
       }
 

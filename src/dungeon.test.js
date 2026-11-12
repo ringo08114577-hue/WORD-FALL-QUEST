@@ -38,6 +38,9 @@ test("階層を全員倒して報酬を受け取ると次の階が解放され�
   dungeon.start();
   const reward = clearCurrentFloor(store, dungeon);
   assert.equal(reward.claimed, true);
+  assert.ok(store.getState().actionLog.some((entry) =>
+    entry.message.startsWith("宝箱から："),
+  ));
   assert.equal(dungeon.getUnlockedFloor("forest-ruins"), 2);
   assert.equal(dungeon.getProgress().floorCleared, true);
   assert.equal(dungeon.claimFloorReward().reason, "already-claimed");
@@ -204,6 +207,9 @@ test("ダンジョン初回制覇時だけ特別素材と追加ゴールドを�
         quantity: 1,
         gold: 100,
       });
+      assert.ok(store.getState().actionLog.some((entry) =>
+        entry.message.startsWith("初回制覇報酬："),
+      ));
     }
   }
 

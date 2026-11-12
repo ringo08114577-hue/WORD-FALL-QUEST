@@ -864,7 +864,9 @@ test("型が不正な所持品・ゴールド加算は例外を出さず無視�
 
 test("有効な行動は内容と時刻を行動ログへ記録する", () => {
   const store = createGameStore();
-  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 25, timestamp: 1000 });
+  store.dispatch({
+    type: GAME_ACTION.ADD_GOLD, amount: 25, sourceLabel: "宝箱から", timestamp: 1000,
+  });
   store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: slime, timestamp: 2000 });
   store.dispatch({
     type: GAME_ACTION.DAMAGE_PLAYER,
@@ -876,8 +878,8 @@ test("有効な行動は内容と時刻を行動ログへ記録する", () => {
 
   const log = store.getState().actionLog;
   assert.equal(log.length, 4);
-  assert.equal(log[0].message, "ゴールド +25G");
-  assert.equal(log[1].message, "スライムとのバトル開始");
+  assert.equal(log[0].message, "宝箱から：25Gを手に入れた！");
+  assert.equal(log[1].message, "スライムに遭遇した！");
   assert.equal(log[2].message, "時間攻撃でHP -1（残り 2）");
   assert.match(log[3].message, /スライムを撃破！ EXP/);
   assert.deepEqual(log.map((entry) => entry.timestamp), [1000, 2000, 3000, 4000]);

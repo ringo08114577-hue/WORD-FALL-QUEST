@@ -552,7 +552,7 @@ function describeActionLog(action, before, after) {
         : "";
       const number = Number.isSafeInteger(context.enemyNumber) ? context.enemyNumber + "体目 · " : "";
       return { category: ACTION_LOG_CATEGORY.BATTLE,
-        message: location + number + (after.enemy?.name ?? "敵") + "とのバトル開始" };
+        message: location + number + (after.enemy?.name ?? "敵") + "に遭遇した！" };
     }
     case GAME_ACTION.DAMAGE_PLAYER: {
       const amount = before.player.hp - after.player.hp;
@@ -600,12 +600,15 @@ function describeActionLog(action, before, after) {
     case GAME_ACTION.ADD_ITEM:
       return item ? {
         category: ACTION_LOG_CATEGORY.REWARD,
-        message: item.name + " ×" + (action.quantity ?? 1) + " を入手",
+        message: (typeof action.sourceLabel === "string" && action.sourceLabel
+          ? action.sourceLabel + "：" : "") +
+          item.name + " ×" + (action.quantity ?? 1) + "を手に入れた！",
       } : null;
     case GAME_ACTION.ADD_GOLD:
       return isPositiveInteger(action.amount) ? {
         category: ACTION_LOG_CATEGORY.REWARD,
-        message: "ゴールド +" + action.amount + "G",
+        message: (typeof action.sourceLabel === "string" && action.sourceLabel
+          ? action.sourceLabel + "：" : "") + action.amount + "Gを手に入れた！",
       } : null;
     case GAME_ACTION.BUY_ITEM:
       return item ? {
