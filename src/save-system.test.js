@@ -202,7 +202,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 7,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 8,
   );
 });
 
