@@ -157,9 +157,6 @@
     .shop-panel { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .shop-panel button { width:100%; }
     .shop-note { grid-column:1 / -1; color:#9eacc2; font-size:.72rem; margin:0; }
-    .save-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
-    .save-actions button { flex:1; min-width:90px; }
-    .save-message { color:#9eacc2; font-size:.68rem; margin:7px 0 0; }
     .inventory-items { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:8px; }
     .inventory-row { display:flex; align-items:center; justify-content:space-between; gap:7px; min-width:0; padding:7px; border-radius:10px; background:#111d30; }
     .inventory-copy { min-width:0; }
@@ -233,8 +230,6 @@
       .shop-panel { grid-template-columns: 1fr; padding: 14px; }
       .shop-note { font-size: .76rem; }
       .shop-items button { min-height: 42px; }
-      .save-actions { flex-direction: column; }
-      .save-actions button { width: 100%; }
     }
     @media (min-width: 1200px) {
       .battle-layout { grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); gap: 18px; }
@@ -297,8 +292,6 @@
       .howto { margin:4px 1px 0; font-size:.64rem; line-height:1.3; }
       .action-row { gap:6px; margin-top:5px; }
       .action-row button { flex:1; min-width:0; }
-      .save-actions { gap:5px; }
-      .save-actions button { min-width:0; padding:6px 7px; font-size:.68rem; }
       .footer { display:none; }
     }
     @media (max-height:700px) and (max-width:480px) {
@@ -405,18 +398,6 @@
       </div>
       <div class="inventory-items" id="inventoryItems"></div>
     </section>
-    <section class="panel" aria-label="セーブデータ">
-      <div class="panel-title">
-        <h2>💾 セーブデータ</h2>
-        <span class="inventory-label">自動保存あり</span>
-      </div>
-      <div class="save-actions">
-        <button id="saveNowButton">今すぐ保存</button>
-        <button id="loadSaveButton">ロード</button>
-        <button id="clearSaveButton">保存データ削除</button>
-      </div>
-      <p class="save-message" id="saveMessage" aria-live="polite">ゲームの進行は自動で保存されるよ。</p>
-    </section>
       </aside>
     </div>
 
@@ -510,7 +491,6 @@
       },
     });
     const initialSave = saveController.load();
-    let saveEnabled = true;
     let statusText = "「冒険を始める」を押してゲームを開始しよう。";
     let statusTone = "";
 
@@ -756,24 +736,8 @@
       renderWordState();
     }
 
-    function updateSaveMessage(message) {
-      $("saveMessage").textContent = message;
-    }
-
-    function saveProgress(showMessage = false) {
-      if (!saveEnabled) {
-        if (showMessage) updateSaveMessage("自動保存は停止中だよ。「今すぐ保存」で再開できるよ。");
-        return { saved: false, reason: "saving-disabled" };
-      }
-      const result = saveController.save();
-      if (showMessage) {
-        updateSaveMessage(
-          result.saved
-            ? "保存したよ（" + new Date(result.savedAt).toLocaleTimeString("ja-JP") + "）。"
-            : "保存できなかったよ。ブラウザの保存領域を確認してね。",
-        );
-      }
-      return result;
+    function saveProgress() {
+      return saveController.save();
     }
 
     function startGame() {
@@ -1028,36 +992,11 @@
       if (action) saveProgress();
     });
     render();
-    if (initialSave.loaded) {
-      updateSaveMessage("前回のセーブデータをロードしたよ。");
-      if (store.getState().phase === GAME_PHASE.PAUSED) {
-        setStatus("前回のバトルは一時停止中だよ。「再開する」を押すと続きから戦えるよ。");
-      }
+    if (initialSave.loaded && store.getState().phase === GAME_PHASE.PAUSED) {
+      setStatus("前回のバトルは一時停止中だよ。「再開する」を押すと続きから戦えるよ。");
     } else if (initialSave.reason === "invalid-save") {
-      updateSaveMessage("保存データを読み込めなかったよ。新しく冒険を始めてね。");
+      setStatus("保存データを読み込めなかったよ。新しく冒険を始めてね。", "bad");
     }
-
-    $("saveNowButton").addEventListener("click", () => {
-      saveEnabled = true;
-      saveProgress(true);
-    });
-    $("loadSaveButton").addEventListener("click", () => {
-      const result = saveController.load();
-      if (!result.loaded) {
-        updateSaveMessage("ロードできる保存データがないか、データが壊れているよ。");
-        return;
-      }
-      combat.reset();
-      render();
-      updateSaveMessage("セーブデータをロードしたよ。");
-    });
-    $("clearSaveButton").addEventListener("click", () => {
-      const result = saveController.clear();
-      if (result.cleared) saveEnabled = false;
-      updateSaveMessage(result.cleared
-        ? "保存データを削除したよ。自動保存は停止中。「今すぐ保存」で再開できるよ。"
-        : "保存データを削除できなかったよ。");
-    });
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         pauseBattleForInterruption("画面を離れたためバトルを一時停止したよ。戻ったら「再開する」を押してね。");
