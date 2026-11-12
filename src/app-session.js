@@ -36,13 +36,14 @@ function isValidExtraData(value) {
   );
 }
 
-export function createAppSession() {
+export function createAppSession({ storage } = {}) {
   const store = createGameStore();
   const dungeon = createDungeonController(store);
   const town = createTownController(store, dungeon);
   let extraData = createDefaultExtraData();
   const saves = createSaveController({
     store,
+    storage,
     dungeon,
     getExtraData: () => extraData,
     validateExtraData: isValidExtraData,
