@@ -201,13 +201,35 @@ export function createDungeonController(
       const { itemId, quantity, gold } = getDungeonFloorReward(floor, dungeonId);
       store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId, quantity });
       store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: gold });
+
+      // The dungeon clear bonus is awarded once per dungeon, after the final
+      // floor's boss treasure is claimed. Ordinary floor rewards remain repeatable.
+      const isFirstDungeonClear = floor === getFloorCount(dungeonId) &&
+        completedDungeons[dungeonId] !== true;
+      const clearReward = isFirstDungeonClear
+        ? DUNGEON_DEFINITIONS[dungeonId].clearReward ?? null
+        : null;
+      if (clearReward) {
+        store.dispatch({
+          type: GAME_ACTION.ADD_ITEM,
+          itemId: clearReward.itemId,
+          quantity: clearReward.quantity,
+        });
+        if (clearReward.gold > 0) {
+          store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: clearReward.gold });
+        }
+      }
+
       rewardClaimed = true;
       if (floor < getFloorCount(dungeonId)) {
         unlockedFloors[dungeonId] = Math.max(unlockedFloors[dungeonId], floor + 1);
       } else {
         completedDungeons[dungeonId] = true;
       }
-      return { claimed: true, floor, itemId, quantity, gold, dungeonId };
+      return {
+        claimed: true, floor, itemId, quantity, gold, dungeonId,
+        firstClearReward: clearReward ? { ...clearReward } : null,
+      };
     },
 
     getSaveData() {

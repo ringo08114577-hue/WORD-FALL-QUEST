@@ -245,3 +245,13 @@ npm test
 装備屋： [equipment.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/equipment.html)
 スキル工房： [skills.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/skills.html)
 ダンジョン選択： [dungeons.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/dungeons.html)
+
+
+### STEP 24 — ダンジョン初回制覇報酬・周回報酬
+
+- 5階のボス撃破後、宝箱を受け取ると初回制覇報酬を追加で獲得
+- はじまりの森：森竜の紋章 ×1・追加100G
+- 氷結の洞窟：氷竜の結晶 ×1・追加150G
+- 特別素材と追加ゴールドはダンジョンごとに1回のみ。受取記録はセーブに保存
+- 通常の階層宝箱は、解放済み階層を周回したときも毎回獲得可能
+- 初回報酬の二重受取防止・セーブ復元・各ダンジョン専用報酬のテストを追加

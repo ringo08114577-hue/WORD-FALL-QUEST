@@ -946,9 +946,18 @@
         saveProgress();
         if (reward.claimed) {
           const item = ITEM_DEFINITIONS[reward.itemId];
+          const bonus = reward.firstClearReward;
+          const bonusText = bonus
+            ? " 初回制覇ボーナス：" +
+              ITEM_DEFINITIONS[bonus.itemId].name + " ×" + bonus.quantity +
+              " と追加 " + bonus.gold + "G！"
+            : "";
+          const nextStepText = dungeon.getProgress().dungeonCleared
+            ? "ダンジョンを制覇したよ。街へ戻ろう。"
+            : "「次の階へ」を押して進もう。";
           setStatus(
             "宝箱を開けた！" + item.name + " ×" + reward.quantity +
-            " と " + reward.gold + "G を獲得！「次の階へ」を押して進もう。",
+            " と " + reward.gold + "G を獲得！" + bonusText + nextStepText,
             "good",
           );
         } else {

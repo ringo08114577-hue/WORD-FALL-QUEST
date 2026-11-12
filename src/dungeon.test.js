@@ -186,3 +186,61 @@ test("無効なダンジョンや階層選択は拒否する", () => {
   assert.equal(dungeon.selectFloor(0).reason, "invalid-floor");
   assert.throws(() => createDungeonController(store, { dungeonId: "unknown" }), RangeError);
 });
+
+
+test("ダンジョン初回制覇時だけ特別素材と追加ゴールドを獲得し、周回では再配布されない", () => {
+  const store = createGameStore();
+  const dungeon = createDungeonController(store);
+  dungeon.start();
+
+  for (let floor = 1; floor <= 5; floor += 1) {
+    const reward = clearCurrentFloor(store, dungeon);
+    if (floor < 5) {
+      assert.equal(reward.firstClearReward, null);
+      dungeon.advance();
+    } else {
+      assert.deepEqual(reward.firstClearReward, {
+        itemId: "forest-dragon-seal",
+        quantity: 1,
+        gold: 100,
+      });
+    }
+  }
+
+  assert.equal(dungeon.isDungeonCleared("forest-ruins"), true);
+  assert.equal(store.getState().inventory.items["forest-dragon-seal"], 1);
+  assert.equal(store.getState().inventory.gold, 225);
+
+  dungeon.exitToTown();
+  store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
+  assert.equal(dungeon.selectFloor(5).selected, true);
+  dungeon.start();
+  const repeatReward = clearCurrentFloor(store, dungeon);
+
+  assert.equal(repeatReward.firstClearReward, null);
+  assert.equal(repeatReward.gold, 35);
+  assert.equal(store.getState().inventory.items["forest-dragon-seal"], 1);
+  assert.equal(store.getState().inventory.gold, 260);
+});
+
+test("氷結の洞窟の初回制覇では専用の氷竜の結晶を獲得する", () => {
+  const store = createGameStore();
+  const dungeon = createDungeonController(store);
+  dungeon.selectDungeon("frozen-cavern");
+  dungeon.start();
+
+  for (let floor = 1; floor <= 5; floor += 1) {
+    const reward = clearCurrentFloor(store, dungeon);
+    if (floor < 5) dungeon.advance();
+    else {
+      assert.deepEqual(reward.firstClearReward, {
+        itemId: "ice-dragon-core",
+        quantity: 1,
+        gold: 150,
+      });
+    }
+  }
+
+  assert.equal(store.getState().inventory.items["ice-dragon-core"], 1);
+  assert.equal(store.getState().inventory.items["forest-dragon-seal"], 0);
+});

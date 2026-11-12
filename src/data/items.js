@@ -34,4 +34,12 @@ export const ITEM_DEFINITIONS = Object.freeze({
     attackBonus: 1, defenseBonus: 1, shopPrice: 90,
     description: "攻撃力と防御力が1ずつ上がる。",
   }),
+  "forest-dragon-seal": Object.freeze({
+    id: "forest-dragon-seal", name: "森竜の紋章", type: "material",
+    description: "はじまりの森を初めて制覇した証。今後の素材システムで使用予定。",
+  }),
+  "ice-dragon-core": Object.freeze({
+    id: "ice-dragon-core", name: "氷竜の結晶", type: "material",
+    description: "氷結の洞窟を初めて制覇した証。今後の素材システムで使用予定。",
+  }),
 });

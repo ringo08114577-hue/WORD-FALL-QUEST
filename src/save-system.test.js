@@ -480,3 +480,47 @@ test("旧バージョン4のセーブはダンジョン進行マップを追加�
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 5);
 });
+
+
+test("初回制覇報酬の受取記録はセーブ・ロード後も保持され、周回で重複しない", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  first.dungeon.start();
+
+  for (let floor = 1; floor <= 5; floor += 1) {
+    for (let enemy = 0; enemy < 3; enemy += 1) {
+      winEnemy(first.store);
+      if (enemy < 2) first.dungeon.advance();
+    }
+    const reward = first.dungeon.claimFloorReward();
+    if (floor < 5) {
+      assert.equal(reward.firstClearReward, null);
+      first.dungeon.advance();
+    } else {
+      assert.equal(reward.firstClearReward.itemId, "forest-dragon-seal");
+    }
+  }
+  assert.equal(first.dungeon.isDungeonCleared("forest-ruins"), true);
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.dungeon.isDungeonCleared("forest-ruins"), true);
+  assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
+
+  second.dungeon.exitToTown();
+  second.store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
+  assert.equal(second.dungeon.selectFloor(5).selected, true);
+  second.dungeon.start();
+  for (let enemy = 0; enemy < 3; enemy += 1) {
+    winEnemy(second.store);
+    if (enemy < 2) second.dungeon.advance();
+  }
+  const repeat = second.dungeon.claimFloorReward();
+  assert.equal(repeat.firstClearReward, null);
+  assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
+});

@@ -62,6 +62,10 @@ test("ダンジョンが参照する敵IDと報酬アイテムIDが存在する"
     assert.ok(Object.hasOwn(ITEM_DEFINITIONS, dungeon.reward.evenFloorItemId));
     assert.ok(Number.isSafeInteger(dungeon.reward.baseGold) && dungeon.reward.baseGold >= 0);
     assert.ok(Number.isSafeInteger(dungeon.reward.goldPerFloor) && dungeon.reward.goldPerFloor >= 0);
+    assert.ok(Object.hasOwn(ITEM_DEFINITIONS, dungeon.clearReward.itemId));
+    assert.equal(ITEM_DEFINITIONS[dungeon.clearReward.itemId].type, "material");
+    assert.ok(Number.isSafeInteger(dungeon.clearReward.quantity) && dungeon.clearReward.quantity > 0);
+    assert.ok(Number.isSafeInteger(dungeon.clearReward.gold) && dungeon.clearReward.gold > 0);
   }
 });
 

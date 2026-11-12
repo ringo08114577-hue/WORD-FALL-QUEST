@@ -33,6 +33,11 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
       oddFloorItemId: "small-potion",
       evenFloorItemId: "large-potion",
     }),
+    clearReward: Object.freeze({
+      itemId: "forest-dragon-seal",
+      quantity: 1,
+      gold: 100,
+    }),
   }),
   "frozen-cavern": Object.freeze({
     id: "frozen-cavern",
@@ -60,6 +65,11 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
       itemQuantity: 1,
       oddFloorItemId: "large-potion",
       evenFloorItemId: "small-potion",
+    }),
+    clearReward: Object.freeze({
+      itemId: "ice-dragon-core",
+      quantity: 1,
+      gold: 150,
     }),
   }),
 });
