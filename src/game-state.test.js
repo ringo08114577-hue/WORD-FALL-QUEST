@@ -756,3 +756,32 @@ test("ゲームをリセットするとスキルレベルも初期状態に戻�
   state = gameReducer(state, { type: GAME_ACTION.RESET_GAME });
   assert.equal(state.skillLevels["ultimate-strike"], 1);
 });
+
+
+test("ホームへ戻るとHPと戦闘状態だけを整え、冒険者の成長を維持する", () => {
+  let state = gameReducer(createInitialGameState(), {
+    type: GAME_ACTION.ADD_GOLD,
+    amount: 80,
+  });
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: slime,
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
+  state = gameReducer(state, { type: GAME_ACTION.PAUSE_BATTLE });
+  state = gameReducer(state, {
+    type: GAME_ACTION.UPGRADE_SKILL,
+    skillId: "quick-strike",
+  });
+  const before = state;
+
+  state = gameReducer(state, { type: GAME_ACTION.RETURN_TO_TOWN });
+  assert.equal(state.phase, GAME_PHASE.TITLE);
+  assert.equal(state.pausedFrom, null);
+  assert.equal(state.enemy, null);
+  assert.equal(state.lastBattleResult, null);
+  assert.equal(state.player.hp, state.player.maxHp);
+  assert.equal(state.inventory.gold, before.inventory.gold);
+  assert.deepEqual(state.skillLevels, before.skillLevels);
+  assert.equal(state.stats.enemiesDefeated, before.stats.enemiesDefeated);
+});

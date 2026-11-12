@@ -227,3 +227,21 @@ npm test
 - 戦闘画面から街へ戻ると既存のページ離脱処理で一時停止・自動保存し、街から同じ戦闘へ戻れる
 - 既存の装備準備・ダンジョン選択・セーブ形式を維持
 - 宿屋・ショップ・街画面の自動テストを追加
+
+
+### STEP 23 — 冒険者ホーム・施設ページ・ダンジョン階層選択
+
+- ホームを拠点として、道具屋・装備屋・スキル工房・ダンジョン選択を別ページに分離
+- 宿屋をなくし、ホームへ戻るとHPを自動で全回復
+- 各ダンジョンは5階構成とし、最深部の5階にボスを配置
+- 階層クリア後に報酬を受け取ると次の階層を解放
+- 解放状況はダンジョンごとに独立して保存し、解放済み階層は自由に選択・周回可能
+- ダンジョン退出時は挑戦中の階層の敵進行をリセットし、同じ階層の最初の敵から再開
+- セーブ形式をバージョン5へ更新し、既存のセーブデータから解放階層を補完
+- 新しいページ・階層選択・ホーム帰還・セーブ移行の自動テストを追加
+
+ホーム： [index.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/)
+道具屋： [items.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/items.html)
+装備屋： [equipment.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/equipment.html)
+スキル工房： [skills.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/skills.html)
+ダンジョン選択： [dungeons.html](https://ringo08114577-hue.github.io/WORD-FALL-QUEST/dungeons.html)

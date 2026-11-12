@@ -1,13 +1,52 @@
 /**
- * Dungeon progression engine. Names, encounters and rewards are content data
- * in ./data/dungeons.js, while this module owns runtime progression and saves.
+ * Dungeon progression engine.
+ * Each dungeon keeps its own unlocked floor and clear record.
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createEnemy, getFloorEnemyIds, getLegacyFloorEnemyIds } from "./enemies.js";
 import { getDungeonFloorReward } from "./game-config.js";
 import { DEFAULT_DUNGEON_ID, DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
-const CURRENT_ENCOUNTER_SET_VERSION = 2;
+export const CURRENT_ENCOUNTER_SET_VERSION = 3;
+export const MAX_DUNGEON_FLOORS = 5;
+
+const dungeonIds = Object.keys(DUNGEON_DEFINITIONS);
+const isRecord = (value) => Boolean(value && typeof value === "object" && !Array.isArray(value));
+
+function getFloorCount(dungeonId) {
+  return DUNGEON_DEFINITIONS[dungeonId]?.floorCount ?? MAX_DUNGEON_FLOORS;
+}
+
+function initialUnlockedFloors() {
+  return Object.fromEntries(dungeonIds.map((id) => [id, 1]));
+}
+
+function initialCompletedDungeons() {
+  return Object.fromEntries(dungeonIds.map((id) => [id, false]));
+}
+
+function getLegacyV2EncounterIds(floor, dungeonId) {
+  const dungeonInfo = DUNGEON_DEFINITIONS[dungeonId];
+  const sets = dungeonInfo?.legacyEncounterSetsV2;
+  if (!Array.isArray(sets) || sets.length === 0) {
+    throw new RangeError("旧編成に対応していないダンジョンです: " + dungeonId);
+  }
+  return [...sets[(floor - 1) % sets.length]];
+}
+
+function normalizedProgressMap(raw, fallbackFactory, validateValue) {
+  const fallback = fallbackFactory();
+  if (raw === undefined) return fallback;
+  if (!isRecord(raw) || Object.keys(raw).some((id) => !Object.hasOwn(DUNGEON_DEFINITIONS, id))) {
+    return null;
+  }
+  for (const id of dungeonIds) {
+    const value = raw[id] ?? fallback[id];
+    if (!validateValue(value, id)) return null;
+    fallback[id] = value;
+  }
+  return fallback;
+}
 
 export function createDungeonController(
   store,
@@ -27,32 +66,47 @@ export function createDungeonController(
   let started = false;
   let rewardClaimed = false;
   let encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+  let unlockedFloors = initialUnlockedFloors();
+  let completedDungeons = initialCompletedDungeons();
 
-  const getEncounterIds = (targetFloor = floor, version = encounterSetVersion, targetId = dungeonId) =>
-    version === 1
-      ? getLegacyFloorEnemyIds(targetId)
-      : getFloorEnemyIds(targetFloor, targetId);
+  const getEncounterIds = (targetFloor = floor, version = encounterSetVersion, targetId = dungeonId) => {
+    if (version === 1) return getLegacyFloorEnemyIds(targetId);
+    if (version === 2) return getLegacyV2EncounterIds(targetFloor, targetId);
+    return getFloorEnemyIds(targetFloor, targetId);
+  };
 
   function startCurrentEnemy() {
     const state = store.getState();
     if (![GAME_PHASE.TITLE, GAME_PHASE.VICTORY].includes(state.phase)) {
       return { started: false, reason: "invalid-phase" };
     }
+    const ids = getEncounterIds();
+    if (enemyIndex < 0 || enemyIndex >= ids.length) {
+      return { started: false, reason: "invalid-enemy-index" };
+    }
     store.dispatch({
       type: GAME_ACTION.START_BATTLE,
-      enemy: createEnemy(getEncounterIds()[enemyIndex], { floor }),
+      enemy: createEnemy(ids[enemyIndex], { floor }),
     });
     started = true;
-    return { started: true, floor, enemyNumber: enemyIndex + 1, enemy: store.getState().enemy };
+    return {
+      started: true,
+      floor,
+      enemyNumber: enemyIndex + 1,
+      enemy: store.getState().enemy,
+      dungeonId,
+    };
   }
 
   return {
     start() {
       if (started) return { started: false, reason: "already-started" };
-      floor = 1;
+      if (floor > unlockedFloors[dungeonId]) {
+        return { started: false, reason: "floor-locked" };
+      }
       enemyIndex = 0;
-      encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
       rewardClaimed = false;
+      encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
       return startCurrentEnemy();
     },
 
@@ -60,12 +114,18 @@ export function createDungeonController(
       if (!started || store.getState().phase !== GAME_PHASE.VICTORY) {
         return { started: false, reason: "battle-not-won" };
       }
-      const floorCleared = enemyIndex === getEncounterIds().length - 1;
+      const ids = getEncounterIds();
+      const floorCleared = enemyIndex === ids.length - 1;
       if (floorCleared && !rewardClaimed) {
         return { started: false, reason: "reward-not-claimed" };
       }
       if (floorCleared) {
+        if (floor >= getFloorCount(dungeonId)) {
+          completedDungeons[dungeonId] = true;
+          return { started: false, reason: "dungeon-cleared", floor, dungeonId };
+        }
         floor += 1;
+        unlockedFloors[dungeonId] = Math.max(unlockedFloors[dungeonId], floor);
         enemyIndex = 0;
         rewardClaimed = false;
         encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
@@ -91,10 +151,43 @@ export function createDungeonController(
       return { selected: true, dungeonId, dungeon: DUNGEON_DEFINITIONS[dungeonId] };
     },
 
-    reset() {
-      floor = 1;
+    selectFloor(nextFloor) {
+      const state = store.getState();
+      if (state.phase !== GAME_PHASE.TITLE || started) {
+        return { selected: false, reason: "adventure-already-started" };
+      }
+      if (!Number.isSafeInteger(nextFloor) || nextFloor < 1 ||
+          nextFloor > getFloorCount(dungeonId)) {
+        return { selected: false, reason: "invalid-floor" };
+      }
+      if (nextFloor > unlockedFloors[dungeonId]) {
+        return { selected: false, reason: "floor-locked" };
+      }
+      floor = nextFloor;
       enemyIndex = 0;
+      rewardClaimed = false;
+      encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      return { selected: true, dungeonId, floor };
+    },
+
+    /**
+     * Leaving for town abandons only the current floor attempt.
+     * The selected floor and each dungeon's unlocked progress remain intact.
+     */
+    exitToTown() {
+      const previous = { started, floor, enemyIndex, rewardClaimed };
       started = false;
+      enemyIndex = 0;
+      rewardClaimed = false;
+      encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      if (floor > getFloorCount(dungeonId)) floor = getFloorCount(dungeonId);
+      return { exited: true, ...previous, dungeonId, floor };
+    },
+
+    reset() {
+      // Used after a defeat: retry the selected floor from its first enemy.
+      started = false;
+      enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
     },
@@ -109,24 +202,49 @@ export function createDungeonController(
       store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId, quantity });
       store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: gold });
       rewardClaimed = true;
-      return { claimed: true, floor, itemId, quantity, gold };
+      if (floor < getFloorCount(dungeonId)) {
+        unlockedFloors[dungeonId] = Math.max(unlockedFloors[dungeonId], floor + 1);
+      } else {
+        completedDungeons[dungeonId] = true;
+      }
+      return { claimed: true, floor, itemId, quantity, gold, dungeonId };
     },
 
     getSaveData() {
-      return { dungeonId, floor, enemyIndex, started, rewardClaimed, encounterSetVersion };
+      return {
+        dungeonId, floor, enemyIndex, started, rewardClaimed, encounterSetVersion,
+        unlockedFloors: { ...unlockedFloors },
+        completedDungeons: { ...completedDungeons },
+      };
     },
 
     isValidSaveData(data, savedGameState = store.getState()) {
-      if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+      if (!isRecord(data)) return false;
       const savedDungeonId = data.dungeonId ?? DEFAULT_DUNGEON_ID;
       if (!Object.hasOwn(DUNGEON_DEFINITIONS, savedDungeonId)) return false;
       const version = data.encounterSetVersion ?? 1;
       if (!Number.isSafeInteger(data.floor) || data.floor < 1 ||
-          !Number.isInteger(data.enemyIndex) ||
-          ![1, CURRENT_ENCOUNTER_SET_VERSION].includes(version) ||
+          !Number.isSafeInteger(data.enemyIndex) || data.enemyIndex < 0 ||
+          ![1, 2, CURRENT_ENCOUNTER_SET_VERSION].includes(version) ||
           typeof data.started !== "boolean" || typeof data.rewardClaimed !== "boolean") {
         return false;
       }
+
+      const floors = normalizedProgressMap(
+        data.unlockedFloors,
+        initialUnlockedFloors,
+        (value, id) => Number.isSafeInteger(value) && value >= 1 &&
+          value <= getFloorCount(id),
+      );
+      const cleared = normalizedProgressMap(
+        data.completedDungeons,
+        initialCompletedDungeons,
+        (value) => typeof value === "boolean",
+      );
+      if (!floors || !cleared) return false;
+      if (version === CURRENT_ENCOUNTER_SET_VERSION &&
+          data.floor > getFloorCount(savedDungeonId)) return false;
+      if (data.floor > floors[savedDungeonId] && version === CURRENT_ENCOUNTER_SET_VERSION) return false;
 
       let ids;
       try {
@@ -134,12 +252,15 @@ export function createDungeonController(
       } catch {
         return false;
       }
-      if (data.enemyIndex < 0 || data.enemyIndex >= ids.length) return false;
+      if (data.enemyIndex >= ids.length) return false;
       if (!data.started) {
-        return data.floor === 1 && data.enemyIndex === 0 &&
-          !data.rewardClaimed && savedGameState.phase === GAME_PHASE.TITLE;
+        return data.enemyIndex === 0 && !data.rewardClaimed &&
+          savedGameState.phase === GAME_PHASE.TITLE &&
+          savedGameState.enemy === null &&
+          data.floor <= floors[savedDungeonId];
       }
       if (savedGameState.phase === GAME_PHASE.TITLE || !savedGameState.enemy) return false;
+
       const expected = createEnemy(ids[data.enemyIndex], { floor: data.floor });
       const actual = savedGameState.enemy;
       if (actual.id !== expected.id || actual.maxHp !== expected.maxHp ||
@@ -163,6 +284,21 @@ export function createDungeonController(
       started = data.started;
       rewardClaimed = data.rewardClaimed;
       encounterSetVersion = data.encounterSetVersion ?? 1;
+      unlockedFloors = normalizedProgressMap(
+        data.unlockedFloors,
+        initialUnlockedFloors,
+        (value, id) => Number.isSafeInteger(value) && value >= 1 &&
+          value <= getFloorCount(id),
+      ) ?? initialUnlockedFloors();
+      completedDungeons = normalizedProgressMap(
+        data.completedDungeons,
+        initialCompletedDungeons,
+        (value) => typeof value === "boolean",
+      ) ?? initialCompletedDungeons();
+      if (started && encounterSetVersion !== CURRENT_ENCOUNTER_SET_VERSION &&
+          floor <= getFloorCount(dungeonId)) {
+        unlockedFloors[dungeonId] = Math.max(unlockedFloors[dungeonId], floor);
+      }
       return true;
     },
 
@@ -170,18 +306,40 @@ export function createDungeonController(
       return DUNGEON_DEFINITIONS[dungeonId];
     },
 
+    getUnlockedFloor(targetDungeonId = dungeonId) {
+      return Object.hasOwn(unlockedFloors, targetDungeonId)
+        ? unlockedFloors[targetDungeonId]
+        : null;
+    },
+
+    isDungeonCleared(targetDungeonId = dungeonId) {
+      return completedDungeons[targetDungeonId] === true;
+    },
+
+    getAllProgress() {
+      return Object.fromEntries(dungeonIds.map((id) => [id, {
+        unlockedFloor: unlockedFloors[id],
+        maxFloors: getFloorCount(id),
+        cleared: completedDungeons[id],
+      }]));
+    },
+
     getProgress() {
+      const ids = getEncounterIds();
+      const floorCleared = started &&
+        store.getState().phase === GAME_PHASE.VICTORY &&
+        enemyIndex === ids.length - 1;
       return {
         floor,
         enemyNumber: enemyIndex + 1,
-        enemiesPerFloor: getEncounterIds().length,
-        floorCleared: started &&
-          store.getState().phase === GAME_PHASE.VICTORY &&
-          enemyIndex === getEncounterIds().length - 1,
+        enemiesPerFloor: ids.length,
+        floorCleared,
         started,
         rewardClaimed,
+        unlockedFloor: unlockedFloors[dungeonId],
+        maxFloors: getFloorCount(dungeonId),
+        dungeonCleared: completedDungeons[dungeonId],
       };
     },
   };
 }
-

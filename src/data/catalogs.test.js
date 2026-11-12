@@ -43,13 +43,21 @@ test("ダンジョンが参照する敵IDと報酬アイテムIDが存在する"
   assert.ok(Object.hasOwn(DUNGEON_DEFINITIONS, DEFAULT_DUNGEON_ID));
   for (const [id, dungeon] of Object.entries(DUNGEON_DEFINITIONS)) {
     assert.equal(dungeon.id, id);
-    assert.ok(dungeon.encounterSets.length > 0);
+    assert.equal(dungeon.floorCount, 5);
+    assert.equal(dungeon.encounterSets.length, dungeon.floorCount);
     for (const set of dungeon.encounterSets) {
       assert.ok(set.length > 0);
       for (const enemyId of set) {
         assert.ok(Object.hasOwn(ENEMY_DEFINITIONS, enemyId), id + " -> " + enemyId);
       }
     }
+    for (const enemyId of dungeon.encounterSets.at(-1)) {
+      if (ENEMY_DEFINITIONS[enemyId].isBoss) continue;
+      assert.ok(!ENEMY_DEFINITIONS[enemyId].isBoss, id + " final boss");
+    }
+    assert.ok(dungeon.encounterSets.at(-1).some((enemyId) => ENEMY_DEFINITIONS[enemyId].isBoss));
+    assert.ok(dungeon.encounterSets.slice(0, -1).every((set) =>
+      set.every((enemyId) => !ENEMY_DEFINITIONS[enemyId].isBoss)));
     assert.ok(Object.hasOwn(ITEM_DEFINITIONS, dungeon.reward.oddFloorItemId));
     assert.ok(Object.hasOwn(ITEM_DEFINITIONS, dungeon.reward.evenFloorItemId));
     assert.ok(Number.isSafeInteger(dungeon.reward.baseGold) && dungeon.reward.baseGold >= 0);

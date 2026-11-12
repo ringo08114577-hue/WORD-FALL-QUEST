@@ -1,6 +1,6 @@
 /**
- * Content catalog: dungeon definitions.
- * Encounter sets are ordered enemy IDs. Sets cycle as the player climbs floors.
+ * Dungeon catalog. Each dungeon has five ordered floors; the fifth floor is
+ * guarded by its boss. Earlier encounter layouts remain here for old saves.
  */
 export const DEFAULT_DUNGEON_ID = "forest-ruins";
 
@@ -11,13 +11,20 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
     icon: "🌲",
     difficulty: "初級",
     recommendedLevel: 1,
-    description: "スライムやコウモリが待ち受ける最初のダンジョン。",
-    // Kept for saves created before encounter-set version 2.
+    floorCount: 5,
+    description: "スライムやゴブリンが待ち受ける森。最深部には森のドラゴンがいる。",
     legacyEncounterSet: Object.freeze(["slime", "bat", "goblin"]),
-    encounterSets: Object.freeze([
+    legacyEncounterSetsV2: Object.freeze([
       Object.freeze(["slime", "bat", "goblin"]),
       Object.freeze(["bat", "orc", "moss-golem"]),
       Object.freeze(["goblin", "moss-golem", "forest-dragon"]),
+    ]),
+    encounterSets: Object.freeze([
+      Object.freeze(["slime", "bat", "goblin"]),
+      Object.freeze(["bat", "orc", "moss-golem"]),
+      Object.freeze(["goblin", "orc", "moss-golem"]),
+      Object.freeze(["orc", "moss-golem", "goblin"]),
+      Object.freeze(["moss-golem", "goblin", "forest-dragon"]),
     ]),
     reward: Object.freeze({
       baseGold: 10,
@@ -33,10 +40,18 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
     icon: "❄️",
     difficulty: "中級",
     recommendedLevel: 3,
-    description: "氷狼や氷のゴーレムが守る寒冷地の洞窟。最奥には氷結のドラゴンが待つ。",
-    encounterSets: Object.freeze([
+    floorCount: 5,
+    description: "氷狼や氷のゴーレムが守る洞窟。最深部には氷結のドラゴンが待つ。",
+    legacyEncounterSetsV2: Object.freeze([
       Object.freeze(["ice-wolf", "orc", "ice-golem"]),
       Object.freeze(["ice-wolf", "ice-golem", "ice-dragon"]),
+      Object.freeze(["orc", "ice-golem", "ice-dragon"]),
+    ]),
+    encounterSets: Object.freeze([
+      Object.freeze(["ice-wolf", "orc", "ice-golem"]),
+      Object.freeze(["ice-wolf", "ice-golem", "orc"]),
+      Object.freeze(["orc", "ice-golem", "ice-wolf"]),
+      Object.freeze(["ice-golem", "orc", "ice-wolf"]),
       Object.freeze(["orc", "ice-golem", "ice-dragon"]),
     ]),
     reward: Object.freeze({

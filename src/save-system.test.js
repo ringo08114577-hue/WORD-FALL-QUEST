@@ -202,8 +202,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version,
-    4,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 5,
   );
 });
 
@@ -323,7 +322,7 @@ test("バージョン3のセーブは旧敵編成を保ったまま能力デー�
   assert.equal(second.store.getState().enemy.isBoss, false);
   assert.equal(second.dungeon.getSaveData().encounterSetVersion, 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 4);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 5);
 });
 
 
@@ -431,4 +430,53 @@ test("以前のセーブにスキルレベルがなくてもLv.1で補完して�
     "power-strike": 1,
     "ultimate-strike": 1,
   });
+});
+
+
+test("ダンジョンごとの解放階層をセーブ・ロードで別々に保持する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  for (let index = 0; index < 3; index += 1) {
+    winEnemy(first.store);
+    if (index < 2) first.dungeon.advance();
+  }
+  first.dungeon.claimFloorReward();
+  assert.equal(first.dungeon.getUnlockedFloor("forest-ruins"), 2);
+  first.dungeon.exitToTown();
+  first.store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
+  first.dungeon.selectDungeon("frozen-cavern");
+  assert.equal(first.dungeon.getUnlockedFloor("frozen-cavern"), 1);
+  assert.equal(first.controller.save().saved, true);
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.dungeon.getUnlockedFloor("forest-ruins"), 2);
+  assert.equal(second.dungeon.getUnlockedFloor("frozen-cavern"), 1);
+});
+
+test("旧バージョン4のセーブはダンジョン進行マップを追加して移行する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(first.controller.save().saved, true);
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 4;
+  delete legacy.dungeonState.unlockedFloors;
+  delete legacy.dungeonState.completedDungeons;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.dungeon.getUnlockedFloor("forest-ruins"), 1);
+  assert.equal(second.dungeon.getUnlockedFloor("frozen-cavern"), 1);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 5);
 });

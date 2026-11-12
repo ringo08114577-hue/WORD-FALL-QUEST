@@ -18,7 +18,7 @@ test("battle layout keeps all gameplay, HP, inventory, and save controls availab
     "japanesePrompt", "spellingProgress", "arena", "lettersLayer",
     "leftButton", "confirmButton", "rightButton", "startButton",
     "nextButton", "enemyHp", "enemyHpFill", "playerHp", "playerHpFill",
-    "enemyAttackTimer", "inventoryItems", "shopItems", "saveNowButton",
+    "enemyAttackTimer", "inventoryItems", "townBackLink", "saveNowButton",
     "loadSaveButton", "clearSaveButton",
   ]) {
     assert.match(html, new RegExp('id="' + id + '"'));

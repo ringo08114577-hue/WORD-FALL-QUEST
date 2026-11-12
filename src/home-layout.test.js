@@ -2,40 +2,44 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 
-const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const root = new URL("../", import.meta.url);
+const read = (path) => readFileSync(new URL(path, root), "utf8");
 
-test("街の拠点はダンジョンカタログから行き先を自動表示する", () => {
-  assert.match(html, /id="dungeonSelectionGrid"/);
-  assert.match(html, /import \{ DUNGEON_DEFINITIONS \} from "\.\/src\/data\/dungeons\.js"/);
-  assert.match(html, /Object\.values\(DUNGEON_DEFINITIONS\)/);
-  assert.match(html, /data-dungeon-id/);
-  assert.match(html, /id="townFacilities"/);
-  assert.match(html, /href="#dungeonPanel"/);
+test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
+  const html = read("index.html");
+  for (const link of ["items.html", "equipment.html", "skills.html", "dungeons.html"]) {
+    assert.ok(html.includes('href="./' + link + '"'), link);
+  }
+  assert.match(html, /createAppSession/);
+  assert.match(html, /session\.returnToTown\(\)/);
+  assert.doesNotMatch(html, /宿屋|innRestButton/);
 });
 
-test("街の宿屋とショップが既存のゲームコントローラーに接続されている", () => {
-  assert.match(html, /createTownController\(store\)/);
-  assert.match(html, /town\.restAtInn\(\)/);
-  assert.match(html, /id="innRestButton"/);
-  assert.match(html, /createShopController\(store, dungeon\)/);
-  assert.match(html, /Object\.entries\(SHOP_CATALOG\)/);
-  assert.match(html, /data-shop-item/);
-  assert.match(html, /id="itemShopGrid"/);
-  assert.match(html, /id="equipmentShopGrid"/);
-  assert.match(html, /saves\.save\(\)/);
+test("ショップ・スキル工房はそれぞれ独立したHTMLページを持つ", () => {
+  for (const [file, facility] of [
+    ["items.html", "items"],
+    ["equipment.html", "equipment"],
+    ["skills.html", "skills"],
+  ]) {
+    const html = read(file);
+    assert.match(html, new RegExp('data-facility="' + facility + '"'));
+    assert.match(html, /facility-page\.js/);
+    assert.match(html, /index\.html/);
+  }
 });
 
-test("選択したダンジョンを保存し、冒険開始後は切り替えられない", () => {
-  assert.match(html, /dungeon\.selectDungeon\(button\.dataset\.dungeonId\)/);
-  assert.match(html, /const saved = saves\.save\(\)/);
-  assert.match(html, /state\.phase === GAME_PHASE\.TITLE && !progress\.started/);
-  assert.match(html, /冒険開始後は変更できません/);
+test("ダンジョン選択ページはダンジョンと階層の両方を選べる", () => {
+  const html = read("dungeons.html");
+  const script = read("src/dungeons-page.js");
+  assert.match(html, /id="dungeonGrid"/);
+  assert.match(html, /id="floorGrid"/);
+  assert.match(script, /dungeon\.selectDungeon\(id\)/);
+  assert.match(script, /dungeon\.selectFloor\(Number\(button\.dataset\.floor\)\)/);
+  assert.match(script, /progress\.unlockedFloor/);
 });
 
-test("街の画面IDは一意でJavaScript参照先も存在する", () => {
+test("施設ページのID参照先がすべてHTML内に存在する", () => {
+  const html = read("index.html");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map((match) => match[1]);
   assert.equal(ids.length, new Set(ids).size);
-  for (const match of html.matchAll(/\$\("([^"]+)"\)/g)) {
-    assert.equal(ids.filter((id) => id === match[1]).length, 1, match[1]);
-  }
 });

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101827"><title>WORD FALL QUEST | 武器・防具屋</title><style>
+    :root{color-scheme:dark;font-family:Inter,"Noto Sans JP",system-ui,sans-serif;background:#0b1220;color:#eef4ff}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:14px 10px 28px;background:radial-gradient(circle at 50% 0%,rgba(56,117,201,.23),transparent 38rem),#0b1220}
+    main{width:min(100%,900px);margin:0 auto}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    .eyebrow{font-size:.68rem;letter-spacing:.14em;font-weight:850;color:#7dd3fc}.back{color:#bfdbfe;text-decoration:none;font-size:.78rem;font-weight:800}
+    h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}.subtitle{margin:0 0 14px;color:#9eacc2;font-size:.84rem;line-height:1.5}
+    .panel,.subpanel{padding:14px;margin:10px 0;border:1px solid #29384f;border-radius:16px;background:rgba(18,29,47,.94)}
+    .panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.muted{color:#91a4be;font-size:.74rem;line-height:1.5}
+    .wallet{display:flex;gap:8px;flex-wrap:wrap}.stat{padding:8px 11px;border-radius:10px;background:#111d30;color:#a9bad0;font-size:.76rem}.stat strong{color:#eef4ff}
+    .facility-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+    .facility-link{min-height:118px;padding:14px;border:1px solid #314662;border-radius:14px;background:linear-gradient(145deg,#1a2b43,#111d30);color:#eef4ff;text-decoration:none;display:flex;flex-direction:column;gap:7px}
+    .facility-link:hover,.dungeon-card:hover,.floor-card:hover{border-color:#60a5fa}.facility-icon{font-size:1.65rem}.facility-link strong{font-size:.95rem}.facility-link small{color:#9eacc2;font-size:.72rem;line-height:1.4}
+    .footer{margin-top:20px;text-align:center;color:#64748b;font-size:.68rem}.feedback{min-height:1.2em;color:#86efac;font-size:.75rem}
+    button{font:inherit;color:#eef4ff;cursor:pointer}.primary-button,.secondary-button{width:100%;min-height:42px;border-radius:10px;padding:9px 12px;font-size:.76rem;font-weight:850;border:1px solid #3b82f6;background:#2563eb}
+    .secondary-button{background:#22334c;border-color:#3b506e}.primary-button:disabled,.secondary-button:disabled{opacity:.42;cursor:not-allowed}
+    .offer-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.offer-card{display:flex;flex-direction:column;gap:7px;min-width:0;padding:12px;border:1px solid #263a56;border-radius:12px;background:#111d30}
+    .offer-name{font-size:.88rem}.offer-description{margin:0;color:#a9bad0;font-size:.72rem;line-height:1.45}.offer-meta{margin:0;color:#fcd34d;font-size:.7rem;font-weight:800}.offer-card button{margin-top:auto}
+    .equipment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.equipment-card,.inventory-item{padding:10px;border-radius:10px;background:#111d30;display:flex;flex-direction:column;gap:4px}
+    .inventory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.equipment-card strong{font-size:.84rem}.subpanel h2{margin:0 0 10px;font-size:.98rem}
+    .dungeon-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.dungeon-card,.floor-card{display:flex;flex-direction:column;align-items:flex-start;gap:7px;min-width:0;padding:12px;border:1px solid #314662;border-radius:13px;background:#111d30;text-align:left}
+    .dungeon-card.selected,.floor-card.selected{border-color:#60a5fa;background:linear-gradient(145deg,rgba(30,64,110,.72),#111d30);box-shadow:0 0 0 2px rgba(96,165,250,.16)}
+    .dungeon-card:disabled,.floor-card:disabled{opacity:.48;cursor:not-allowed}.dungeon-icon{font-size:1.6rem}.dungeon-name,.floor-name{font-weight:900;font-size:.9rem}.dungeon-meta,.floor-status{color:#93c5fd;font-size:.7rem;font-weight:800}.dungeon-description{color:#a9bad0;font-size:.72rem;line-height:1.45}.dungeon-progress{margin-top:auto;color:#86efac;font-size:.7rem;font-weight:850}
+    .floor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.floor-card{min-height:100px;justify-content:space-between}.boss-note{align-self:flex-end;color:#fda4af;font-size:.68rem;font-weight:900;letter-spacing:.12em}
+    .primary-link{display:flex;justify-content:center;align-items:center;width:100%;min-height:48px;margin-top:12px;border-radius:12px;border:1px solid #3b82f6;background:#2563eb;color:#fff;text-decoration:none;font-size:.84rem;font-weight:900}
+    @media(max-width:620px){body{padding:10px 8px 20px}.panel,.subpanel{padding:11px;margin:7px 0}.facility-grid{gap:7px}.facility-link{min-height:100px;padding:10px}.offer-grid{gap:7px}.offer-card{padding:10px}.floor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dungeon-grid{grid-template-columns:1fr}.inventory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:360px){.facility-grid,.offer-grid,.equipment-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
+</style></head>
+<body data-facility="equipment"><main>
+<div class="topline"><div class="eyebrow">WORD FALL QUEST · TOWN FACILITY</div><a class="back" href="./index.html">← ホームへ戻る</a></div>
+<h1 id="pageTitle">武器・防具屋</h1><p class="subtitle" id="pageSubtitle">装備を購入して、持っている装備を付け替えよう。</p>
+<section class="panel"><div class="panel-head"><div class="wallet"><div class="stat" id="levelValue">LV.1</div><div class="stat" id="hpValue">HP 3 / 3</div></div><strong id="goldValue">0 G</strong></div></section>
+<section id="facilityContent"></section><p class="feedback" id="feedback" aria-live="polite"></p><p class="footer">WORD FALL QUEST · ADVENTURER TOWN</p>
+</main><script type="module" src="./src/facility-page.js"></script></body></html>

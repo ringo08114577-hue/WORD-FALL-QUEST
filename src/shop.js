@@ -1,5 +1,5 @@
 /**
- * WORD FALL QUEST - Town and between-floor shop.
+ * WORD FALL QUEST - Town facility shop.
  * Purchases are available in safe hub phases (title, paused, victory).
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";

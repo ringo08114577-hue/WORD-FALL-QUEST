@@ -1,6 +1,5 @@
 /**
- * Enemy domain logic. Add species and abilities in ./data/enemies.js.
- * The dungeon catalog selects the ordered enemies for each floor.
+ * Enemy domain logic. The dungeon catalog selects the ordered enemies for each floor.
  */
 import { GAME_CONFIG } from "./game-config.js";
 import { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS } from "./data/enemies.js";
@@ -30,7 +29,10 @@ export function getFloorEnemyIds(floor, dungeonId = DEFAULT_DUNGEON_ID) {
   if (!Array.isArray(sets) || sets.length === 0) {
     throw new Error("ダンジョンに敵編成が登録されていません: " + dungeonId);
   }
-  return [...sets[(floor - 1) % sets.length]];
+  if (floor > (dungeon.floorCount ?? sets.length) || !sets[floor - 1]) {
+    throw new RangeError("このダンジョンにその階層はありません: " + dungeonId + " / " + floor);
+  }
+  return [...sets[floor - 1]];
 }
 
 export function getEnemyAbilityEffects(enemy) {

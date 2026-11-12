@@ -34,7 +34,7 @@ export const GAME_ACTION = Object.freeze({
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
   UPGRADE_SKILL: "UPGRADE_SKILL",
-  REST_AT_INN: "REST_AT_INN",
+  RETURN_TO_TOWN: "RETURN_TO_TOWN",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
   RESET_GAME: "RESET_GAME",
@@ -375,21 +375,6 @@ export function gameReducer(state, action) {
       };
     }
 
-    case GAME_ACTION.REST_AT_INN: {
-      if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) return state;
-      const cost = GAME_CONFIG.town.innRestCost;
-      if (!isPositiveInteger(cost) || state.player.hp >= state.player.maxHp ||
-          state.inventory.gold < cost) return state;
-      return {
-        ...state,
-        player: { ...state.player, hp: state.player.maxHp },
-        inventory: {
-          ...state.inventory,
-          gold: state.inventory.gold - cost,
-        },
-      };
-    }
-
     case GAME_ACTION.BUY_ITEM: {
       if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) return state;
       const itemExists = Object.hasOwn(ITEM_DEFINITIONS, action.itemId);
@@ -436,6 +421,19 @@ export function gameReducer(state, action) {
           ...state.inventory,
           gold: state.inventory.gold - cost,
         },
+      };
+    }
+
+    case GAME_ACTION.RETURN_TO_TOWN: {
+      if (state.phase === GAME_PHASE.TITLE &&
+          state.player.hp === state.player.maxHp && state.enemy === null) return state;
+      return {
+        ...state,
+        phase: GAME_PHASE.TITLE,
+        pausedFrom: null,
+        player: { ...state.player, hp: state.player.maxHp },
+        enemy: null,
+        lastBattleResult: null,
       };
     }
 

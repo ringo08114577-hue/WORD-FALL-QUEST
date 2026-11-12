@@ -398,14 +398,6 @@
         </div>
       </div>
     </section>
-    <section class="panel shop-panel" id="shopPanel" hidden aria-label="ショップ">
-      <div class="panel-title" style="grid-column:1 / -1">
-        <h2>🏪 フロア間ショップ</h2>
-        <strong id="shopGold">0G</strong>
-      </div>
-      <p class="shop-note">宝箱を開けたあと、次の階へ進む前に買い物できるよ。</p>
-      <div class="shop-items" id="shopItems"></div>
-    </section>
     <section class="panel" aria-label="アイテムと装備">
       <div class="panel-title">
         <h2>🎒 所持品・装備</h2>
@@ -450,7 +442,6 @@
       GAME_PHASE,
     } from "./src/game-state.js";
     import { createDungeonController } from "./src/dungeon.js";
-    import { createShopController, SHOP_CATALOG } from "./src/shop.js";
     import { createSaveController } from "./src/save-system.js";
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
@@ -462,7 +453,6 @@
     const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
     const combat = createCombatController(store);
     const dungeon = createDungeonController(store);
-    const shop = createShopController(store, dungeon);
     const TICK_MS = 100;
     const SPAWN_INTERVAL_MS = 900;
     const WAVE_RESPAWN_INTERVAL_MS = 250;
@@ -604,29 +594,9 @@
       }
     }
 
-    function buildShopCatalog() {
-      const root = $("shopItems");
-      root.replaceChildren();
-      for (const [itemId, offer] of Object.entries(SHOP_CATALOG)) {
-        const item = ITEM_DEFINITIONS[itemId];
-        const button = document.createElement("button");
-        button.dataset.shopItem = itemId;
-        button.textContent = item.name + " ×1（" + offer.cost + "G）";
-        root.append(button);
-      }
-    }
-
     function renderStore(state) {
       const dungeonProgress = dungeon.getProgress();
       $("dungeonProgress").textContent = dungeon.getDungeonInfo().name + " · " + dungeonProgress.floor + "階 · " + dungeonProgress.enemyNumber + " / " + dungeonProgress.enemiesPerFloor + "体目 · 🪙 " + state.inventory.gold + "G";
-      const shopOpen = state.phase === GAME_PHASE.VICTORY &&
-        dungeonProgress.floorCleared && dungeonProgress.rewardClaimed;
-      $("shopPanel").hidden = !shopOpen;
-      $("shopGold").textContent = state.inventory.gold + "G";
-      for (const button of $("shopItems").querySelectorAll("[data-shop-item]")) {
-        const itemId = button.dataset.shopItem;
-        button.disabled = !shopOpen || state.inventory.gold < SHOP_CATALOG[itemId].cost;
-      }
       $("phaseBadge").textContent = phaseLabels[state.phase] ?? state.phase;
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
@@ -988,27 +958,6 @@
       }
       startGame();
     });
-    function buyShopItem(itemId) {
-      const result = shop.buy(itemId);
-      if (!result.purchased) {
-        const messages = {
-          "not-at-shop": "ショップは宝箱を開けたあとに利用できるよ。",
-          "not-enough-gold": "ゴールドが足りないよ。",
-          "unknown-item": "その商品は取り扱っていないよ。",
-        };
-        setStatus(messages[result.reason] ?? "購入できなかったよ。", "bad");
-        return;
-      }
-      render();
-      setStatus(result.item.name + "を購入した！残り " + result.gold + "G。", "good");
-      saveProgress();
-    }
-    $("shopItems").addEventListener("click", (event) => {
-      const button = event.target.closest("button[data-shop-item]");
-      if (!button || button.disabled) return;
-      buyShopItem(button.dataset.shopItem);
-    });
-
     $("pauseButton").addEventListener("click", toggleBattlePause);
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE ||
@@ -1069,7 +1018,6 @@
       renderStore(state);
       if (action) saveProgress();
     });
-    buildShopCatalog();
     render();
     if (initialSave.loaded) {
       updateSaveMessage("前回のセーブデータをロードしたよ。");

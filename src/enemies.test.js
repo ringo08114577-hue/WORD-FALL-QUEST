@@ -35,19 +35,21 @@ test("敵の能力一覧は個別生成され、呼び出し元の変更が定�
   assert.equal(ENEMY_ABILITY_DEFINITIONS.swift.name, "すばやい反撃");
 });
 
-test("フロア編成は3種類で循環し、不正な階層を拒否する", () => {
+test("フロア編成は5階分あり、最深部にボスがいる", () => {
   assert.deepEqual(getFloorEnemyIds(1), ["slime", "bat", "goblin"]);
   assert.deepEqual(getFloorEnemyIds(2), ["bat", "orc", "moss-golem"]);
-  assert.deepEqual(getFloorEnemyIds(3), ["goblin", "moss-golem", "forest-dragon"]);
-  assert.deepEqual(getFloorEnemyIds(4), ["slime", "bat", "goblin"]);
+  assert.deepEqual(getFloorEnemyIds(3), ["goblin", "orc", "moss-golem"]);
+  assert.deepEqual(getFloorEnemyIds(4), ["orc", "moss-golem", "goblin"]);
+  assert.deepEqual(getFloorEnemyIds(5), ["moss-golem", "goblin", "forest-dragon"]);
   assert.throws(() => getFloorEnemyIds(0), TypeError);
+  assert.throws(() => getFloorEnemyIds(6), RangeError);
 });
 
 test("階層補正は敵の基礎能力と経験値を保ちながら強化する", () => {
-  const dragon = createEnemy("forest-dragon", { floor: 4 });
-  assert.equal(dragon.maxHp, 13);
+  const dragon = createEnemy("forest-dragon", { floor: 5 });
+  assert.equal(dragon.maxHp, 14);
   assert.equal(dragon.attackPower, 3);
-  assert.equal(dragon.experienceReward, 61);
+  assert.equal(dragon.experienceReward, 63);
   assert.equal(dragon.isBoss, true);
   assert.throws(() => createEnemy("unknown"), RangeError);
 });
