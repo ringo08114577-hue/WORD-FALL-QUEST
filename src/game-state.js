@@ -3,6 +3,7 @@ import { ENEMY_ABILITY_DEFINITIONS } from "./enemies.js";
 import { GAME_CONFIG } from "./game-config.js";
 import {
   SKILL_DEFINITIONS, createInitialSkillLevels, isValidSkillLevels, getSkillUpgradeCost,
+  createInitialEquippedSkillIds, isValidEquippedSkillIds,
 } from "./skills.js";
 
 /**
@@ -34,6 +35,7 @@ export const GAME_ACTION = Object.freeze({
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
   UPGRADE_SKILL: "UPGRADE_SKILL",
+  EQUIP_SKILL: "EQUIP_SKILL",
   RETURN_TO_TOWN: "RETURN_TO_TOWN",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
@@ -201,6 +203,7 @@ export function createInitialGameState({
     },
     enemy: null,
     skillLevels: createInitialSkillLevels(),
+    equippedSkillIds: createInitialEquippedSkillIds(),
     inventory: { ...createInitialInventory(), gold: 0 },
     battle: {
       number: 0,
@@ -424,6 +427,21 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.EQUIP_SKILL: {
+      if (state.phase !== GAME_PHASE.TITLE) return state;
+      const slotIndex = action.slotIndex;
+      const skillId = action.skillId;
+      if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= state.equippedSkillIds.length ||
+          (skillId !== null && (typeof skillId !== "string" || !Object.hasOwn(SKILL_DEFINITIONS, skillId)))) return state;
+      if (skillId !== null && state.equippedSkillIds.some((id, index) => index !== slotIndex && id === skillId)) return state;
+      if (skillId === null && state.equippedSkillIds[slotIndex] !== null &&
+          state.equippedSkillIds.filter((id) => id !== null).length <= 1) return state;
+      if (state.equippedSkillIds[slotIndex] === skillId) return state;
+      const equippedSkillIds = [...state.equippedSkillIds];
+      equippedSkillIds[slotIndex] = skillId;
+      return { ...state, equippedSkillIds };
+    }
+
     case GAME_ACTION.RETURN_TO_TOWN: {
       if (state.phase === GAME_PHASE.TITLE &&
           state.player.hp === state.player.maxHp && state.enemy === null) return state;
@@ -523,6 +541,7 @@ export function isValidSavedGameState(saved) {
     p.defensePower !== p.baseDefensePower + equipmentBonuses.defenseBonus ||
     !items || typeof items !== "object" || Array.isArray(items) ||
     !isValidSkillLevels(saved.skillLevels) ||
+    !isValidEquippedSkillIds(saved.equippedSkillIds) ||
     !equipmentValid ||
     !isNonNegativeInteger(inv.gold)
   ) return false;
@@ -578,6 +597,7 @@ function copySavedGameState(saved) {
     phase: saved.phase,
     pausedFrom: saved.pausedFrom,
     skillLevels: { ...saved.skillLevels },
+    equippedSkillIds: [...saved.equippedSkillIds],
     player: {
       hp: saved.player.hp,
       maxHp: saved.player.maxHp,

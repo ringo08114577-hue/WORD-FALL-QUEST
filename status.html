@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101827">
+<title>WORD FALL QUEST | 冒険者ステータス</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,"Noto Sans JP",system-ui,sans-serif;background:#0b1220;color:#eef4ff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:14px 10px 28px;background:radial-gradient(circle at 50% 0%,rgba(56,117,201,.23),transparent 38rem),#0b1220}
+main{width:min(100%,900px);margin:0 auto}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.eyebrow{font-size:.68rem;letter-spacing:.14em;font-weight:850;color:#7dd3fc}.back{color:#bfdbfe;text-decoration:none;font-size:.78rem;font-weight:800}
+h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}.subtitle{margin:0 0 14px;color:#9eacc2;font-size:.84rem;line-height:1.5}
+.panel{padding:14px;margin:10px 0;border:1px solid #29384f;border-radius:16px;background:rgba(18,29,47,.94)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.panel h2{font-size:1rem;margin:0}
+.muted{color:#91a4be;font-size:.74rem;line-height:1.5}.hero{display:flex;align-items:center;gap:12px}.avatar{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#1e4168,#14243b);border:1px solid #416080;font-size:2rem}
+.hero-name{font-size:1.05rem;font-weight:900}.hero-note{margin-top:4px;color:#9eacc2;font-size:.75rem}
+.record-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.record{padding:10px;border-radius:11px;background:#111d30;min-width:0}.record span{display:block;color:#91a4be;font-size:.66rem}.record strong{display:block;margin-top:4px;font-size:1.08rem;overflow-wrap:anywhere}
+.exp-track{height:9px;border-radius:99px;background:#25364c;overflow:hidden;margin-top:7px}.exp-fill{height:100%;width:0;background:linear-gradient(90deg,#38bdf8,#60a5fa);border-radius:99px}
+.slot-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.slot-card{padding:12px;border:1px solid #2d415d;border-radius:12px;background:#111d30;display:flex;flex-direction:column;gap:8px;min-width:0}.slot-title{font-size:.8rem;color:#93c5fd;font-weight:900}
+.skill-select{width:100%;min-height:42px;padding:8px;border-radius:9px;border:1px solid #475d7b;background:#0c1728;color:#eef4ff;font:inherit;font-size:.78rem}
+button{font:inherit;color:#eef4ff;cursor:pointer}.change-button{width:100%;min-height:40px;border-radius:9px;padding:8px 10px;font-size:.76rem;font-weight:850;border:1px solid #3b82f6;background:#2563eb}.change-button:disabled{opacity:.45;cursor:not-allowed}
+.skill-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.skill-card{padding:11px;border-radius:11px;background:#111d30;border:1px solid #263a56;min-width:0}.skill-card strong{font-size:.86rem}.skill-card p{margin:5px 0 0;color:#a9bad0;font-size:.72rem;line-height:1.5}.skill-meta{color:#fcd34d!important;font-weight:800}
+.feedback{min-height:1.2em;color:#86efac;font-size:.75rem}.footer{margin-top:20px;text-align:center;color:#64748b;font-size:.68rem}
+@media(max-width:520px){body{padding:10px 8px 20px}.panel{padding:11px;margin:7px 0}.record-grid{gap:6px}.record{padding:8px 6px}.record strong{font-size:.96rem}.slot-grid,.skill-list{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="topline"><div class="eyebrow">WORD FALL QUEST · ADVENTURER STATUS</div><a class="back" href="./index.html">← ホームへ戻る</a></div>
+  <h1>冒険者ステータス</h1><p class="subtitle">冒険者の能力を確認して、バトルで使うスキルを4枠まで装備しよう。</p>
+  <section class="panel">
+    <div class="hero"><div class="avatar" aria-hidden="true">🧙</div><div><div class="hero-name">冒険者 <span id="levelValue">LV.1</span></div><div class="hero-note" id="hpValue">HP 3 / 3</div></div></div>
+    <div class="panel-head" style="margin-top:14px;margin-bottom:4px"><strong>次のレベルまで</strong><span class="muted" id="expValue">EXP 0 / 10</span></div>
+    <div class="exp-track" role="progressbar" aria-label="次のレベルまでの経験値" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0" id="expBar"><div class="exp-fill" id="expFill"></div></div>
+    <div class="record-grid">
+      <div class="record"><span>攻撃力</span><strong id="attackValue">1</strong></div>
+      <div class="record"><span>防御力</span><strong id="defenseValue">0</strong></div>
+      <div class="record"><span>所持ゴールド</span><strong id="goldValue">0 G</strong></div>
+      <div class="record"><span>撃破した敵</span><strong id="defeatedValue">0</strong></div>
+      <div class="record"><span>獲得経験値合計</span><strong id="totalExpValue">0</strong></div>
+      <div class="record"><span>バトル回数</span><strong id="battleCountValue">0</strong></div>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>装備中のスキル（4枠）</h2><span class="muted">重複装備不可</span></div>
+    <div class="slot-grid" id="equippedSkillSlots"></div>
+    <p class="muted">装備を変更すると自動保存されるよ。スキルのレベル強化はスキル工房で行えるよ。</p>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>スキル一覧</h2><span class="muted">習得済みスキル</span></div>
+    <div class="skill-list" id="skillList"></div>
+  </section>
+  <p class="feedback" id="feedback" aria-live="polite"></p>
+  <p class="footer">WORD FALL QUEST · STEP 25 · ADVENTURER STATUS</p>
+</main>
+<script type="module" src="./src/status-page.js"></script>
+</body></html>

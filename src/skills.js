@@ -4,6 +4,36 @@ import { getSkillLevelDifficultyRange } from "./word-difficulty.js";
 
 export { SKILL_DEFINITIONS, getSkillLevelDifficultyRange };
 
+export const SKILL_EQUIP_SLOT_COUNT = 4;
+export function createInitialEquippedSkillIds() {
+  const equipped = Object.keys(SKILL_DEFINITIONS).slice(0, SKILL_EQUIP_SLOT_COUNT);
+  return [...equipped, ...Array(SKILL_EQUIP_SLOT_COUNT - equipped.length).fill(null)];
+}
+export function isValidEquippedSkillIds(skillIds) {
+  if (!Array.isArray(skillIds) || skillIds.length !== SKILL_EQUIP_SLOT_COUNT || !skillIds.some((id) => id !== null)) return false;
+  const seen = new Set();
+  for (const id of skillIds) {
+    if (id === null) continue;
+    if (typeof id !== "string" || !Object.hasOwn(SKILL_DEFINITIONS, id) || seen.has(id)) return false;
+    seen.add(id);
+  }
+  return true;
+}
+export function normalizeEquippedSkillIds(skillIds) {
+  const normalized = Array(SKILL_EQUIP_SLOT_COUNT).fill(null);
+  const seen = new Set();
+  if (Array.isArray(skillIds)) {
+    for (let index = 0; index < Math.min(skillIds.length, SKILL_EQUIP_SLOT_COUNT); index += 1) {
+      const id = skillIds[index];
+      if (typeof id === "string" && Object.hasOwn(SKILL_DEFINITIONS, id) && !seen.has(id)) {
+        normalized[index] = id;
+        seen.add(id);
+      }
+    }
+  }
+  return normalized.some((id) => id !== null) ? normalized : createInitialEquippedSkillIds();
+}
+
 export function getSkillDefinition(skillId) {
   return Object.hasOwn(SKILL_DEFINITIONS, skillId)
     ? SKILL_DEFINITIONS[skillId]

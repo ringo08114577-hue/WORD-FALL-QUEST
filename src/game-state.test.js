@@ -785,3 +785,26 @@ test("ホームへ戻るとHPと戦闘状態だけを整え、冒険者の成長
   assert.deepEqual(state.skillLevels, before.skillLevels);
   assert.equal(state.stats.enemiesDefeated, before.stats.enemiesDefeated);
 });
+
+
+test("スキルは4枠まで装備でき、重複と最後の1枠の解除はできない", () => {
+  let state = createInitialGameState();
+  assert.deepEqual(state.equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
+  const duplicate = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike" });
+  assert.equal(duplicate, state);
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: null });
+  assert.deepEqual(state.equippedSkillIds, ["quick-strike", null, "ultimate-strike", null]);
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: null });
+  assert.equal(state.equippedSkillIds[0], null);
+  const lastSkill = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 2, skillId: null });
+  assert.equal(lastSkill, state);
+});
+
+test("スキル装備の変更は街でのみ行え、登録外の技は装備できない", () => {
+  const title = createInitialGameState();
+  const unknown = gameReducer(title, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "unknown-skill" });
+  assert.equal(unknown, title);
+  const battle = gameReducer(title, { type: GAME_ACTION.START_BATTLE, enemy: slime });
+  const duringBattle = gameReducer(battle, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike" });
+  assert.equal(duringBattle, battle);
+});

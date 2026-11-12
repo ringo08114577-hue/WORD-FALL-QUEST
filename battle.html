@@ -629,14 +629,25 @@
       $("nextButton").hidden = !(active && wordState.phase === "word-complete" && !awaitingSkill);
       $("nextButton").textContent = "次の技を選ぶ";
       $("skillPanel").hidden = !(active && awaitingSkill);
+      const equippedSkillIds = state.equippedSkillIds ?? [];
+      let visibleSkillCount = 0;
       for (const button of $("skillPanel").querySelectorAll("[data-skill]")) {
-        button.disabled = !(active && awaitingSkill);
         const skillId = button.dataset.skill;
+        const isEquipped = equippedSkillIds.includes(skillId);
+        button.hidden = !isEquipped;
+        button.style.display = isEquipped ? "" : "none";
+        button.disabled = !(active && awaitingSkill && isEquipped);
+        if (!isEquipped) continue;
+        visibleSkillCount += 1;
         const level = state.skillLevels[skillId] ?? SKILL_DEFINITIONS[skillId].startingLevel;
         const range = getSkillLevelDifficultyRange(level);
         button.querySelector("span").textContent =
           "Lv." + level + " · 単語難易度 " + range.min + "〜" + range.max;
       }
+      const skillNote = $("skillPanel").querySelector(".shop-note");
+      skillNote.textContent = visibleSkillCount > 0
+        ? "長い単語ほど強力。ただし完成まで敵の攻撃を受ける可能性があるよ。"
+        : "装備中のスキルがないよ。いったん街に戻ってステータス画面でスキルを装備してね。";
       $("arenaCover").hidden =
         active && !awaitingSkill && wordState.phase === "active";
 
@@ -802,8 +813,9 @@
 
     function selectSkill(skillId) {
       if (store.getState().phase !== GAME_PHASE.BATTLE || !awaitingSkill) return;
+      const currentState = store.getState();
       const skill = SKILL_DEFINITIONS[skillId];
-      if (!skill) return;
+      if (!skill || !currentState.equippedSkillIds.includes(skillId)) return;
       const skillLevel = store.getState().skillLevels[skillId] ?? skill.startingLevel ?? 1;
       wordState = selectChallengeForSkill(wordState, skillId, { skillLevel });
       wordState = spawnLaneWave(wordState);

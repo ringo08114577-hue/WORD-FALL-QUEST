@@ -119,6 +119,12 @@ test("leaving the battle tab automatically pauses and preserves the enemy timer"
 });
 
 
+test("バトルで選べる技はステータス画面で装備したスキルだけ", () => {
+  assert.match(html, /const equippedSkillIds = state\.equippedSkillIds/);
+  assert.match(html, /button\.hidden = !isEquipped/);
+  assert.match(html, /currentState\.equippedSkillIds\.includes\(skillId\)/);
+});
+
 test("battle status displays the selected dungeon name from the saved controller state", () => {
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ dungeonProgress\.floor/);
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ progress\.floor/);

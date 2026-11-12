@@ -322,7 +322,7 @@ test("バージョン3のセーブは旧敵編成を保ったまま能力デー�
   assert.equal(second.store.getState().enemy.isBoss, false);
   assert.equal(second.dungeon.getSaveData().encounterSetVersion, 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 5);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 6);
 });
 
 
@@ -478,7 +478,7 @@ test("旧バージョン4のセーブはダンジョン進行マップを追加�
   assert.equal(second.dungeon.getUnlockedFloor("forest-ruins"), 1);
   assert.equal(second.dungeon.getUnlockedFloor("frozen-cavern"), 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 5);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 6);
 });
 
 
@@ -523,4 +523,20 @@ test("初回制覇報酬の受取記録はセーブ・ロード後も保持さ�
   const repeat = second.dungeon.claimFloorReward();
   assert.equal(repeat.firstClearReward, null);
   assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
+});
+
+
+test("バージョン5のセーブを4枠スキル装備つきのバージョン6へ移行する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  assert.equal(first.controller.save().saved, true);
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 5;
+  delete legacy.gameState.equippedSkillIds;
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+  const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 6);
 });

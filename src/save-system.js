@@ -3,11 +3,11 @@
  * Migration keeps existing characters and adds independent dungeon progress.
  */
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
-import { normalizeSkillLevels } from "./skills.js";
+import { normalizeSkillLevels, normalizeEquippedSkillIds } from "./skills.js";
 import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -24,7 +24,7 @@ function createInitialDungeonProgress() {
 }
 
 function migrateSnapshot(snapshot) {
-  if (!isRecord(snapshot) || ![1, 2, 3, 4, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, SAVE_VERSION].includes(snapshot.version)) return null;
   let migrated = snapshot;
 
   if (migrated.version === 1) {
@@ -130,6 +130,15 @@ function migrateSnapshot(snapshot) {
     };
   }
 
+  if (migrated.version === 5) {
+    const gameState = migrated.gameState;
+    if (!isRecord(gameState)) return null;
+    migrated = { ...migrated, version: 6, gameState: {
+      ...gameState,
+      equippedSkillIds: normalizeEquippedSkillIds(gameState.equippedSkillIds),
+    } };
+  }
+
   if (migrated.version === SAVE_VERSION) {
     const gameState = migrated.gameState;
     if (!isRecord(gameState) || !isRecord(gameState.inventory) ||
@@ -139,6 +148,7 @@ function migrateSnapshot(snapshot) {
       gameState: {
         ...gameState,
         skillLevels: normalizeSkillLevels(gameState.skillLevels),
+        equippedSkillIds: normalizeEquippedSkillIds(gameState.equippedSkillIds),
         inventory: {
           ...gameState.inventory,
           items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map((itemId) => [
