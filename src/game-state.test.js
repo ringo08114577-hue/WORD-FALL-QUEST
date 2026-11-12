@@ -280,7 +280,7 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
 test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", () => {
   const state = createInitialGameState();
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0 },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0, "forest-dragon-seal": 0, "ice-dragon-core": 0 },
     equipment: { weapon: null, shield: null, armor: null, accessory: null },
     gold: 0,
   });
@@ -372,7 +372,7 @@ test("アイテムはバトル中以外には使えず、敗北時のリセッ�
   assert.equal(state.player.maxHp, 4);
   assert.equal(state.player.attackPower, 2);
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0 },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0, "forest-dragon-seal": 0, "ice-dragon-core": 0 },
     equipment: { weapon: null, shield: null, armor: null, accessory: null },
     gold: 0,
   });
