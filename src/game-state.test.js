@@ -847,3 +847,16 @@ test("所持品数とゴールドが安全な整数の上限を超える加算�
   });
   assert.equal(goldOverflow, state);
 });
+
+
+test("型が不正な所持品・ゴールド加算は例外を出さず無視する", () => {
+  const state = createInitialGameState();
+  assert.equal(
+    gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "large-potion", quantity: Symbol("bad") }),
+    state,
+  );
+  assert.equal(
+    gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: Symbol("bad") }),
+    state,
+  );
+});

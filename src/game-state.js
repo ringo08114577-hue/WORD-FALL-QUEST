@@ -356,8 +356,9 @@ export function gameReducer(state, action) {
         ? ITEM_DEFINITIONS[action.itemId]
         : null;
       const quantity = action.quantity === undefined ? 1 : action.quantity;
+      if (!item || !isPositiveInteger(quantity)) return state;
       const nextQuantity = (state.inventory.items[action.itemId] ?? 0) + quantity;
-      if (!item || !isPositiveInteger(quantity) || !isNonNegativeInteger(nextQuantity)) return state;
+      if (!isNonNegativeInteger(nextQuantity)) return state;
       return {
         ...state,
         inventory: {
@@ -372,8 +373,9 @@ export function gameReducer(state, action) {
 
     case GAME_ACTION.ADD_GOLD: {
       const amount = action.amount;
+      if (!isPositiveInteger(amount)) return state;
       const nextGold = state.inventory.gold + amount;
-      if (!isPositiveInteger(amount) || !isNonNegativeInteger(nextGold)) return state;
+      if (!isNonNegativeInteger(nextGold)) return state;
       return {
         ...state,
         inventory: { ...state.inventory, gold: nextGold },
