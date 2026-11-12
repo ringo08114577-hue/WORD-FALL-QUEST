@@ -55,3 +55,9 @@ test("ステータス画面は4枠のスキル装備を行い、強化はスキ�
   assert.match(script, /skillLevels/);
   assert.match(read("skills.html"), /スキル工房/);
 });
+
+test("ホームには開発用画面へのリンクを表示せず、開発用ページも含めない", () => {
+  const html = read("index.html");
+  assert.doesNotMatch(html, /debug-state\\.html|開発用画面/);
+  assert.throws(() => read("debug-state.html"), { code: "ENOENT" });
+});
