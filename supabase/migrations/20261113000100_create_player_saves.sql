@@ -4,7 +4,7 @@ create table if not exists public.player_saves (
   user_id uuid primary key references auth.users (id) on delete cascade,
   save_version integer not null check (save_version > 0),
   save_data jsonb not null check (jsonb_typeof(save_data) = 'object'),
-  updated_at timestamptz not null default timezone('utc', now())
+  updated_at timestamptz not null default now()
 );
 
 comment on table public.player_saves is

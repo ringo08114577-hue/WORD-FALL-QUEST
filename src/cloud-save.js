@@ -113,7 +113,7 @@ export function createCloudSaveController({ client, saveController, getUser }) {
         return {
           loaded: true,
           updatedAt: data.updated_at ?? null,
-          migrated: data.save_version !== restored.snapshotVersion,
+          migrated: data.save_version !== restored.version,
         };
       } catch (error) {
         return { loaded: false, reason: "cloud-read-failed", error };

@@ -310,7 +310,7 @@ export function createSaveController({
           return { restored: false, reason: "invalid-save" };
         }
         restoreExtraData(snapshot.extra);
-        return { restored: true, savedAt: snapshot.savedAt ?? null };
+        return { restored: true, savedAt: snapshot.savedAt ?? null, version: snapshot.version };
       } catch {
         return { restored: false, reason: "snapshot-restore-failed" };
       }
