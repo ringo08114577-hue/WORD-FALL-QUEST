@@ -3,15 +3,49 @@
 <style>
 :root{color-scheme:dark;font-family:system-ui,"Noto Sans JP",sans-serif;background:#0b1220;color:#eef4ff}*{box-sizing:border-box}body{margin:0;padding:18px 12px 30px;background:radial-gradient(circle at 50% 0%,rgba(56,117,201,.23),transparent 34rem),#0b1220}main{width:min(100%,620px);margin:auto}.back{color:#bfdbfe;text-decoration:none;font-size:.85rem;font-weight:800}.panel{margin-top:16px;padding:18px;border:1px solid #29384f;border-radius:16px;background:rgba(18,29,47,.96)}h1{font-size:1.6rem;margin:12px 0 5px}.muted{color:#9eacc2;font-size:.84rem;line-height:1.6}.status{margin:16px 0;padding:12px;border-radius:12px;background:#111d30;border:1px solid #314662;line-height:1.6}.status strong{display:block}.actions{display:grid;gap:10px;margin-top:16px}button{min-height:48px;padding:12px;border-radius:11px;border:1px solid #3b82f6;background:#2563eb;color:white;font-size:.9rem;font-weight:850}button.secondary{background:#22334c;border-color:#49617f}button:disabled{opacity:.5}.message{min-height:2.5em;margin-top:12px;color:#86efac;font-size:.82rem;white-space:pre-wrap}.warning{margin-top:18px;padding:12px;border-radius:10px;background:#332817;color:#f8d9a0;font-size:.78rem;line-height:1.55}
 </style></head><body><main><a class="back" href="./index.html">← 冒険者ホームへ戻る</a><h1>アカウント</h1><p class="muted">ゲストで遊び始めて、あとからGoogleアカウントに連携できるよ。</p>
-<section class="panel"><div class="status" id="accountStatus" aria-live="polite">アカウント状態を確認中…</div><p class="muted">Google連携すると、今後追加するクラウドセーブや別端末での引き継ぎに使えるようになるよ。</p><div class="actions"><button id="guestButton">ゲストプレイを開始</button><button class="secondary" id="googleButton">Googleアカウントでログイン</button><button class="secondary" id="linkButton">今のゲストデータをGoogleと連携</button></div><div class="message" id="message" role="status"></div><div class="warning">注意：ゲストのままブラウザデータを消したり、別の端末に変えたりすると、ゲストアカウントに戻れなくなる場合があるよ。大切なデータを守るため、Google連携は早めに行おう。Google連携に失敗した場合は、ゲスト状態を消さずにエラーを確認してね。</div></section></main>
+<section class="panel"><div class="status" id="accountStatus" aria-live="polite">アカウント状態を確認中…</div><p class="muted">ログイン後、下のボタンから手動でクラウド保存・復元ができるよ。初回はローカルデータをクラウドへ保存し、別端末ではクラウドから復元してね。</p><div class="actions"><button id="guestButton">ゲストプレイを開始</button><button class="secondary" id="googleButton">Googleアカウントでログイン</button><button class="secondary" id="linkButton">今のゲストデータをGoogleと連携</button><button class="secondary" id="cloudSaveButton">この端末のセーブをクラウドへ保存</button><button class="secondary" id="cloudLoadButton">クラウドのセーブをこの端末へ復元</button></div><div class="message" id="message" role="status"></div><div class="warning">注意：ゲストのままブラウザデータを消したり、別の端末に変えたりすると、ゲストアカウントに戻れなくなる場合があるよ。大切なデータを守るため、Google連携は早めに行おう。Google連携に失敗した場合は、ゲスト状態を消さずにエラーを確認してね。</div></section></main>
 <script type="module">
 import { supabase, startGuestSession, getCurrentUser, signInWithGoogle, linkGuestToGoogle } from "./src/supabase-auth.js";
-const statusEl=document.getElementById("accountStatus");const messageEl=document.getElementById("message");const guestButton=document.getElementById("guestButton");const googleButton=document.getElementById("googleButton");const linkButton=document.getElementById("linkButton");
+import { createAppSession } from "./src/app-session.js";
+import { createCloudSaveController } from "./src/cloud-save.js";
+const gameSession = createAppSession();
+const cloudSave = createCloudSaveController({ client: supabase, saveController: gameSession.saves, getUser: getCurrentUser });
+const statusEl=document.getElementById("accountStatus");const messageEl=document.getElementById("message");const guestButton=document.getElementById("guestButton");const googleButton=document.getElementById("googleButton");const linkButton=document.getElementById("linkButton");const cloudSaveButton=document.getElementById("cloudSaveButton");const cloudLoadButton=document.getElementById("cloudLoadButton");
 function showMessage(message){messageEl.textContent=message;}
-function render(user){if(!user){statusEl.innerHTML="<strong>未ログイン</strong>ゲストプレイまたはGoogleログインを選んでね。";guestButton.disabled=false;googleButton.disabled=false;linkButton.disabled=true;return;}if(user.is_anonymous){statusEl.innerHTML="<strong>ゲストでプレイ中</strong>このブラウザのゲストアカウントが有効だよ。";guestButton.disabled=true;googleButton.disabled=true;linkButton.disabled=false;}else{statusEl.innerHTML="<strong>Googleアカウント連携済み</strong>ログイン状態を確認できたよ。";guestButton.disabled=true;googleButton.disabled=true;linkButton.disabled=true;}}
+function render(user){const signedIn=Boolean(user);if(!user){statusEl.innerHTML="<strong>未ログイン</strong>ゲストプレイまたはGoogleログインを選んでね。";guestButton.disabled=false;googleButton.disabled=false;linkButton.disabled=true;}else if(user.is_anonymous){statusEl.innerHTML="<strong>ゲストでプレイ中</strong>このブラウザのゲストアカウントが有効だよ。";guestButton.disabled=true;googleButton.disabled=true;linkButton.disabled=false;}else{statusEl.innerHTML="<strong>Googleアカウント連携済み</strong>ログイン状態を確認できたよ。";guestButton.disabled=true;googleButton.disabled=true;linkButton.disabled=true;}cloudSaveButton.disabled=!signedIn;cloudLoadButton.disabled=!signedIn;}
 async function refresh(){try{render(await getCurrentUser());}catch(error){showMessage("状態を確認できませんでした："+error.message);}}
 guestButton.addEventListener("click",async()=>{guestButton.disabled=true;try{const result=await startGuestSession();render(result.user);showMessage(result.existing?"ゲストアカウントはすでに有効だよ。":"ゲストプレイを開始したよ。");}catch(error){showMessage("ゲスト開始に失敗："+error.message);guestButton.disabled=false;}});
 googleButton.addEventListener("click",async()=>{googleButton.disabled=true;try{await signInWithGoogle();}catch(error){showMessage("Googleログインに失敗："+error.message);googleButton.disabled=false;}});
 linkButton.addEventListener("click",async()=>{linkButton.disabled=true;try{await linkGuestToGoogle();}catch(error){showMessage("連携できませんでした。ゲストデータは削除していません。\n"+error.message);linkButton.disabled=false;}});
+
+cloudSaveButton.addEventListener("click",async()=>{
+  cloudSaveButton.disabled=true;
+  try{
+    const firstAttempt=await cloudSave.saveToCloud();
+    if(firstAttempt.reason==="cloud-save-exists"){
+      const overwrite=window.confirm("クラウドには既にセーブデータがあるよ。今の端末のデータで上書きする？");
+      if(!overwrite){showMessage("クラウドのデータは変更していないよ。");return;}
+      const result=await cloudSave.saveToCloud({overwrite:true});
+      showMessage(result.saved?"クラウドへ保存したよ。":"保存できなかったよ："+(result.error?.message??result.reason));
+      return;
+    }
+    showMessage(firstAttempt.saved?"クラウドへ保存したよ。":"保存できなかったよ："+(firstAttempt.error?.message??firstAttempt.reason));
+  }catch(error){showMessage("クラウド保存に失敗："+error.message);}
+  finally{cloudSaveButton.disabled=false;}
+});
+cloudLoadButton.addEventListener("click",async()=>{
+  if(!window.confirm("クラウドのデータで、この端末のゲームデータを置き換えるよ。先にこの端末のデータをクラウドへ保存した？")) return;
+  cloudLoadButton.disabled=true;
+  try{
+    const result=await cloudSave.loadFromCloud();
+    if(result.loaded){
+      showMessage("クラウドのセーブを復元したよ。この端末のローカルセーブも更新したよ。ホームへ戻って画面を更新してね。");
+    }else{
+      showMessage("復元できなかったよ："+(result.error?.message??result.reason));
+    }
+  }catch(error){showMessage("クラウド復元に失敗："+error.message);}
+  finally{cloudLoadButton.disabled=false;}
+});
+
 supabase.auth.onAuthStateChange((_event,session)=>render(session?.user??null));refresh();
 </script></body></html>

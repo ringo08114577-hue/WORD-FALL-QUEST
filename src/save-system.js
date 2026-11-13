@@ -270,6 +270,52 @@ export function createSaveController({
       }
     },
 
+    exportSnapshot() {
+      try {
+        const extra = getExtraData();
+        const gameState = store.getState();
+        const dungeonState = dungeon.getSaveData();
+        if (!store.isValidState(gameState) ||
+            !dungeon.isValidSaveData(dungeonState, gameState)) {
+          return { exported: false, reason: "invalid-game-state" };
+        }
+        if (!validateExtraData(extra)) {
+          return { exported: false, reason: "invalid-extra-data" };
+        }
+        return {
+          exported: true,
+          snapshot: {
+            version: SAVE_VERSION,
+            savedAt: new Date().toISOString(),
+            gameState,
+            dungeonState,
+            extra,
+          },
+        };
+      } catch {
+        return { exported: false, reason: "snapshot-export-failed" };
+      }
+    },
+
+    restoreSnapshot(candidate) {
+      try {
+        const snapshot = migrateSnapshot(candidate);
+        if (!snapshot || !store.isValidState(snapshot.gameState) ||
+            !dungeon.isValidSaveData(snapshot.dungeonState, snapshot.gameState) ||
+            !validateExtraData(snapshot.extra)) {
+          return { restored: false, reason: "invalid-save" };
+        }
+        if (!store.restoreState(snapshot.gameState) ||
+            !dungeon.restoreSaveData(snapshot.dungeonState)) {
+          return { restored: false, reason: "invalid-save" };
+        }
+        restoreExtraData(snapshot.extra);
+        return { restored: true, savedAt: snapshot.savedAt ?? null };
+      } catch {
+        return { restored: false, reason: "snapshot-restore-failed" };
+      }
+    },
+
     clear() {
       try {
         const target = getStorage();
