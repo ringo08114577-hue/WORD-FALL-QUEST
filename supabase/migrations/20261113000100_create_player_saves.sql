@@ -45,7 +45,7 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  new.updated_at = timezone('utc', now());
+  new.updated_at = now();
   return new;
 end;
 $$;
