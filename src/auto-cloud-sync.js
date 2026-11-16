@@ -119,6 +119,18 @@ export function attachAutoCloudSync({
     return result;
   };
 
+  function reloadAfterCloudRestore(updatedAt) {
+    if (typeof window === "undefined") return;
+    try {
+      const marker = `wq-cloud-restore-reload:${activeUserId}:${updatedAt ?? "unknown"}`;
+      if (window.sessionStorage.getItem(marker) === "1") return;
+      window.sessionStorage.setItem(marker, "1");
+      globalThis.setTimeout(() => window.location.reload(), 120);
+    } catch {
+      // Session storage may be disabled; keep the current page usable.
+    }
+  }
+
   async function reconcile(user) {
     if (!user?.id) {
       activeUserId = null;
@@ -186,6 +198,7 @@ export function attachAutoCloudSync({
             return;
           }
           emitSyncStatus("restored", { updatedAt: result.updatedAt ?? null });
+          reloadAfterCloudRestore(result.updatedAt ?? null);
         } else if (action === "none") {
           emitSyncStatus("synced");
         } else {
