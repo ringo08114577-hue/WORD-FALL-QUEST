@@ -64,3 +64,20 @@ test("ホームには開発用画面へのリンクを表示せず、開発用�
 });
 
 
+
+
+test("ホームと各施設の初期表示は新しい冒険者の能力値と一致する", () => {
+  for (const file of ["index.html", "status.html", "skills.html", "items.html", "equipment.html"]) {
+    const html = read(file);
+    assert.match(html, /HP 100 \/ 100/, file + " の初期HP表示");
+    assert.doesNotMatch(html, /HP 3 \/ 3/, file + " に古いHP表示を残さない");
+  }
+
+  for (const file of ["index.html", "status.html"]) {
+    assert.match(read(file), /id="attackValue">20/, file + " の初期攻撃力表示");
+  }
+
+  const status = read("status.html");
+  assert.match(status, /EXP 0 \/ 100/);
+  assert.match(status, /aria-valuemax="100" aria-valuenow="0" id="expBar"/);
+});

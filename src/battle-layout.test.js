@@ -162,3 +162,13 @@ test("プレイヤー欄に攻撃・防御バフの残り回数を表示する",
   assert.match(html, /state\.battleEffects\?\.defenseHitsRemaining > 0/);
   assert.match(html, /activeBuffs\.join\(" \/ "\)/);
 });
+
+
+test("バトル画面は共通の初期能力値HP100・攻撃力20を使う", () => {
+  assert.match(html, /const store = createGameStore\(\);/);
+  assert.doesNotMatch(html, /createGameStore\(\{\s*playerMaxHp:\s*3,\s*playerAttackPower:\s*1/);
+  assert.match(html, /id="playerHp">HP 100 \/ 100/);
+  assert.match(html, /aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"/);
+  assert.match(html, /id="playerProgression">LV\.1 · EXP 0 \/ 100/);
+  assert.match(html, /id="equipmentSummary">ATK 20 · DEF 0/);
+});

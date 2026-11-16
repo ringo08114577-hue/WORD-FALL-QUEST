@@ -405,9 +405,9 @@
       <div class="progression" id="dungeonProgress">ダンジョン 1階 · 1 / 3体目</div>
       <div class="vitals">
         <div class="vital">
-          <div class="vital-head"><span>🧙 プレイヤー</span><span class="hp-text" id="playerHp">HP 3 / 3</span></div>
-          <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill" id="playerHpFill"></div></div>
-          <div class="progression" id="playerProgression">LV.1 · EXP 0 / 10</div>
+          <div class="vital-head"><span>🧙 プレイヤー</span><span class="hp-text" id="playerHp">HP 100 / 100</span></div>
+          <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="bar-fill" id="playerHpFill"></div></div>
+          <div class="progression" id="playerProgression">LV.1 · EXP 0 / 100</div>
         </div>
         <div class="vital enemy-vital">
           <div class="vital-head"><span id="enemyName">🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
@@ -421,7 +421,7 @@
     <section class="panel" aria-label="アイテムと装備">
       <div class="panel-title">
         <h2>🎒 所持品・装備</h2>
-        <strong class="inventory-value" id="equipmentSummary">ATK 1 · DEF 0</strong>
+        <strong class="inventory-value" id="equipmentSummary">ATK 20 · DEF 0</strong>
       </div>
       <div class="inventory-items" id="inventoryItems"></div>
     </section>
@@ -469,7 +469,7 @@
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
     const $ = (id) => document.getElementById(id);
-    const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
+    const store = createGameStore();
     const combat = createCombatController(store);
     const dungeon = createDungeonController(store);
     const town = createTownController(store, dungeon);

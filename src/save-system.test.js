@@ -4,6 +4,7 @@ import { createGameStore, createInitialGameState, GAME_ACTION, GAME_PHASE } from
 import { createDungeonController } from "./dungeon.js";
 import { createWordBattleState, spawnFallingLetter, collectLetter, restoreWordBattleState } from "./word-battle.js";
 import { createSaveController, SAVE_STORAGE_KEY, SAVE_VERSION } from "./save-system.js";
+import { getEquipmentBonuses } from "./items.js";
 
 function memoryStorage() {
   const values = new Map();
@@ -202,7 +203,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 11,
   );
 });
 
@@ -297,6 +298,94 @@ test("鎧とアクセサリーの装備状態もセーブ・ロードで保持�
   assert.equal(second.store.getState().player.defensePower, 25);
 });
 
+
+
+test("バージョン10の誤った初期能力値を成長データを保ったまま修正する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  const oldState = structuredClone(first.store.getState());
+  oldState.inventory.equipment.armor = "leather-armor";
+  oldState.inventory.equipment.accessory = "copper-charm";
+  oldState.inventory.items["leather-armor"] = 0;
+  oldState.inventory.items["copper-charm"] = 0;
+  oldState.inventory.gold = 321;
+
+  const bonuses = getEquipmentBonuses(oldState.inventory.equipment);
+  const oldLevel = 2;
+  const oldBaseMaxHp = 3 + (oldLevel - 1) * 40;
+  const oldBaseAttackPower = 1 + (oldLevel - 1) * 5;
+  const oldMaxHp = oldBaseMaxHp + bonuses.maxHpBonus;
+  const oldHp = Math.round(oldMaxHp * 0.55);
+  oldState.player = {
+    ...oldState.player,
+    level: oldLevel,
+    experience: 40,
+    nextLevelXp: 200,
+    hp: oldHp,
+    maxHp: oldMaxHp,
+    startingMaxHp: 3,
+    baseMaxHp: oldBaseMaxHp,
+    startingAttackPower: 1,
+    baseAttackPower: oldBaseAttackPower,
+    attackPower: oldBaseAttackPower + bonuses.attackBonus,
+    baseDefensePower: 0,
+    defensePower: bonuses.defenseBonus,
+  };
+
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({
+    version: 10,
+    savedAt: "2026-11-16T00:00:00.000Z",
+    gameState: oldState,
+    dungeonState: first.dungeon.getSaveData(),
+    extra: { wordState: createWordBattleState(), spawnElapsed: 0 },
+  }));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  const result = second.controller.load();
+  assert.equal(result.loaded, true);
+
+  const player = second.store.getState().player;
+  const expectedMaxHp = 100 + 40 + bonuses.maxHpBonus;
+  const expectedHp = Math.round(expectedMaxHp * oldHp / oldMaxHp);
+  assert.equal(player.level, 2);
+  assert.equal(player.maxHp, expectedMaxHp);
+  assert.equal(player.hp, expectedHp);
+  assert.equal(player.attackPower, 25 + bonuses.attackBonus);
+  assert.equal(player.baseAttackPower, 25);
+  assert.equal(player.defensePower, bonuses.defenseBonus);
+  assert.equal(player.experience, 40);
+  assert.equal(player.nextLevelXp, 200);
+  assert.deepEqual(second.store.getState().inventory.equipment, oldState.inventory.equipment);
+  assert.equal(second.store.getState().inventory.gold, 321);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
+});
+
+test("バージョン10ですでに正しい能力値のセーブは能力値を変更しない", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  const correctState = structuredClone(createInitialGameState());
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({
+    version: 10,
+    savedAt: "2026-11-16T00:00:00.000Z",
+    gameState: correctState,
+    dungeonState: first.dungeon.getSaveData(),
+    extra: { wordState: createWordBattleState(), spawnElapsed: 0 },
+  }));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.store.getState().player.maxHp, 100);
+  assert.equal(second.store.getState().player.attackPower, 20);
+});
 
 test("バージョン9のセーブは新しい成長バランスへHP割合と経験値進捗を引き継ぐ", () => {
   const storage = memoryStorage();

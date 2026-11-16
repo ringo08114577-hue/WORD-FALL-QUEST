@@ -9,7 +9,7 @@ import { GAME_CONFIG } from "./game-config.js";
 import { createEnemy } from "./enemies.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -26,7 +26,7 @@ function createInitialDungeonProgress() {
 }
 
 function migrateSnapshot(snapshot) {
-  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, SAVE_VERSION].includes(snapshot.version)) return null;
   let migrated = snapshot;
 
   if (migrated.version === 1) {
@@ -271,6 +271,68 @@ function migrateSnapshot(snapshot) {
         },
       },
     };
+  }
+
+
+  if (migrated.version === 10) {
+    const gameState = migrated.gameState;
+    if (!isRecord(gameState) || !isRecord(gameState.player) ||
+        !isRecord(gameState.inventory) || !isRecord(gameState.inventory.equipment)) return null;
+
+    const oldPlayer = gameState.player;
+    let nextGameState = gameState;
+
+    // Older battle.html builds accidentally initialized new characters with
+    // HP 3 / ATK 1 even after the central balance changed to HP 100 / ATK 20.
+    // Only repair saves carrying both exact legacy markers; keep valid newer
+    // v10 characters and all unrelated progression untouched.
+    if (oldPlayer.startingMaxHp === 3 && oldPlayer.startingAttackPower === 1) {
+      const level = Number.isSafeInteger(oldPlayer.level) && oldPlayer.level > 0
+        ? oldPlayer.level
+        : 1;
+      const oldMaxHp = Number.isSafeInteger(oldPlayer.maxHp) && oldPlayer.maxHp > 0
+        ? oldPlayer.maxHp
+        : 3;
+      const oldHp = Number.isSafeInteger(oldPlayer.hp) && oldPlayer.hp >= 0
+        ? oldPlayer.hp
+        : oldMaxHp;
+      const hpRatio = oldHp / oldMaxHp;
+      const equipmentBonuses = getEquipmentBonuses(gameState.inventory.equipment);
+      const startingMaxHp = GAME_CONFIG.player.startingMaxHp;
+      const startingAttackPower = GAME_CONFIG.player.startingAttackPower;
+      const baseMaxHp = startingMaxHp +
+        (level - 1) * GAME_CONFIG.progression.hpPerLevel;
+      const baseAttackPower = startingAttackPower +
+        (level - 1) * GAME_CONFIG.progression.attackPowerPerLevel;
+      const maxHp = baseMaxHp + equipmentBonuses.maxHpBonus;
+      const baseDefensePower = Number.isSafeInteger(oldPlayer.baseDefensePower) &&
+        oldPlayer.baseDefensePower >= 0 ? oldPlayer.baseDefensePower : 0;
+      const nextLevelXp = level * GAME_CONFIG.progression.experiencePerLevel;
+      const experience = Number.isSafeInteger(oldPlayer.experience) &&
+        oldPlayer.experience >= 0
+        ? Math.min(nextLevelXp - 1, oldPlayer.experience)
+        : 0;
+
+      nextGameState = {
+        ...gameState,
+        player: {
+          ...oldPlayer,
+          hp: oldHp === 0 ? 0 : Math.max(1, Math.min(maxHp, Math.round(maxHp * hpRatio))),
+          maxHp,
+          baseMaxHp,
+          startingMaxHp,
+          startingAttackPower,
+          baseAttackPower,
+          attackPower: baseAttackPower + equipmentBonuses.attackBonus,
+          baseDefensePower,
+          defensePower: baseDefensePower + equipmentBonuses.defenseBonus,
+          experience,
+          nextLevelXp,
+        },
+      };
+    }
+
+    migrated = { ...migrated, version: 11, gameState: nextGameState };
   }
 
   if (migrated.version === SAVE_VERSION) {
