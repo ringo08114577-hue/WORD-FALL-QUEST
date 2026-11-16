@@ -178,7 +178,7 @@ test("プレイヤーと敵の攻撃力は正の整数で管理され、リセ�
 });
 
 
-test("初期プレイヤーはレベル1で、次のレベルまで10EXP", () => {
+test("初期プレイヤーはレベル1で、次のレベルまで100EXP", () => {
   const state = createTestGameState();
   assert.equal(state.player.level, 1);
   assert.equal(state.player.experience, 0);
@@ -218,7 +218,7 @@ test("敵を倒したときだけEXPを獲得し、レベルアップで能力�
     amount: 99,
   });
   assert.equal(afterVictory, state);
-  assert.equal(afterVictory.stats.totalExperienceEarned, 10);
+  assert.equal(afterVictory.stats.totalExperienceEarned, 100);
 });
 
 test("余ったEXPを次のレベルに持ち越し、複数レベルも正しく上がる", () => {
@@ -654,7 +654,7 @@ test("事前装備アクションは一時停止中に使え、敗北状態で�
   });
   assert.notEqual(paused, state);
   assert.equal(paused.inventory.equipment.weapon, "wooden-sword");
-  assert.equal(paused.player.attackPower, 2);
+  assert.equal(paused.player.attackPower, 11);
 
   state = gameReducer(gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
@@ -877,7 +877,7 @@ test("型が不正な所持品・ゴールド加算は例外を出さず無視�
 
 
 test("有効な行動は内容と時刻を行動ログへ記録する", () => {
-  const store = createGameStore();
+  const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
   store.dispatch({
     type: GAME_ACTION.ADD_GOLD, amount: 25, sourceLabel: "宝箱から", timestamp: 1000,
   });

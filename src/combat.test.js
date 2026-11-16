@@ -109,7 +109,7 @@ test("同じ戦闘イベントを2回処理してもダメージは1回だけ", 
 test("敵を倒すと勝利になり、その後のイベントは無視される", () => {
   const store = startBattle({
     playerAttackPower: 3,
-    enemy: { ...testSlime, maxHp: 3 },
+    enemy: { ...testSlime, maxHp: 3, experienceReward: 100 },
   });
   const combat = createCombatController(store);
   const result = combat.handle({
@@ -119,11 +119,11 @@ test("敵を倒すと勝利になり、その後のイベントは無視され�
 
   assert.equal(store.getState().phase, GAME_PHASE.VICTORY);
   assert.equal(store.getState().enemy.hp, 0);
-  assert.equal(result.experienceGained, 10);
+  assert.equal(result.experienceGained, 100);
   assert.equal(result.levelUps, 1);
   assert.equal(store.getState().player.level, 2);
-  assert.equal(store.getState().player.attackPower, 4);
-  assert.match(result.message, /EXP \+10/);
+  assert.equal(store.getState().player.attackPower, 8);
+  assert.match(result.message, /EXP \+100/);
   assert.match(result.message, /レベルアップ/);
 
   const ignored = combat.handle({
@@ -132,7 +132,7 @@ test("敵を倒すと勝利になり、その後のイベントは無視され�
     letter: "Z",
   });
   assert.equal(ignored.ignored, true);
-  assert.equal(store.getState().player.hp, 4);
+  assert.equal(store.getState().player.hp, 43);
 });
 
 test("プレイヤーHPが0になると敗北になり、同じイベントで二重に減らない", () => {
@@ -213,7 +213,7 @@ test("盾は敵の反撃ダメージを1減らすが、最低1ダメージは受
 
   assert.equal(result.damage, 1);
   assert.equal(store.getState().player.hp, 2);
-  assert.equal(store.getState().player.defensePower, 1);
+  assert.equal(store.getState().player.defensePower, 10);
 });
 
 
@@ -236,7 +236,7 @@ test("防御力が敵の攻撃力以上でも最低1ダメージは受ける", (
 });
 
 
-test("コウモリの素早い反撃は間違った文字へのダメージを1増やす", () => {
+test("コウモリの素早い反撃は間違った文字へのダメージを10増やす", () => {
   const store = startBattle({ playerMaxHp: 100, enemy: { ...createTestEnemy("bat"), maxHp: 3, attackPower: 1 } });
   const result = createCombatController(store).handle({
     eventId: "bat-swift-counter", type: "wrong", letter: "Z",
@@ -246,7 +246,7 @@ test("コウモリの素早い反撃は間違った文字へのダメージを1�
   assert.equal(store.getState().player.hp, 89);
 });
 
-test("ゴブリンのかたい体は単語攻撃のダメージを1減らす", () => {
+test("ゴブリンのかたい体は単語攻撃のダメージを10減らす", () => {
   const store = startBattle({ playerAttackPower: 2, enemy: createTestEnemy("goblin") });
   const result = createCombatController(store).handle({
     eventId: "goblin-guard", type: "word-complete",
@@ -256,7 +256,7 @@ test("ゴブリンのかたい体は単語攻撃のダメージを1減らす", (
   assert.match(result.message, /かたい体/);
 });
 
-test("オークの防御突破はプレイヤーの防御力を1無視する", () => {
+test("オークの防御突破はプレイヤーの防御力を10無視する", () => {
   const store = startBattle({ enemy: createTestEnemy("orc") });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
   store.dispatch({ type: GAME_ACTION.EQUIP_SHIELD, itemId: "wooden-shield" });

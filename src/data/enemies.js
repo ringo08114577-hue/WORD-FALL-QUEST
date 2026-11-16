@@ -17,8 +17,8 @@ export const ENEMY_ABILITY_DEFINITIONS = Object.freeze({
   }),
   crushing: Object.freeze({
     id: "crushing", name: "重い一撃",
-    description: "間違った文字への反撃が1強くなる。",
-    counterAttackBonus: 1,
+    description: "間違った文字への反撃が10強くなる。",
+    counterAttackBonus: 10,
   }),
 });
 
