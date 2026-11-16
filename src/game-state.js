@@ -117,7 +117,7 @@ function isValidBattleEffects(effects) {
     effects.attackMultiplier < 1 || effects.attackMultiplier > 2 ||
     !Number.isInteger(effects.attackUsesRemaining) ||
     effects.attackUsesRemaining < 0 || effects.attackUsesRemaining > 5 ||
-    !isNonNegativeInteger(effects.defenseBonus) || effects.defenseBonus > 10 ||
+    !isNonNegativeInteger(effects.defenseBonus) || effects.defenseBonus > 200 ||
     !Number.isInteger(effects.defenseHitsRemaining) ||
     effects.defenseHitsRemaining < 0 || effects.defenseHitsRemaining > 5
   ) return false;
@@ -127,9 +127,13 @@ function isValidBattleEffects(effects) {
 }
 
 /**
- * Add EXP and apply every level-up reached.
- * Each level grants +1 max HP, +1 current HP, and +1 attack power.
+ * Equipment and level growth are kept separate so a gear swap never erases
+ * permanent character progression.
  */
+function getEquippedHealthBonus(inventory) {
+  return getEquipmentBonuses(inventory?.equipment).maxHpBonus;
+}
+
 function getEquippedWeaponBonus(inventory) {
   return getEquipmentBonuses(inventory?.equipment).attackBonus;
 }
@@ -170,10 +174,16 @@ function equipItem(state, action, requiredSlot = null) {
     [slot]: action.itemId,
   };
   const bonuses = getEquipmentBonuses(equipment);
+  const maxHp = (state.player.baseMaxHp ?? state.player.maxHp) + bonuses.maxHpBonus;
+  const missingHp = state.player.maxHp - state.player.hp;
   return {
     ...state,
     player: {
       ...state.player,
+      maxHp,
+      hp: state.phase === GAME_PHASE.DEFEAT
+        ? Math.max(0, Math.min(maxHp, maxHp - missingHp))
+        : Math.max(1, Math.min(maxHp, maxHp - missingHp)),
       attackPower: state.player.baseAttackPower + bonuses.attackBonus,
       defensePower: (state.player.baseDefensePower ?? 0) + bonuses.defenseBonus,
     },
@@ -191,16 +201,19 @@ function addPlayerExperience(player, amount, inventory) {
   let level = player.level;
   let experience = player.experience + amount;
   let nextLevelXp = player.nextLevelXp;
-  let maxHp = player.maxHp;
-  let hp = player.hp;
+  let baseMaxHp = player.baseMaxHp ?? player.maxHp;
   let baseAttackPower = player.baseAttackPower ?? player.attackPower;
+  const equipmentBonuses = getEquipmentBonuses(inventory?.equipment);
+  let maxHp = baseMaxHp + equipmentBonuses.maxHpBonus;
+  let hp = player.hp;
 
   while (experience >= nextLevelXp) {
     experience -= nextLevelXp;
     level += 1;
-    maxHp += 1;
-    hp = Math.min(maxHp, hp + 1);
-    baseAttackPower += 1;
+    baseMaxHp += GAME_CONFIG.progression.hpPerLevel;
+    maxHp += GAME_CONFIG.progression.hpPerLevel;
+    hp = Math.min(maxHp, hp + GAME_CONFIG.progression.hpPerLevel);
+    baseAttackPower += GAME_CONFIG.progression.attackPowerPerLevel;
     nextLevelXp = experienceRequiredForNextLevel(level);
   }
 
@@ -209,17 +222,18 @@ function addPlayerExperience(player, amount, inventory) {
     level,
     experience,
     nextLevelXp,
+    baseMaxHp,
     maxHp,
     hp,
     baseAttackPower,
-    attackPower: baseAttackPower + getEquippedWeaponBonus(inventory),
-    defensePower: (player.baseDefensePower ?? 0) + getEquippedShieldBonus(inventory),
+    attackPower: baseAttackPower + equipmentBonuses.attackBonus,
+    defensePower: (player.baseDefensePower ?? 0) + equipmentBonuses.defenseBonus,
   };
 }
 
 /**
  * Create a fresh game state.
- * Initial HP remains 3 to match the current prototype baseline.
+ * New adventurers start at HP 100 and attack 20; levels and gear add growth.
  */
 export function createInitialGameState({
   playerMaxHp = GAME_CONFIG.player.startingMaxHp,
@@ -237,6 +251,7 @@ export function createInitialGameState({
       maxHp: playerMaxHp,
       attackPower: playerAttackPower,
       baseMaxHp: playerMaxHp,
+      startingMaxHp: playerMaxHp,
       baseAttackPower: playerAttackPower,
       baseDefensePower: 0,
       defensePower: 0,
@@ -403,7 +418,7 @@ export function gameReducer(state, action) {
       if (state.phase !== GAME_PHASE.BATTLE) return state;
       const bonus = action.bonus;
       const hits = action.hits;
-      if (!Number.isInteger(bonus) || bonus < 1 || bonus > 10 ||
+      if (!Number.isInteger(bonus) || bonus < 1 || bonus > 200 ||
           !Number.isInteger(hits) || hits < 1 || hits > 5) return state;
       const current = state.battleEffects ?? createEmptyBattleEffects();
       const battleEffects = {
@@ -614,7 +629,7 @@ export function gameReducer(state, action) {
 
     case GAME_ACTION.RESET_GAME:
       return createInitialGameState({
-        playerMaxHp: state.player.baseMaxHp ?? state.player.maxHp,
+        playerMaxHp: state.player.startingMaxHp ?? state.player.baseMaxHp ?? state.player.maxHp,
         playerAttackPower: state.player.startingAttackPower ?? state.player.baseAttackPower ?? state.player.attackPower,
       });
 
@@ -848,12 +863,14 @@ export function isValidSavedGameState(saved) {
     !isNonNegativeInteger(p.experience) ||
     p.nextLevelXp !== experienceRequiredForNextLevel(p.level) ||
     p.experience >= p.nextLevelXp ||
+    !isPositiveInteger(p.startingMaxHp) ||
     !isPositiveInteger(p.baseMaxHp) ||
     !isPositiveInteger(p.baseAttackPower) ||
     !isNonNegativeInteger(p.baseDefensePower) ||
     !isPositiveInteger(p.startingAttackPower) ||
-    p.baseAttackPower !== p.startingAttackPower + p.level - 1 ||
-    p.maxHp !== p.baseMaxHp + p.level - 1 ||
+    p.baseMaxHp !== p.startingMaxHp + (p.level - 1) * GAME_CONFIG.progression.hpPerLevel ||
+    p.baseAttackPower !== p.startingAttackPower + (p.level - 1) * GAME_CONFIG.progression.attackPowerPerLevel ||
+    p.maxHp !== p.baseMaxHp + equipmentBonuses.maxHpBonus ||
     !isNonNegativeInteger(p.hp) || p.hp > p.maxHp ||
     p.attackPower !== p.baseAttackPower + equipmentBonuses.attackBonus ||
     p.defensePower !== p.baseDefensePower + equipmentBonuses.defenseBonus ||
@@ -926,6 +943,7 @@ function copySavedGameState(saved) {
       maxHp: saved.player.maxHp,
       attackPower: saved.player.attackPower,
       baseMaxHp: saved.player.baseMaxHp,
+      startingMaxHp: saved.player.startingMaxHp,
       baseAttackPower: saved.player.baseAttackPower,
       baseDefensePower: saved.player.baseDefensePower,
       defensePower: saved.player.defensePower,

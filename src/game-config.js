@@ -8,17 +8,19 @@ const defaultReward = DUNGEON_DEFINITIONS[DEFAULT_DUNGEON_ID].reward;
 
 export const GAME_CONFIG = Object.freeze({
   player: Object.freeze({
-    startingMaxHp: 3,
-    startingAttackPower: 1,
+    startingMaxHp: 100,
+    startingAttackPower: 20,
   }),
   progression: Object.freeze({
-    experiencePerLevel: 10,
+    experiencePerLevel: 100,
+    hpPerLevel: 40,
+    attackPowerPerLevel: 5,
   }),
   enemyScaling: Object.freeze({
-    hpPerFloor: 1,
-    attackPowerEveryFloors: 3,
-    attackPowerPerStep: 1,
-    experiencePerFloor: 2,
+    hpPerFloor: 35,
+    attackPowerEveryFloors: 2,
+    attackPowerPerStep: 5,
+    experiencePerFloor: 20,
   }),
   // Compatibility view for existing balance screens/tests. The source of
   // truth is the selected dungeon's reward block, not this derived object.

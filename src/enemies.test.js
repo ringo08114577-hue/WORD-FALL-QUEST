@@ -18,13 +18,13 @@ test("敵カタログには基本敵・追加敵・ボスが登録されてい�
 
 test("敵の能力IDから戦闘効果を集計できる", () => {
   assert.deepEqual(getEnemyAbilityEffects(createEnemy("bat")), {
-    counterAttackBonus: 1, damageReduction: 0, defensePiercing: 0,
+    counterAttackBonus: 10, damageReduction: 0, defensePiercing: 0,
   });
   assert.deepEqual(getEnemyAbilityEffects(createEnemy("moss-golem")), {
-    counterAttackBonus: 1, damageReduction: 1, defensePiercing: 0,
+    counterAttackBonus: 10, damageReduction: 10, defensePiercing: 0,
   });
   assert.deepEqual(getEnemyAbilityEffects(createEnemy("forest-dragon")), {
-    counterAttackBonus: 1, damageReduction: 1, defensePiercing: 1,
+    counterAttackBonus: 10, damageReduction: 10, defensePiercing: 10,
   });
 });
 
@@ -47,9 +47,9 @@ test("フロア編成は5階分あり、最深部にボスがいる", () => {
 
 test("階層補正は敵の基礎能力と経験値を保ちながら強化する", () => {
   const dragon = createEnemy("forest-dragon", { floor: 5 });
-  assert.equal(dragon.maxHp, 14);
-  assert.equal(dragon.attackPower, 3);
-  assert.equal(dragon.experienceReward, 63);
+  assert.equal(dragon.maxHp, 940);
+  assert.equal(dragon.attackPower, 60);
+  assert.equal(dragon.experienceReward, 630);
   assert.equal(dragon.isBoss, true);
   assert.throws(() => createEnemy("unknown"), RangeError);
 });

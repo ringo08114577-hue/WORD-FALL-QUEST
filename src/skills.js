@@ -121,8 +121,8 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
   else return null;
   if (!evolved) return result;
   if (result.type === "attack") return { ...result, damageMultiplier: Number((result.damageMultiplier * 1.2).toFixed(1)) };
-  if (result.type === "heal") return { ...result, amount: result.amount + 1 };
-  if (result.type === "defense") return { ...result, bonus: result.bonus + 1 };
+  if (result.type === "heal") return { ...result, amount: result.amount + 20 };
+  if (result.type === "defense") return { ...result, bonus: result.bonus + 10 };
   if (result.type === "attack-buff") return { ...result, multiplier: Number((result.multiplier + 0.2).toFixed(1)) };
   return result;
 }

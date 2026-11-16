@@ -2,12 +2,14 @@
  * WORD FALL QUEST - Versioned local save system.
  * Migration keeps existing characters and adds independent dungeon progress.
  */
-import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
+import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, getEquipmentBonuses } from "./items.js";
 import { normalizeSkillLevels, normalizeEquippedSkillIds, normalizeEvolvedSkillIds } from "./skills.js";
-import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
+import { DUNGEON_DEFINITIONS, DEFAULT_DUNGEON_ID } from "./data/dungeons.js";
+import { GAME_CONFIG } from "./game-config.js";
+import { createEnemy } from "./enemies.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -24,7 +26,7 @@ function createInitialDungeonProgress() {
 }
 
 function migrateSnapshot(snapshot) {
-  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, SAVE_VERSION].includes(snapshot.version)) return null;
   let migrated = snapshot;
 
   if (migrated.version === 1) {
@@ -179,6 +181,94 @@ function migrateSnapshot(snapshot) {
       gameState: {
         ...gameState,
         evolvedSkillIds: Array.isArray(gameState.evolvedSkillIds) ? gameState.evolvedSkillIds : [],
+      },
+    };
+  }
+
+  if (migrated.version === 9) {
+    const gameState = migrated.gameState;
+    const dungeonState = migrated.dungeonState;
+    if (!isRecord(gameState) || !isRecord(gameState.player) ||
+        !isRecord(gameState.inventory) || !isRecord(gameState.inventory.equipment)) return null;
+
+    const oldPlayer = gameState.player;
+    const level = Number.isSafeInteger(oldPlayer.level) && oldPlayer.level > 0
+      ? oldPlayer.level
+      : 1;
+    const oldMaxHp = Number.isSafeInteger(oldPlayer.maxHp) && oldPlayer.maxHp > 0
+      ? oldPlayer.maxHp
+      : 3;
+    const oldHp = Number.isSafeInteger(oldPlayer.hp) && oldPlayer.hp >= 0
+      ? oldPlayer.hp
+      : oldMaxHp;
+    const hpRatio = oldHp / oldMaxHp;
+    const startingMaxHp = GAME_CONFIG.player.startingMaxHp;
+    const startingAttackPower = GAME_CONFIG.player.startingAttackPower;
+    const baseMaxHp = startingMaxHp + (level - 1) * GAME_CONFIG.progression.hpPerLevel;
+    const baseAttackPower = startingAttackPower +
+      (level - 1) * GAME_CONFIG.progression.attackPowerPerLevel;
+    const equipmentBonuses = getEquipmentBonuses(gameState.inventory.equipment);
+    const maxHp = baseMaxHp + equipmentBonuses.maxHpBonus;
+    const oldNextLevelXp = Number.isSafeInteger(oldPlayer.nextLevelXp) && oldPlayer.nextLevelXp > 0
+      ? oldPlayer.nextLevelXp
+      : level * 10;
+    const nextLevelXp = level * GAME_CONFIG.progression.experiencePerLevel;
+    const experienceRatio = Number.isSafeInteger(oldPlayer.experience) && oldPlayer.experience >= 0
+      ? oldPlayer.experience / oldNextLevelXp
+      : 0;
+    let enemy = null;
+    if (isRecord(gameState.enemy)) {
+      const floor = Number.isSafeInteger(dungeonState?.floor) && dungeonState.floor > 0
+        ? dungeonState.floor
+        : 1;
+      const dungeonId = Object.hasOwn(DUNGEON_DEFINITIONS, dungeonState?.dungeonId)
+        ? dungeonState.dungeonId
+        : DEFAULT_DUNGEON_ID;
+      const freshEnemy = createEnemy(gameState.enemy.id, { floor, dungeonId });
+      const oldEnemyMaxHp = Number.isSafeInteger(gameState.enemy.maxHp) && gameState.enemy.maxHp > 0
+        ? gameState.enemy.maxHp
+        : freshEnemy.maxHp;
+      const oldEnemyHp = Number.isSafeInteger(gameState.enemy.hp) && gameState.enemy.hp >= 0
+        ? gameState.enemy.hp
+        : oldEnemyMaxHp;
+      const enemyHp = oldEnemyHp === 0
+        ? 0
+        : Math.max(1, Math.min(freshEnemy.maxHp, Math.round(freshEnemy.maxHp * oldEnemyHp / oldEnemyMaxHp)));
+      enemy = { ...freshEnemy, hp: enemyHp };
+    }
+
+    migrated = {
+      ...migrated,
+      version: 10,
+      gameState: {
+        ...gameState,
+        player: {
+          ...oldPlayer,
+          hp: oldHp === 0 ? 0 : Math.max(1, Math.min(maxHp, Math.round(maxHp * hpRatio))),
+          maxHp,
+          baseMaxHp,
+          startingMaxHp,
+          startingAttackPower,
+          baseAttackPower,
+          attackPower: baseAttackPower + equipmentBonuses.attackBonus,
+          defensePower: (oldPlayer.baseDefensePower ?? 0) + equipmentBonuses.defenseBonus,
+          nextLevelXp,
+          experience: Math.min(nextLevelXp - 1, Math.round(experienceRatio * nextLevelXp)),
+        },
+        enemy,
+        battleEffects: {
+          ...(gameState.battleEffects ?? {
+            attackMultiplier: 1,
+            attackUsesRemaining: 0,
+            defenseBonus: 0,
+            defenseHitsRemaining: 0,
+          }),
+          defenseBonus: (gameState.battleEffects?.defenseBonus ?? 0) * 10,
+        },
+        stats: {
+          ...gameState.stats,
+          totalExperienceEarned: (gameState.stats?.totalExperienceEarned ?? 0) * 10,
+        },
       },
     };
   }

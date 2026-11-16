@@ -43,13 +43,13 @@ test("敗北から街へ戻っても育成・所持品を保持し、同じ階�
   assert.equal(state.phase, GAME_PHASE.TITLE);
   assert.equal(state.player.hp, state.player.maxHp);
   assert.equal(state.player.level, 2);
-  assert.equal(state.player.maxHp, 2);
-  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.player.maxHp, 41);
+  assert.equal(state.player.attackPower, 25);
   assert.equal(state.skillLevels["quick-strike"], 2);
   assert.equal(state.inventory.gold, 20);
   assert.equal(state.inventory.items["large-potion"], 2);
   assert.equal(state.stats.enemiesDefeated, 1);
-  assert.equal(state.stats.totalExperienceEarned, 10);
+  assert.equal(state.stats.totalExperienceEarned, 100);
   assert.equal(dungeon.getProgress().started, false);
   assert.equal(dungeon.getProgress().enemyNumber, 1);
   assert.equal(dungeon.start().enemy.id, "slime");

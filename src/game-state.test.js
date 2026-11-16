@@ -12,16 +12,26 @@ import {
 
 const slime = { id: "slime", name: "スライム", maxHp: 3 };
 
-test("初期状態はタイトル画面で、プレイヤーHPは3", () => {
+function createTestGameState(options = {}) {
+  return createInitialGameState({
+    playerMaxHp: 3,
+    playerAttackPower: 1,
+    ...options,
+  });
+}
+
+test("新しい冒険者の初期能力はHP100・攻撃力20", () => {
   const state = createInitialGameState();
   assert.equal(state.phase, GAME_PHASE.TITLE);
-  assert.equal(state.player.hp, 3);
-  assert.equal(state.player.maxHp, 3);
+  assert.equal(state.player.hp, 100);
+  assert.equal(state.player.maxHp, 100);
+  assert.equal(state.player.attackPower, 20);
+  assert.equal(state.player.startingMaxHp, 100);
   assert.equal(state.enemy, null);
 });
 
 test("バトル開始で敵とバトル番号が設定される", () => {
-  const initial = createInitialGameState();
+  const initial = createTestGameState();
   const state = gameReducer(initial, {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
@@ -34,7 +44,7 @@ test("バトル開始で敵とバトル番号が設定される", () => {
 });
 
 test("敵へのダメージでHPが減り、0になると勝利になる", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -51,7 +61,7 @@ test("敵へのダメージでHPが減り、0になると勝利になる", () =>
 });
 
 test("プレイヤーHPが0になると敗北になり、0未満にはならない", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -63,7 +73,7 @@ test("プレイヤーHPが0になると敗北になり、0未満にはならな�
 });
 
 test("一時停止中はダメージが適用されず、再開できる", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -81,7 +91,7 @@ test("一時停止中はダメージが適用されず、再開できる", () =>
 });
 
 test("回復は最大HPを超えない", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -91,7 +101,7 @@ test("回復は最大HPを超えない", () => {
 });
 
 test("勝利後は次のバトルを開始できる", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: { ...slime, maxHp: 1 },
   });
@@ -107,7 +117,7 @@ test("勝利後は次のバトルを開始できる", () => {
 });
 
 test("敗北後の操作は無視され、リセットで初期状態に戻る", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -155,7 +165,7 @@ test("プレイヤーと敵の攻撃力は正の整数で管理され、リセ�
   assert.equal(store.getState().player.attackPower, 2);
 
   assert.throws(
-    () => gameReducer(createInitialGameState(), {
+    () => gameReducer(createTestGameState(), {
       type: GAME_ACTION.START_BATTLE,
       enemy: { ...slime, attackPower: 0 },
     }),
@@ -169,10 +179,10 @@ test("プレイヤーと敵の攻撃力は正の整数で管理され、リセ�
 
 
 test("初期プレイヤーはレベル1で、次のレベルまで10EXP", () => {
-  const state = createInitialGameState();
+  const state = createTestGameState();
   assert.equal(state.player.level, 1);
   assert.equal(state.player.experience, 0);
-  assert.equal(state.player.nextLevelXp, 10);
+  assert.equal(state.player.nextLevelXp, 100);
   assert.equal(state.player.maxHp, 3);
   assert.equal(state.player.attackPower, 1);
   assert.equal(state.player.defensePower, 0);
@@ -181,9 +191,9 @@ test("初期プレイヤーはレベル1で、次のレベルまで10EXP", () =>
 });
 
 test("敵を倒したときだけEXPを獲得し、レベルアップで能力が上がる", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...slime, experienceReward: 10 },
+    enemy: { ...slime, experienceReward: 100 },
   });
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 1 });
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 2 });
@@ -197,11 +207,11 @@ test("敵を倒したときだけEXPを獲得し、レベルアップで能力�
   assert.equal(state.phase, GAME_PHASE.VICTORY);
   assert.equal(state.player.level, 2);
   assert.equal(state.player.experience, 0);
-  assert.equal(state.player.nextLevelXp, 20);
-  assert.equal(state.player.maxHp, 4);
-  assert.equal(state.player.hp, 3);
-  assert.equal(state.player.attackPower, 2);
-  assert.equal(state.stats.totalExperienceEarned, 10);
+  assert.equal(state.player.nextLevelXp, 200);
+  assert.equal(state.player.maxHp, 43);
+  assert.equal(state.player.hp, 42);
+  assert.equal(state.player.attackPower, 6);
+  assert.equal(state.stats.totalExperienceEarned, 100);
 
   const afterVictory = gameReducer(state, {
     type: GAME_ACTION.DAMAGE_ENEMY,
@@ -212,46 +222,46 @@ test("敵を倒したときだけEXPを獲得し、レベルアップで能力�
 });
 
 test("余ったEXPを次のレベルに持ち越し、複数レベルも正しく上がる", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...slime, experienceReward: 35 },
+    enemy: { ...slime, experienceReward: 350 },
   });
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
 
   assert.equal(state.player.level, 3);
-  assert.equal(state.player.experience, 5);
-  assert.equal(state.player.nextLevelXp, 30);
-  assert.equal(state.player.maxHp, 5);
-  assert.equal(state.player.hp, 5);
-  assert.equal(state.player.attackPower, 3);
+  assert.equal(state.player.experience, 50);
+  assert.equal(state.player.nextLevelXp, 300);
+  assert.equal(state.player.maxHp, 83);
+  assert.equal(state.player.hp, 83);
+  assert.equal(state.player.attackPower, 11);
 });
 
 test("経験値報酬は0以上の整数で、リセットすると成長状態も初期化される", () => {
   assert.throws(
-    () => gameReducer(createInitialGameState(), {
+    () => gameReducer(createTestGameState(), {
       type: GAME_ACTION.START_BATTLE,
       enemy: { ...slime, experienceReward: -1 },
     }),
     TypeError,
   );
   assert.throws(
-    () => gameReducer(createInitialGameState(), {
+    () => gameReducer(createTestGameState(), {
       type: GAME_ACTION.START_BATTLE,
       enemy: { ...slime, experienceReward: 1.5 },
     }),
     TypeError,
   );
 
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...slime, experienceReward: 10 },
+    enemy: { ...slime, experienceReward: 100 },
   });
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
   state = gameReducer(state, { type: GAME_ACTION.RESET_GAME });
 
   assert.equal(state.player.level, 1);
   assert.equal(state.player.experience, 0);
-  assert.equal(state.player.nextLevelXp, 10);
+  assert.equal(state.player.nextLevelXp, 100);
   assert.equal(state.player.hp, 3);
   assert.equal(state.player.maxHp, 3);
   assert.equal(state.player.attackPower, 1);
@@ -260,9 +270,9 @@ test("経験値報酬は0以上の整数で、リセットすると成長状態�
 
 
 test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継ぐ", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...slime, experienceReward: 10 },
+    enemy: { ...slime, experienceReward: 100 },
   });
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
   state = gameReducer(state, {
@@ -272,14 +282,14 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
 
   assert.equal(state.phase, GAME_PHASE.BATTLE);
   assert.equal(state.player.level, 2);
-  assert.equal(state.player.maxHp, 4);
-  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.player.maxHp, 43);
+  assert.equal(state.player.attackPower, 6);
   assert.equal(state.player.experience, 0);
 });
 
 
 test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", () => {
-  const state = createInitialGameState();
+  const state = createTestGameState();
   assert.deepEqual(state.inventory, {
     items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0, "forest-dragon-seal": 0, "ice-dragon-core": 0 },
     equipment: { weapon: null, shield: null, armor: null, accessory: null },
@@ -288,7 +298,7 @@ test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", 
 });
 
 test("回復薬はHPが減っているときだけ消費し、最大HPを超えて回復しない", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -324,9 +334,9 @@ test("回復薬はHPが減っているときだけ消費し、最大HPを超え�
 });
 
 test("武器装備は攻撃力を上げ、レベルアップ分と別々に計算する", () => {
-  let state = gameReducer(createInitialGameState({ playerAttackPower: 2 }), {
+  let state = gameReducer(createTestGameState({ playerAttackPower: 2 }), {
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...slime, experienceReward: 10 },
+    enemy: { ...slime, experienceReward: 100 },
   });
   state = gameReducer(state, {
     type: GAME_ACTION.EQUIP_WEAPON,
@@ -334,7 +344,7 @@ test("武器装備は攻撃力を上げ、レベルアップ分と別々に計�
   });
 
   assert.equal(state.player.baseAttackPower, 2);
-  assert.equal(state.player.attackPower, 3);
+  assert.equal(state.player.attackPower, 12);
   assert.equal(state.inventory.items["wooden-sword"], 0);
   assert.equal(state.inventory.equipment.weapon, "wooden-sword");
 
@@ -346,8 +356,8 @@ test("武器装備は攻撃力を上げ、レベルアップ分と別々に計�
 
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
   assert.equal(state.player.level, 2);
-  assert.equal(state.player.baseAttackPower, 3);
-  assert.equal(state.player.attackPower, 4);
+  assert.equal(state.player.baseAttackPower, 7);
+  assert.equal(state.player.attackPower, 17);
 });
 
 test("アイテムはバトル中以外には使えず、敗北時のリセットで所持品と装備も戻る", () => {
@@ -380,7 +390,7 @@ test("アイテムはバトル中以外には使えず、敗北時のリセッ�
 });
 
 test("未登録アイテムや装備できない種類は無視される", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -399,7 +409,7 @@ test("未登録アイテムや装備できない種類は無視される", () =>
 
 
 test("宝箱報酬で登録済みアイテムとゴールドを追加できる", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, {
     type: GAME_ACTION.ADD_ITEM,
     itemId: "large-potion",
@@ -429,7 +439,7 @@ test("宝箱報酬で登録済みアイテムとゴールドを追加できる",
 });
 
 test("大きな回復薬は定義された回復量だけHPを回復する", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
@@ -443,7 +453,7 @@ test("大きな回復薬は定義された回復量だけHPを回復する", () 
 
 
 test("ショップ価格はゲーム状態側でも固定され、不正な商品キーを追加できない", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 30 });
   state = gameReducer(state, {
     type: GAME_ACTION.START_BATTLE,
@@ -477,7 +487,7 @@ test("ショップ価格はゲーム状態側でも固定され、不正な商�
 
 
 test("木の盾を装備すると防御力が上がり、装備状態と所持数が更新される", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, {
     type: GAME_ACTION.ADD_ITEM,
     itemId: "wooden-shield",
@@ -493,7 +503,7 @@ test("木の盾を装備すると防御力が上がり、装備状態と所持�
   });
 
   assert.equal(state.player.baseDefensePower, 0);
-  assert.equal(state.player.defensePower, 1);
+  assert.equal(state.player.defensePower, 10);
   assert.equal(state.inventory.items["wooden-shield"], 0);
   assert.equal(state.inventory.equipment.shield, "wooden-shield");
 
@@ -511,7 +521,7 @@ test("木の盾を装備すると防御力が上がり、装備状態と所持�
 });
 
 test("所持していない盾や防具以外は装備できない", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -529,14 +539,14 @@ test("所持していない盾や防具以外は装備できない", () => {
 
 
 test("盾を装備したままレベルアップしても防御力を維持する", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, {
     type: GAME_ACTION.ADD_ITEM,
     itemId: "wooden-shield",
   });
   state = gameReducer(state, {
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...slime, maxHp: 1, experienceReward: 10 },
+    enemy: { ...slime, maxHp: 1, experienceReward: 100 },
   });
   state = gameReducer(state, {
     type: GAME_ACTION.EQUIP_SHIELD,
@@ -544,13 +554,13 @@ test("盾を装備したままレベルアップしても防御力を維持す�
   });
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
   assert.equal(state.player.level, 2);
-  assert.equal(state.player.attackPower, 2);
-  assert.equal(state.player.defensePower, 1);
+  assert.equal(state.player.attackPower, 6);
+  assert.equal(state.player.defensePower, 10);
 });
 
 
 test("汎用装備アクションで複数スロットの能力ボーナスを合算できる", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   for (const itemId of ["iron-sword", "leather-armor", "copper-charm"]) {
     state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId });
   }
@@ -569,15 +579,16 @@ test("汎用装備アクションで複数スロットの能力ボーナスを�
     armor: "leather-armor",
     accessory: "copper-charm",
   });
-  assert.equal(state.player.attackPower, 4);
-  assert.equal(state.player.defensePower, 2);
+  assert.equal(state.player.attackPower, 31);
+  assert.equal(state.player.defensePower, 25);
+  assert.equal(state.player.maxHp, 183);
   assert.equal(state.inventory.items["iron-sword"], 0);
   assert.equal(state.inventory.items["leather-armor"], 0);
   assert.equal(state.inventory.items["copper-charm"], 0);
 });
 
 test("同じ装備スロットの付け替えで旧装備が戻り、能力値を再計算する", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "iron-sword" });
   state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
   state = gameReducer(state, { type: GAME_ACTION.EQUIP_ITEM, itemId: "iron-sword" });
@@ -586,11 +597,11 @@ test("同じ装備スロットの付け替えで旧装備が戻り、能力値�
   assert.equal(state.inventory.equipment.weapon, "wooden-sword");
   assert.equal(state.inventory.items["iron-sword"], 1);
   assert.equal(state.inventory.items["wooden-sword"], 0);
-  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.player.attackPower, 11);
 });
 
 test("未所持・戦闘外の汎用装備アクションは状態を変更しない", () => {
-  const titleState = createInitialGameState();
+  const titleState = createTestGameState();
   assert.equal(
     gameReducer(titleState, { type: GAME_ACTION.EQUIP_ITEM, itemId: "iron-sword" }),
     titleState,
@@ -606,7 +617,7 @@ test("未所持・戦闘外の汎用装備アクションは状態を変更し�
 });
 
 test("冒険者ホームでは冒険前に装備を整え、同じ枠の旧装備を所持品へ戻せる", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
 
   state = gameReducer(state, {
     type: GAME_ACTION.PREPARE_EQUIPMENT,
@@ -614,7 +625,7 @@ test("冒険者ホームでは冒険前に装備を整え、同じ枠の旧装�
   });
   assert.equal(state.phase, GAME_PHASE.TITLE);
   assert.equal(state.inventory.equipment.weapon, "wooden-sword");
-  assert.equal(state.player.attackPower, 2);
+  assert.equal(state.player.attackPower, 11);
   assert.equal(state.inventory.items["wooden-sword"], 0);
 
   state = gameReducer(state, {
@@ -628,11 +639,11 @@ test("冒険者ホームでは冒険前に装備を整え、同じ枠の旧装�
   assert.equal(state.inventory.equipment.weapon, "iron-sword");
   assert.equal(state.inventory.items["iron-sword"], 0);
   assert.equal(state.inventory.items["wooden-sword"], 1);
-  assert.equal(state.player.attackPower, 3);
+  assert.equal(state.player.attackPower, 21);
 });
 
 test("事前装備アクションは一時停止中に使え、敗北状態では使えない", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   });
@@ -645,7 +656,7 @@ test("事前装備アクションは一時停止中に使え、敗北状態で�
   assert.equal(paused.inventory.equipment.weapon, "wooden-sword");
   assert.equal(paused.player.attackPower, 2);
 
-  state = gameReducer(gameReducer(createInitialGameState(), {
+  state = gameReducer(gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: slime,
   }), { type: GAME_ACTION.DAMAGE_PLAYER, amount: 3 });
@@ -658,7 +669,7 @@ test("事前装備アクションは一時停止中に使え、敗北状態で�
 
 
 test("一時停止と再開を繰り返してもHP・敵・ダンジョン進行は変化しない", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE,
     enemy: { ...slime, maxHp: 7, attackPower: 2 },
   });
@@ -682,7 +693,7 @@ test("一時停止と再開を繰り返してもHP・敵・ダンジョン進行
 
 
 test("スキルはゴールドで強化でき、レベルごとの出題範囲も保存される", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   assert.deepEqual(state.skillLevels, {
     "quick-strike": 1,
     "power-strike": 1,
@@ -704,7 +715,7 @@ test("スキルはゴールドで強化でき、レベルごとの出題範囲�
 });
 
 test("スキル強化は50・100・200・400Gで上昇し、Lv.5が上限", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 750 });
 
   for (let expectedLevel = 2; expectedLevel <= 5; expectedLevel += 1) {
@@ -724,7 +735,7 @@ test("スキル強化は50・100・200・400Gで上昇し、Lv.5が上限", () =
 });
 
 test("ゴールド不足・未登録スキル・戦闘中の強化は拒否する", () => {
-  const poor = createInitialGameState();
+  const poor = createTestGameState();
   assert.equal(gameReducer(poor, {
     type: GAME_ACTION.UPGRADE_SKILL,
     skillId: "quick-strike",
@@ -750,7 +761,7 @@ test("ゴールド不足・未登録スキル・戦闘中の強化は拒否す�
 });
 
 test("ゲームをリセットするとスキルレベルも初期状態に戻る", () => {
-  let state = gameReducer(createInitialGameState(), { type: GAME_ACTION.ADD_GOLD, amount: 50 });
+  let state = gameReducer(createTestGameState(), { type: GAME_ACTION.ADD_GOLD, amount: 50 });
   state = gameReducer(state, {
     type: GAME_ACTION.UPGRADE_SKILL,
     skillId: "ultimate-strike",
@@ -763,7 +774,7 @@ test("ゲームをリセットするとスキルレベルも初期状態に戻�
 
 
 test("ホームへ戻るとHPと戦闘状態だけを整え、冒険者の成長を維持する", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.ADD_GOLD,
     amount: 80,
   });
@@ -792,7 +803,7 @@ test("ホームへ戻るとHPと戦闘状態だけを整え、冒険者の成長
 
 
 test("スキルは4枠まで装備でき、重複と最後の1枠の解除はできない", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   assert.deepEqual(state.equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
   const duplicate = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike" });
   assert.equal(duplicate, state);
@@ -805,7 +816,7 @@ test("スキルは4枠まで装備でき、重複と最後の1枠の解除はで
 });
 
 test("スキル装備の変更は街でのみ行え、登録外の技は装備できない", () => {
-  const title = createInitialGameState();
+  const title = createTestGameState();
   const unknown = gameReducer(title, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "unknown-skill" });
   assert.equal(unknown, title);
   const battle = gameReducer(title, { type: GAME_ACTION.START_BATTLE, enemy: slime });
@@ -815,7 +826,7 @@ test("スキル装備の変更は街でのみ行え、登録外の技は装備�
 
 
 test("保存データの攻撃力はレベルに応じた成長値と一致する必要がある", () => {
-  const valid = createInitialGameState();
+  const valid = createTestGameState();
   assert.equal(isValidSavedGameState(valid), true);
 
   const invalid = structuredClone(valid);
@@ -825,7 +836,7 @@ test("保存データの攻撃力はレベルに応じた成長値と一致す�
 });
 
 test("所持品数とゴールドが安全な整数の上限を超える加算は拒否する", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, {
     type: GAME_ACTION.ADD_ITEM,
     itemId: "large-potion",
@@ -853,7 +864,7 @@ test("所持品数とゴールドが安全な整数の上限を超える加算�
 
 
 test("型が不正な所持品・ゴールド加算は例外を出さず無視する", () => {
-  const state = createInitialGameState();
+  const state = createTestGameState();
   assert.equal(
     gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "large-potion", quantity: Symbol("bad") }),
     state,
@@ -923,7 +934,7 @@ test("行動ログは最大200件に制限され、新しい記録を優先す�
 
 
 test("戦闘中の一時効果は敵への攻撃・被攻撃で回数を消費する", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   assert.deepEqual(state.battleEffects, {
     attackMultiplier: 1, attackUsesRemaining: 0,
     defenseBonus: 0, defenseHitsRemaining: 0,
@@ -951,7 +962,7 @@ test("戦闘中の一時効果は敵への攻撃・被攻撃で回数を消費�
 });
 
 test("勝利または街への帰還で戦闘中だけの一時効果を解除する", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE, enemy: slime,
   });
   state = gameReducer(state, {
@@ -971,7 +982,7 @@ test("勝利または街への帰還で戦闘中だけの一時効果を解除�
 
 
 test("鉄壁の構えは0ダメージで攻撃を防いだ場合も回数を消費する", () => {
-  let state = gameReducer(createInitialGameState(), {
+  let state = gameReducer(createTestGameState(), {
     type: GAME_ACTION.START_BATTLE, enemy: slime,
   });
   state = gameReducer(state, {
@@ -988,7 +999,7 @@ test("鉄壁の構えは0ダメージで攻撃を防いだ場合も回数を消�
 
 
 test("Lv.5スキルは対応素材と200Gを消費して1回だけ進化できる", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 950 });
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
   for (let i = 0; i < 4; i += 1) state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
@@ -1003,7 +1014,7 @@ test("Lv.5スキルは対応素材と200Gを消費して1回だけ進化でき�
 });
 
 test("進化はLv.5未満・素材不足・ゴールド不足・バトル中には実行できない", () => {
-  let state = createInitialGameState();
+  let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 1000 });
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
   assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" }), state);

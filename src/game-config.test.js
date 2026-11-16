@@ -12,13 +12,18 @@ test("ゲームバランス設定は読み取り専用で管理される", () =>
 
 test("初期能力と成長・敵強化の既存バランスを維持する", () => {
   assert.deepEqual(GAME_CONFIG.player, {
-    startingMaxHp: 3,
-    startingAttackPower: 1,
+    startingMaxHp: 100,
+    startingAttackPower: 20,
   });
-  assert.equal(GAME_CONFIG.progression.experiencePerLevel, 10);
-  assert.equal(GAME_CONFIG.enemyScaling.hpPerFloor, 1);
-  assert.equal(GAME_CONFIG.enemyScaling.attackPowerEveryFloors, 3);
-  assert.equal(GAME_CONFIG.enemyScaling.experiencePerFloor, 2);
+  assert.deepEqual(GAME_CONFIG.progression, {
+    experiencePerLevel: 100,
+    hpPerLevel: 40,
+    attackPowerPerLevel: 5,
+  });
+  assert.equal(GAME_CONFIG.enemyScaling.hpPerFloor, 35);
+  assert.equal(GAME_CONFIG.enemyScaling.attackPowerEveryFloors, 2);
+  assert.equal(GAME_CONFIG.enemyScaling.attackPowerPerStep, 5);
+  assert.equal(GAME_CONFIG.enemyScaling.experiencePerFloor, 20);
 });
 
 test("奇数階と偶数階で既存どおりの宝箱報酬を生成する", () => {

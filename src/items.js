@@ -30,10 +30,11 @@ export function getEquipmentBonuses(equipment = {}) {
       if (item) {
         total.attackBonus += item.attackBonus ?? 0;
         total.defenseBonus += item.defenseBonus ?? 0;
+        total.maxHpBonus += item.maxHpBonus ?? 0;
       }
       return total;
     },
-    { attackBonus: 0, defenseBonus: 0 },
+    { attackBonus: 0, defenseBonus: 0, maxHpBonus: 0 },
   );
 }
 

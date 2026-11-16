@@ -7,32 +7,32 @@ export const EQUIPMENT_SLOT_LABELS = Object.freeze({
 export const ITEM_DEFINITIONS = Object.freeze({
   "small-potion": Object.freeze({
     id: "small-potion", name: "回復薬", type: "consumable", effect: "heal",
-    healAmount: 2, startingQuantity: 2, shopPrice: 15, description: "HPを2回復する。",
+    healAmount: 20, startingQuantity: 2, shopPrice: 15, description: "HPを20回復する。",
   }),
   "large-potion": Object.freeze({
     id: "large-potion", name: "大きな回復薬", type: "consumable", effect: "heal",
-    healAmount: 4, shopPrice: 30, description: "HPを4回復する。",
+    healAmount: 40, shopPrice: 30, description: "HPを40回復する。",
   }),
   "wooden-sword": Object.freeze({
     id: "wooden-sword", name: "木の剣", type: "weapon", slot: "weapon",
-    attackBonus: 1, startingQuantity: 1, description: "攻撃力が1上がる。",
+    attackBonus: 10, startingQuantity: 1, description: "攻撃力が10上がる。",
   }),
   "wooden-shield": Object.freeze({
     id: "wooden-shield", name: "木の盾", type: "shield", slot: "shield",
-    defenseBonus: 1, shopPrice: 30, description: "防御力が1上がる。",
+    defenseBonus: 10, shopPrice: 30, description: "防御力が10上がる。",
   }),
   "iron-sword": Object.freeze({
     id: "iron-sword", name: "鉄の剣", type: "weapon", slot: "weapon",
-    attackBonus: 2, shopPrice: 80, description: "攻撃力が2上がる。",
+    attackBonus: 20, shopPrice: 80, description: "攻撃力が20上がる。",
   }),
   "leather-armor": Object.freeze({
     id: "leather-armor", name: "革の鎧", type: "armor", slot: "armor",
-    defenseBonus: 1, shopPrice: 65, description: "防御力が1上がる。",
+    defenseBonus: 15, maxHpBonus: 120, shopPrice: 65, description: "防御力が15、最大HPが120上がる。",
   }),
   "copper-charm": Object.freeze({
     id: "copper-charm", name: "銅のお守り", type: "accessory", slot: "accessory",
-    attackBonus: 1, defenseBonus: 1, shopPrice: 90,
-    description: "攻撃力と防御力が1ずつ上がる。",
+    attackBonus: 10, defenseBonus: 10, maxHpBonus: 60, shopPrice: 90,
+    description: "攻撃力と防御力が10、最大HPが60上がる。",
   }),
   "forest-dragon-seal": Object.freeze({
     id: "forest-dragon-seal", name: "森竜の紋章", type: "material",

@@ -5,11 +5,26 @@ import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createCombatController, resolveCombatEvent } from "./combat.js";
 import { createEnemy } from "./enemies.js";
 
+function createTestStore(options = {}) {
+  return createGameStore({ playerMaxHp: 3, playerAttackPower: 1, ...options });
+}
+
+const testSlime = { ...createEnemy("slime"), maxHp: 3, attackPower: 1, experienceReward: 10 };
+const testEnemyStats = {
+  bat: { maxHp: 3, attackPower: 1, experienceReward: 12 },
+  goblin: { maxHp: 4, attackPower: 1, experienceReward: 15 },
+  orc: { maxHp: 5, attackPower: 2, experienceReward: 20 },
+};
+function createTestEnemy(id) {
+  const enemy = createEnemy(id);
+  return { ...enemy, ...(testEnemyStats[id] ?? {}) };
+}
+
 function startBattle({ playerMaxHp = 3, playerAttackPower = 1, enemy } = {}) {
-  const store = createGameStore({ playerMaxHp, playerAttackPower });
+  const store = createTestStore({ playerMaxHp, playerAttackPower });
   store.dispatch({
     type: GAME_ACTION.START_BATTLE,
-    enemy: enemy ?? createEnemy("slime"),
+    enemy: enemy ?? testSlime,
   });
   return store;
 }
@@ -19,14 +34,14 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
   assert.deepEqual(slime, {
     id: "slime",
     name: "スライム",
-    maxHp: 3,
-    attackPower: 1,
-    experienceReward: 10,
+    maxHp: 160,
+    attackPower: 20,
+    experienceReward: 100,
     abilities: [],
     isBoss: false,
   });
   slime.maxHp = 99;
-  assert.equal(createEnemy("slime").maxHp, 3);
+  assert.equal(createEnemy("slime").maxHp, 160);
   assert.throws(() => createEnemy("dragon"), RangeError);
 });
 
@@ -44,7 +59,7 @@ test("正しい文字ではHPを減らさず、メッセージだけを返す", 
 
 test("間違った文字では敵のattackPowerぶんプレイヤーがダメージを受ける", () => {
   const store = startBattle({
-    enemy: { ...createEnemy("slime"), attackPower: 2 },
+    enemy: { ...testSlime, attackPower: 2 },
   });
   const combat = createCombatController(store);
   const result = combat.handle({
@@ -94,7 +109,7 @@ test("同じ戦闘イベントを2回処理してもダメージは1回だけ", 
 test("敵を倒すと勝利になり、その後のイベントは無視される", () => {
   const store = startBattle({
     playerAttackPower: 3,
-    enemy: { ...createEnemy("slime"), maxHp: 3 },
+    enemy: { ...testSlime, maxHp: 3 },
   });
   const combat = createCombatController(store);
   const result = combat.handle({
@@ -123,7 +138,7 @@ test("敵を倒すと勝利になり、その後のイベントは無視され�
 test("プレイヤーHPが0になると敗北になり、同じイベントで二重に減らない", () => {
   const store = startBattle({
     playerMaxHp: 1,
-    enemy: { ...createEnemy("slime"), attackPower: 1 },
+    enemy: { ...testSlime, attackPower: 1 },
   });
   const combat = createCombatController(store);
   const event = {
@@ -171,7 +186,7 @@ test("同じ文字イベントをリセット後の新しい戦闘で再利用�
   store.dispatch({ type: GAME_ACTION.RESET_GAME });
   store.dispatch({
     type: GAME_ACTION.START_BATTLE,
-    enemy: createEnemy("slime"),
+    enemy: testSlime,
   });
   const again = combat.handle(event);
 
@@ -182,7 +197,7 @@ test("同じ文字イベントをリセット後の新しい戦闘で再利用�
 
 test("盾は敵の反撃ダメージを1減らすが、最低1ダメージは受ける", () => {
   const store = startBattle({
-    enemy: { ...createEnemy("slime"), attackPower: 2 },
+    enemy: { ...testSlime, attackPower: 2 },
   });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
   store.dispatch({
@@ -204,7 +219,7 @@ test("盾は敵の反撃ダメージを1減らすが、最低1ダメージは受
 
 test("防御力が敵の攻撃力以上でも最低1ダメージは受ける", () => {
   const store = startBattle({
-    enemy: { ...createEnemy("slime"), attackPower: 1 },
+    enemy: { ...testSlime, attackPower: 1 },
   });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
   store.dispatch({
@@ -222,17 +237,17 @@ test("防御力が敵の攻撃力以上でも最低1ダメージは受ける", (
 
 
 test("コウモリの素早い反撃は間違った文字へのダメージを1増やす", () => {
-  const store = startBattle({ enemy: createEnemy("bat") });
+  const store = startBattle({ playerMaxHp: 100, enemy: { ...createTestEnemy("bat"), maxHp: 3, attackPower: 1 } });
   const result = createCombatController(store).handle({
     eventId: "bat-swift-counter", type: "wrong", letter: "Z",
   });
-  assert.equal(result.damage, 2);
+  assert.equal(result.damage, 11);
   assert.match(result.message, /すばやい反撃/);
-  assert.equal(store.getState().player.hp, 1);
+  assert.equal(store.getState().player.hp, 89);
 });
 
 test("ゴブリンのかたい体は単語攻撃のダメージを1減らす", () => {
-  const store = startBattle({ playerAttackPower: 2, enemy: createEnemy("goblin") });
+  const store = startBattle({ playerAttackPower: 2, enemy: createTestEnemy("goblin") });
   const result = createCombatController(store).handle({
     eventId: "goblin-guard", type: "word-complete",
   });
@@ -242,7 +257,7 @@ test("ゴブリンのかたい体は単語攻撃のダメージを1減らす", (
 });
 
 test("オークの防御突破はプレイヤーの防御力を1無視する", () => {
-  const store = startBattle({ enemy: createEnemy("orc") });
+  const store = startBattle({ enemy: createTestEnemy("orc") });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
   store.dispatch({ type: GAME_ACTION.EQUIP_SHIELD, itemId: "wooden-shield" });
   assert.equal(store.getState().player.defensePower, 1);
@@ -277,9 +292,9 @@ test("技の種類によって単語完成時のダメージが変わる", () =>
   }
 });
 test("いやしの光は簡単な単語の完成でHPを回復し、敵にはダメージを与えない", () => {
-  const store = createGameStore();
+  const store = createTestStore();
   store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "healing-light" });
-  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: createEnemy("slime") });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: testSlime });
   store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
   const result = createCombatController(store).handle({
     eventId: "healing-light-word", type: "word-complete",
@@ -293,11 +308,11 @@ test("いやしの光は簡単な単語の完成でHPを回復し、敵にはダ
 });
 
 test("鉄壁の構えは次の2回の敵攻撃を軽減する", () => {
-  const store = createGameStore();
+  const store = createTestStore({ playerMaxHp: 100 });
   store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "iron-guard" });
   store.dispatch({
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...createEnemy("slime"), attackPower: 3 },
+    enemy: { ...testSlime, attackPower: 30 },
   });
   const combat = createCombatController(store);
   const guard = combat.handle({
@@ -305,23 +320,23 @@ test("鉄壁の構えは次の2回の敵攻撃を軽減する", () => {
     skillId: "iron-guard", wordDifficulty: 1,
   });
   assert.equal(guard.ignored, false);
-  assert.equal(store.getState().battleEffects.defenseBonus, 2);
+  assert.equal(store.getState().battleEffects.defenseBonus, 20);
   assert.equal(store.getState().battleEffects.defenseHitsRemaining, 2);
 
   const firstHit = combat.handle({ eventId: "iron-guard-hit-1", type: "timed-attack" });
-  assert.equal(firstHit.damage, 1);
+  assert.equal(firstHit.damage, 10);
   assert.equal(store.getState().battleEffects.defenseHitsRemaining, 1);
 
   const secondHit = combat.handle({ eventId: "iron-guard-hit-2", type: "timed-attack" });
-  assert.equal(secondHit.damage, 1);
+  assert.equal(secondHit.damage, 10);
   assert.equal(store.getState().battleEffects.defenseHitsRemaining, 0);
   assert.equal(store.getState().battleEffects.defenseBonus, 0);
 });
 
 test("鉄壁の構えは弱い敵の攻撃を0ダメージにして、使用回数を消費する", () => {
-  const store = createGameStore();
+  const store = createTestStore();
   store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "iron-guard" });
-  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: createEnemy("slime") });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: testSlime });
   const combat = createCombatController(store);
   combat.handle({
     eventId: "iron-guard-block-word", type: "word-complete",
@@ -338,11 +353,11 @@ test("鉄壁の構えは弱い敵の攻撃を0ダメージにして、使用回�
 });
 
 test("力の咆哮は次の2回の攻撃を強化し、回数を使い切ると解除される", () => {
-  const store = createGameStore();
+  const store = createTestStore();
   store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "battle-cry" });
   store.dispatch({
     type: GAME_ACTION.START_BATTLE,
-    enemy: { ...createEnemy("slime"), maxHp: 20 },
+    enemy: { ...testSlime, maxHp: 20 },
   });
   const combat = createCombatController(store);
   const buff = combat.handle({
@@ -373,7 +388,7 @@ test("力の咆哮は次の2回の攻撃を強化し、回数を使い切ると�
 test("単語難易度が高いほど攻撃ダメージが大きくなる", () => {
   const store = startBattle({
     playerAttackPower: 2,
-    enemy: { ...createEnemy("slime"), maxHp: 100 },
+    enemy: { ...testSlime, maxHp: 100 },
   });
   const result = createCombatController(store).handle({
     eventId: "difficulty-six",
@@ -398,7 +413,7 @@ test("難易度が省略された旧形式の戦闘イベントは難易度1と�
 
 test("時間経過の敵攻撃は防御力を適用してプレイヤーにダメージを与える", () => {
   const store = startBattle({
-    enemy: { ...createEnemy("slime"), attackPower: 2 },
+    enemy: { ...testSlime, attackPower: 2 },
   });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
   store.dispatch({ type: GAME_ACTION.EQUIP_ITEM, itemId: "wooden-shield" });
@@ -413,11 +428,11 @@ test("時間経過の敵攻撃は防御力を適用してプレイヤーにダ�
 
 
 test("未装備のスキルや登録外スキルでは攻撃できない", () => {
-  const store = createGameStore();
+  const store = createTestStore();
   store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: null });
   store.dispatch({
     type: GAME_ACTION.START_BATTLE,
-    enemy: createEnemy("slime"),
+    enemy: testSlime,
   });
   const combat = createCombatController(store);
 
@@ -455,12 +470,12 @@ test("範囲外の単語難易度では攻撃ダメージを発生させない",
 
 
 test("進化した攻撃スキルは実際のバトルダメージが上昇する", () => {
-  const store = createGameStore();
+  const store = createTestStore();
   store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 950 });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
   for (let i = 0; i < 4; i += 1) store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
   store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" });
-  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...createEnemy("slime"), maxHp: 10 } });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...testSlime, maxHp: 10 } });
   const result = createCombatController(store).handle({
     eventId: "evolved-quick-strike", type: "word-complete",
     skillId: "quick-strike", wordDifficulty: 1,

@@ -15,7 +15,7 @@ function memoryStorage() {
   };
 }
 function setup(storage, extra = {}) {
-  const store = createGameStore();
+  const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
   const dungeon = createDungeonController(store);
   let restoredExtra = extra;
   const controller = createSaveController({
@@ -202,7 +202,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 9,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10,
   );
 });
 
@@ -219,7 +219,7 @@ test("装備中の盾と防御力をセーブ・ロードで引き継ぐ", () =>
     type: GAME_ACTION.EQUIP_SHIELD,
     itemId: "wooden-shield",
   });
-  assert.equal(first.store.getState().player.defensePower, 1);
+  assert.equal(first.store.getState().player.defensePower, 10);
   assert.equal(first.controller.save().saved, true);
 
   const second = setup(storage, {
@@ -227,7 +227,7 @@ test("装備中の盾と防御力をセーブ・ロードで引き継ぐ", () =>
     spawnElapsed: 0,
   });
   assert.equal(second.controller.load().loaded, true);
-  assert.equal(second.store.getState().player.defensePower, 1);
+  assert.equal(second.store.getState().player.defensePower, 10);
   assert.equal(second.store.getState().inventory.equipment.shield, "wooden-shield");
   assert.equal(second.store.getState().inventory.items["wooden-shield"], 0);
 });
@@ -282,8 +282,8 @@ test("鎧とアクセサリーの装備状態もセーブ・ロードで保持�
   first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "copper-charm" });
   first.store.dispatch({ type: GAME_ACTION.EQUIP_ITEM, itemId: "leather-armor" });
   first.store.dispatch({ type: GAME_ACTION.EQUIP_ITEM, itemId: "copper-charm" });
-  assert.equal(first.store.getState().player.attackPower, 2);
-  assert.equal(first.store.getState().player.defensePower, 2);
+  assert.equal(first.store.getState().player.attackPower, 11);
+  assert.equal(first.store.getState().player.defensePower, 25);
   assert.equal(first.controller.save().saved, true);
 
   const second = setup(storage, {
@@ -293,10 +293,66 @@ test("鎧とアクセサリーの装備状態もセーブ・ロードで保持�
   assert.equal(second.controller.load().loaded, true);
   assert.equal(second.store.getState().inventory.equipment.armor, "leather-armor");
   assert.equal(second.store.getState().inventory.equipment.accessory, "copper-charm");
-  assert.equal(second.store.getState().player.attackPower, 2);
-  assert.equal(second.store.getState().player.defensePower, 2);
+  assert.equal(second.store.getState().player.attackPower, 11);
+  assert.equal(second.store.getState().player.defensePower, 25);
 });
 
+
+test("バージョン9のセーブは新しい成長バランスへHP割合と経験値進捗を引き継ぐ", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  first.dungeon.start();
+  const oldState = structuredClone(first.store.getState());
+  oldState.player.hp = 2;
+  oldState.player.maxHp = 3;
+  oldState.player.baseMaxHp = 3;
+  oldState.player.startingAttackPower = 1;
+  oldState.player.baseAttackPower = 1;
+  oldState.player.attackPower = 1;
+  oldState.player.level = 1;
+  oldState.player.experience = 5;
+  oldState.player.nextLevelXp = 10;
+  oldState.enemy = {
+    ...oldState.enemy,
+    hp: 2,
+    maxHp: 3,
+    attackPower: 1,
+    experienceReward: 10,
+  };
+  oldState.battleEffects = {
+    attackMultiplier: 1,
+    attackUsesRemaining: 0,
+    defenseBonus: 2,
+    defenseHitsRemaining: 2,
+  };
+  oldState.stats.totalExperienceEarned = 10;
+
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify({
+    version: 9,
+    savedAt: "2026-11-13T00:00:00.000Z",
+    gameState: oldState,
+    dungeonState: first.dungeon.getSaveData(),
+    extra: { wordState: createWordBattleState(), spawnElapsed: 0 },
+  }));
+
+  const second = setup(storage, {
+    wordState: createWordBattleState(), spawnElapsed: 0,
+  });
+  assert.equal(second.controller.load().loaded, true);
+  const player = second.store.getState().player;
+  assert.equal(player.maxHp, 100);
+  assert.equal(player.hp, 67);
+  assert.equal(player.attackPower, 20);
+  assert.equal(player.experience, 50);
+  assert.equal(player.nextLevelXp, 100);
+  assert.equal(second.store.getState().enemy.maxHp, 160);
+  assert.equal(second.store.getState().enemy.hp, 107);
+  assert.equal(second.store.getState().enemy.attackPower, 20);
+  assert.equal(second.store.getState().battleEffects.defenseBonus, 20);
+  assert.equal(second.store.getState().stats.totalExperienceEarned, 100);
+});
 
 test("バージョン3のセーブは旧敵編成を保ったまま能力データ形式へ移行する", () => {
   const storage = memoryStorage();
@@ -322,7 +378,7 @@ test("バージョン3のセーブは旧敵編成を保ったまま能力デー�
   assert.equal(second.store.getState().enemy.isBoss, false);
   assert.equal(second.dungeon.getSaveData().encounterSetVersion, 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 9);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
 });
 
 
@@ -481,7 +537,7 @@ test("旧バージョン4のセーブはダンジョン進行マップを追加�
   assert.equal(second.dungeon.getUnlockedFloor("forest-ruins"), 1);
   assert.equal(second.dungeon.getUnlockedFloor("frozen-cavern"), 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 9);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
 });
 
 
@@ -541,7 +597,7 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 9);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
 });
 
 
@@ -589,7 +645,7 @@ test("バージョン6のセーブデータには空の行動ログを追加し�
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().actionLog, []);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 9);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
 });
 
 
@@ -614,7 +670,7 @@ test("バージョン7のセーブへ一時効果の空状態を追加して移�
     defenseBonus: 0, defenseHitsRemaining: 0,
   });
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 9);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
 });
 
 test("攻撃・防御の一時効果はセーブとロードで維持される", () => {
@@ -653,7 +709,7 @@ test("ローカルセーブの有無と更新日時を安全に確認できる",
   assert.equal(data.controller.save().saved, true);
   const info = data.controller.getLocalSaveInfo();
   assert.equal(info.exists, true);
-  assert.equal(info.version, 9);
+  assert.equal(info.version, 10);
   assert.equal(typeof info.savedAt, "string");
   assert.equal(Number.isFinite(Date.parse(info.savedAt)), true);
 
@@ -675,7 +731,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 9);
+  assert.equal(SAVE_VERSION, 10);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {
