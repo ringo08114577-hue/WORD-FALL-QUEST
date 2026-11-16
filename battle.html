@@ -461,7 +461,7 @@
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
-    import { SKILL_DEFINITIONS, getSkillLevelDifficultyRange } from "./src/skills.js";
+    import { SKILL_DEFINITIONS, getSkillLevelDifficultyRange, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
     const $ = (id) => document.getElementById(id);
@@ -741,6 +741,8 @@
         visibleSkillCount += 1;
         const level = state.skillLevels[skillId] ?? SKILL_DEFINITIONS[skillId].startingLevel;
         const range = getSkillLevelDifficultyRange(level);
+        button.querySelector("strong").textContent = getSkillDisplayName(skillId,
+          state.evolvedSkillIds?.includes(skillId) === true);
         button.querySelector("span").textContent =
           "Lv." + level + " · 単語難易度 " + range.min + "〜" + range.max;
       }
@@ -925,7 +927,8 @@
       awaitingSkill = false;
       spawnElapsed = 0;
       setStatus(
-        skill.name + " Lv." + skillLevel + "を選択！難易度Lv." +
+        getSkillDisplayName(skillId, currentState.evolvedSkillIds?.includes(skillId) === true) +
+        " Lv." + skillLevel + "を選択！難易度Lv." +
         getCurrentChallenge(wordState).difficulty + "の「" + getCurrentChallenge(wordState).japanese +
         "」を英語にしよう。必要な文字のレーンで決定を押してね。",
       );

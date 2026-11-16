@@ -985,3 +985,28 @@ test("鉄壁の構えは0ダメージで攻撃を防いだ場合も回数を消�
   assert.equal(state.battleEffects.defenseBonus, 2);
   assert.equal(isValidSavedGameState(state), true);
 });
+
+
+test("Lv.5スキルは対応素材と200Gを消費して1回だけ進化できる", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 950 });
+  state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
+  for (let i = 0; i < 4; i += 1) state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
+  assert.equal(state.skillLevels["quick-strike"], 5);
+  const evolved = gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" });
+  assert.notEqual(evolved, state);
+  assert.deepEqual(evolved.evolvedSkillIds, ["quick-strike"]);
+  assert.equal(evolved.inventory.items["forest-dragon-seal"], 0);
+  assert.equal(evolved.inventory.gold, 0);
+  assert.equal(isValidSavedGameState(evolved), true);
+  assert.equal(gameReducer(evolved, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" }), evolved);
+});
+
+test("進化はLv.5未満・素材不足・ゴールド不足・バトル中には実行できない", () => {
+  let state = createInitialGameState();
+  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 1000 });
+  state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
+  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" }), state);
+  state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
+  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" }), state);
+});

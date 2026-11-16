@@ -5,6 +5,7 @@ import { createShopController, SHOP_CATALOG } from "./shop.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel,
+  getSkillEvolutionRecipe, getSkillDisplayName,
 } from "./skills.js";
 
 const $ = (id) => document.getElementById(id);
@@ -117,8 +118,10 @@ function renderSkills(state) {
   const grid = node("div", "offer-grid");
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
     const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
+    const evolved = state.evolvedSkillIds?.includes(skillId) === true;
+    const displayName = getSkillDisplayName(skillId, evolved);
     const range = getSkillWordDifficultyRange(skillId, level);
-    const effect = getSkillEffectForLevel(skillId, level);
+    const effect = getSkillEffectForLevel(skillId, level, evolved);
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
     const effectText = effect.type === "attack"
       ? "攻撃威力 ×" + effect.damageMultiplier
@@ -127,23 +130,41 @@ function renderSkills(state) {
         : effect.type === "defense"
           ? "防御力 +" + effect.bonus + "（次の" + effect.hits + "回）"
           : "攻撃倍率 ×" + effect.multiplier + "（次の攻撃" + effect.uses + "回）";
-    const cost = getSkillUpgradeCost(skillId, level);
-    const button = node("button", cost === null ? "secondary-button" : "primary-button",
-      cost === null ? "最大レベル" : "スキルを強化（" + cost + "G）");
-    button.type = "button";
-    button.disabled = cost === null || state.phase !== GAME_PHASE.TITLE || state.inventory.gold < cost;
-    if (cost !== null) button.dataset.skillUpgrade = skillId;
-    addCard(
-      grid,
-      skill.name + " · Lv." + level + " · " + category,
-      "単語難易度 " + range.min + "〜" + range.max + " · " + effectText,
-      cost === null ? "これ以上強化できないよ。" : "次はLv." + (level + 1) + " · " + cost + "G",
-      button,
-    );
+    const upgradeCost = getSkillUpgradeCost(skillId, level);
+    const upgradeButton = node("button", upgradeCost === null ? "secondary-button" : "primary-button",
+      upgradeCost === null ? "最大レベル" : "スキルを強化（" + upgradeCost + "G）");
+    upgradeButton.type = "button";
+    upgradeButton.disabled = upgradeCost === null || state.phase !== GAME_PHASE.TITLE ||
+      state.inventory.gold < upgradeCost;
+    if (upgradeCost !== null) upgradeButton.dataset.skillUpgrade = skillId;
+    const recipe = getSkillEvolutionRecipe(skillId);
+    const material = ITEM_DEFINITIONS[recipe.materialId];
+    const ownedMaterial = state.inventory.items[recipe.materialId] ?? 0;
+    const canEvolve = level === (skill.maxLevel ?? 5) && !evolved &&
+      ownedMaterial >= recipe.materialQuantity && state.inventory.gold >= recipe.gold &&
+      state.phase === GAME_PHASE.TITLE;
+    const evolutionLabel = evolved ? "進化済み" :
+      level < (skill.maxLevel ?? 5) ? "Lv." + (skill.maxLevel ?? 5) + "で進化可能" :
+      "進化する（" + material.name + " ×" + recipe.materialQuantity + "・" + recipe.gold + "G）";
+    const evolutionButton = node("button", evolved ? "secondary-button" : "primary-button", evolutionLabel);
+    evolutionButton.type = "button";
+    evolutionButton.disabled = evolved || !canEvolve;
+    if (!evolved) evolutionButton.dataset.skillEvolve = skillId;
+    const card = node("article", "offer-card");
+    card.append(node("strong", "offer-name",
+      displayName + " · Lv." + level + " · " + category + (evolved ? " · 進化済み" : "")));
+    card.append(node("p", "offer-description",
+      "単語難易度 " + range.min + "〜" + range.max + " · " + effectText));
+    card.append(node("p", "offer-meta", evolved
+      ? "進化によって効果が上昇しているよ。"
+      : "進化素材：" + material.name + " ×" + recipe.materialQuantity +
+        "（所持 " + ownedMaterial + "） · " + recipe.gold + "G"));
+    card.append(upgradeButton, evolutionButton);
+    grid.append(card);
   }
   root.append(grid);
-  const note = node("p", "muted", "スキルレベルは戦闘で使う技ごとに保存されるよ。");
-  root.append(note);
+  root.append(node("p", "muted",
+    "スキルはLv.5になると進化できるよ。進化すると効果が永久に上がり、素材とゴールドを消費するよ。"));
 }
 
 function render() {
@@ -211,6 +232,23 @@ $("facilityContent").addEventListener("click", (event) => {
           : "攻撃倍率 ×" + effect.multiplier;
     $("feedback").textContent = SKILL_DEFINITIONS[skillId].name + "がLv." + level +
       "になったよ。単語難易度 " + range.min + "〜" + range.max + " · " + effectText + "。" +
+      (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
+    render();
+    return;
+  }
+
+  const evolutionButton = event.target.closest("button[data-skill-evolve]");
+  if (evolutionButton && !evolutionButton.disabled) {
+    const skillId = evolutionButton.dataset.skillEvolve;
+    const before = store.getState();
+    const after = store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId });
+    if (after === before) {
+      $("feedback").textContent = "進化できなかったよ。レベル・素材・ゴールドを確認してね。";
+      return;
+    }
+    const saved = saves.save();
+    $("feedback").textContent = getSkillDisplayName(skillId, true) +
+      "に進化したよ！効果が強くなったよ。" +
       (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
     render();
   }

@@ -6,7 +6,7 @@
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ENEMY_ABILITY_DEFINITIONS, getEnemyAbilityEffects } from "./enemies.js";
-import { SKILL_DEFINITIONS, getSkillEffectForLevel } from "./skills.js";
+import { SKILL_DEFINITIONS, getSkillEffectForLevel, getSkillDisplayName } from "./skills.js";
 import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
 
 export const COMBAT_EVENT = Object.freeze({
@@ -91,8 +91,9 @@ export function resolveCombatEvent(gameState, event) {
   }
 
   const skillLevel = gameState.skillLevels?.[skillId] ?? skill.startingLevel ?? 1;
-  const skillEffect = getSkillEffectForLevel(skillId, skillLevel);
-  const skillNote = "「" + skill.name + "」！";
+  const isEvolved = gameState.evolvedSkillIds?.includes(skillId) === true;
+  const skillEffect = getSkillEffectForLevel(skillId, skillLevel, isEvolved);
+  const skillNote = "「" + getSkillDisplayName(skillId, isEvolved) + "」！";
 
   if (skillEffect?.type === "heal") {
     const actualHeal = Math.min(skillEffect.amount, gameState.player.maxHp - gameState.player.hp);
@@ -215,7 +216,10 @@ export function createCombatController(store) {
           category: "skill",
           message: (event.japanese ? "「" + event.japanese + "」" : "単語") +
             (event.word ? "（" + event.word + "）" : "") +
-            "を完成：" + (skill?.name ?? "スキル") +
+            "を完成：" + getSkillDisplayName(
+              event.skillId ?? "quick-strike",
+              state.evolvedSkillIds?.includes(event.skillId ?? "quick-strike") === true,
+            ) +
             "・難易度Lv." + (event.wordDifficulty ?? 1),
         });
       }

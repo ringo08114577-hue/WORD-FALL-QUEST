@@ -5,6 +5,8 @@ import {
   SKILL_DEFINITIONS, getSkillDefinition, createInitialSkillLevels,
   isValidSkillLevels, normalizeSkillLevels, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel,
+  getSkillEvolutionRecipe, getSkillDisplayName,
+  isValidEvolvedSkillIds, normalizeEvolvedSkillIds,
 } from "./skills.js";
 
 test("攻撃スキルは単語が長いほど火力が高い", () => {
@@ -59,4 +61,34 @@ test("スキルレベルの初期化・検証・旧セーブ補完が正しく�
     "iron-guard": 1,
     "battle-cry": 1,
   });
+});
+
+
+test("スキル進化の素材・効果・表示名が定義どおり", () => {
+  assert.deepEqual(getSkillEvolutionRecipe("quick-strike"), {
+    materialId: "forest-dragon-seal", materialQuantity: 1, gold: 200,
+  });
+  assert.deepEqual(getSkillEvolutionRecipe("healing-light"), {
+    materialId: "ice-dragon-core", materialQuantity: 1, gold: 200,
+  });
+  assert.equal(getSkillEvolutionRecipe("unknown-skill"), null);
+  assert.deepEqual(getSkillEffectForLevel("quick-strike", 5, true), { type: "attack", damageMultiplier: 1.2 });
+  assert.deepEqual(getSkillEffectForLevel("power-strike", 5, true), { type: "attack", damageMultiplier: 2.4 });
+  assert.deepEqual(getSkillEffectForLevel("ultimate-strike", 5, true), { type: "attack", damageMultiplier: 3.6 });
+  assert.deepEqual(getSkillEffectForLevel("healing-light", 5, true), { type: "heal", amount: 5 });
+  assert.deepEqual(getSkillEffectForLevel("iron-guard", 5, true), { type: "defense", bonus: 5, hits: 2 });
+  assert.deepEqual(getSkillEffectForLevel("battle-cry", 5, true), { type: "attack-buff", multiplier: 1.8, uses: 2 });
+  assert.equal(getSkillDisplayName("quick-strike", true), "疾風の斬撃");
+  assert.equal(getSkillDisplayName("quick-strike", false), "すばやい斬撃");
+});
+
+test("進化済みスキルはLv.5でのみ有効になり、重複や未知IDを補完で除外する", () => {
+  const levels = createInitialSkillLevels();
+  levels["quick-strike"] = 5;
+  levels["power-strike"] = 4;
+  assert.equal(isValidEvolvedSkillIds(["quick-strike"], levels), true);
+  assert.equal(isValidEvolvedSkillIds(["power-strike"], levels), false);
+  assert.equal(isValidEvolvedSkillIds(["unknown"], levels), false);
+  assert.equal(isValidEvolvedSkillIds(["quick-strike", "quick-strike"], levels), false);
+  assert.deepEqual(normalizeEvolvedSkillIds(["quick-strike", "power-strike", "unknown", "quick-strike"], levels), ["quick-strike"]);
 });

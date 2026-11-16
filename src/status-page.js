@@ -2,7 +2,7 @@ import { createAppSession } from "./app-session.js";
 import { GAME_ACTION } from "./game-state.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillWordDifficultyRange,
-  getSkillEffectForLevel,
+  getSkillEffectForLevel, getSkillDisplayName,
 } from "./skills.js";
 
 const $ = (id) => document.getElementById(id);
@@ -32,7 +32,8 @@ function renderSlots(state) {
     for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
       const usedElsewhere = state.equippedSkillIds.some((id, index) => index !== slotIndex && id === skillId);
       if (usedElsewhere) continue;
-      const option = node("option", "", skill.name);
+      const option = node("option", "", getSkillDisplayName(skillId,
+        state.evolvedSkillIds?.includes(skillId) === true));
       option.value = skillId;
       select.append(option);
     }
@@ -53,7 +54,9 @@ function renderSkills(state) {
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
     const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
     const range = getSkillWordDifficultyRange(skillId, level);
-    const effect = getSkillEffectForLevel(skillId, level);
+    const evolved = state.evolvedSkillIds?.includes(skillId) === true;
+    const effect = getSkillEffectForLevel(skillId, level, evolved);
+    const displayName = getSkillDisplayName(skillId, evolved);
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
     const effectText = effect.type === "attack"
       ? "威力倍率 ×" + effect.damageMultiplier
@@ -63,7 +66,7 @@ function renderSkills(state) {
           ? "防御力 +" + effect.bonus + " · 次の" + effect.hits + "回"
           : "攻撃倍率 ×" + effect.multiplier + " · 次の攻撃" + effect.uses + "回";
     const card = node("article", "skill-card");
-    card.append(node("strong", "", skill.name + " · Lv." + level));
+    card.append(node("strong", "", displayName + " · Lv." + level + (evolved ? " · 進化済み" : "")));
     card.append(node("p", "", category + " · " + skill.description));
     card.append(node("p", "skill-meta", "単語難易度 " + range.min + "〜" + range.max + " · " + effectText));
     root.append(card);
@@ -102,7 +105,9 @@ $("equippedSkillSlots").addEventListener("click", (event) => {
     return;
   }
   const saved = saves.save();
-  const skillName = skillId ? SKILL_DEFINITIONS[skillId].name : "未装備";
+  const skillName = skillId
+    ? getSkillDisplayName(skillId, after.evolvedSkillIds?.includes(skillId) === true)
+    : "未装備";
   $("feedback").textContent = "スキル枠 " + (slotIndex + 1) + "を" + skillName +
     "に変更したよ。" + (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
   render(after);

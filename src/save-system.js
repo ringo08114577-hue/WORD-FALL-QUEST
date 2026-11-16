@@ -3,11 +3,11 @@
  * Migration keeps existing characters and adds independent dungeon progress.
  */
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
-import { normalizeSkillLevels, normalizeEquippedSkillIds } from "./skills.js";
+import { normalizeSkillLevels, normalizeEquippedSkillIds, normalizeEvolvedSkillIds } from "./skills.js";
 import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 8;
+export const SAVE_VERSION = 9;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -24,7 +24,7 @@ function createInitialDungeonProgress() {
 }
 
 function migrateSnapshot(snapshot) {
-  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, SAVE_VERSION].includes(snapshot.version)) return null;
   let migrated = snapshot;
 
   if (migrated.version === 1) {
@@ -170,15 +170,30 @@ function migrateSnapshot(snapshot) {
     };
   }
 
+  if (migrated.version === 8) {
+    const gameState = migrated.gameState;
+    if (!isRecord(gameState)) return null;
+    migrated = {
+      ...migrated,
+      version: 9,
+      gameState: {
+        ...gameState,
+        evolvedSkillIds: Array.isArray(gameState.evolvedSkillIds) ? gameState.evolvedSkillIds : [],
+      },
+    };
+  }
+
   if (migrated.version === SAVE_VERSION) {
     const gameState = migrated.gameState;
     if (!isRecord(gameState) || !isRecord(gameState.inventory) ||
         !isRecord(gameState.inventory.items) || !isRecord(gameState.inventory.equipment)) return null;
+    const skillLevels = normalizeSkillLevels(gameState.skillLevels);
     migrated = {
       ...migrated,
       gameState: {
         ...gameState,
-        skillLevels: normalizeSkillLevels(gameState.skillLevels),
+        skillLevels,
+        evolvedSkillIds: normalizeEvolvedSkillIds(gameState.evolvedSkillIds, skillLevels),
         equippedSkillIds: normalizeEquippedSkillIds(gameState.equippedSkillIds),
         inventory: {
           ...gameState.inventory,

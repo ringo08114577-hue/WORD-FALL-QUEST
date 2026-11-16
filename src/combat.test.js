@@ -452,3 +452,19 @@ test("範囲外の単語難易度では攻撃ダメージを発生させない",
   assert.equal(result.reason, "invalid-word-difficulty");
   assert.equal(store.getState().enemy.hp, 3);
 });
+
+
+test("進化した攻撃スキルは実際のバトルダメージが上昇する", () => {
+  const store = createGameStore();
+  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 950 });
+  store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
+  for (let i = 0; i < 4; i += 1) store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
+  store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...createEnemy("slime"), maxHp: 10 } });
+  const result = createCombatController(store).handle({
+    eventId: "evolved-quick-strike", type: "word-complete",
+    skillId: "quick-strike", wordDifficulty: 1,
+  });
+  assert.equal(result.damage, 2);
+  assert.match(result.message, /疾風の斬撃/);
+});

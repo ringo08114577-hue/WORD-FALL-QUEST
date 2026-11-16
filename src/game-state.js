@@ -4,6 +4,7 @@ import { GAME_CONFIG } from "./game-config.js";
 import {
   SKILL_DEFINITIONS, createInitialSkillLevels, isValidSkillLevels, getSkillUpgradeCost,
   createInitialEquippedSkillIds, isValidEquippedSkillIds,
+  getSkillEvolutionRecipe, isValidEvolvedSkillIds, getSkillDisplayName,
 } from "./skills.js";
 
 /**
@@ -37,6 +38,7 @@ export const GAME_ACTION = Object.freeze({
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
   UPGRADE_SKILL: "UPGRADE_SKILL",
+  EVOLVE_SKILL: "EVOLVE_SKILL",
   EQUIP_SKILL: "EQUIP_SKILL",
   RETURN_TO_TOWN: "RETURN_TO_TOWN",
   PAUSE_BATTLE: "PAUSE_BATTLE",
@@ -246,6 +248,7 @@ export function createInitialGameState({
     enemy: null,
     battleEffects: createEmptyBattleEffects(),
     skillLevels: createInitialSkillLevels(),
+    evolvedSkillIds: [],
     equippedSkillIds: createInitialEquippedSkillIds(),
     inventory: { ...createInitialInventory(), gold: 0 },
     battle: {
@@ -538,6 +541,28 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.EVOLVE_SKILL: {
+      if (state.phase !== GAME_PHASE.TITLE) return state;
+      const skillId = action.skillId;
+      const skill = Object.hasOwn(SKILL_DEFINITIONS, skillId) ? SKILL_DEFINITIONS[skillId] : null;
+      const recipe = getSkillEvolutionRecipe(skillId);
+      if (!skill || !recipe || state.skillLevels?.[skillId] !== (skill.maxLevel ?? 5) ||
+          state.evolvedSkillIds?.includes(skillId) || state.inventory.gold < recipe.gold ||
+          (state.inventory.items[recipe.materialId] ?? 0) < recipe.materialQuantity) return state;
+      return {
+        ...state,
+        evolvedSkillIds: [...(state.evolvedSkillIds ?? []), skillId],
+        inventory: {
+          ...state.inventory,
+          gold: state.inventory.gold - recipe.gold,
+          items: {
+            ...state.inventory.items,
+            [recipe.materialId]: state.inventory.items[recipe.materialId] - recipe.materialQuantity,
+          },
+        },
+      };
+    }
+
     case GAME_ACTION.EQUIP_SKILL: {
       if (state.phase !== GAME_PHASE.TITLE) return state;
       const slotIndex = action.slotIndex;
@@ -739,6 +764,18 @@ function describeActionLog(action, before, after) {
           (before.inventory.gold - after.inventory.gold) + "G）",
       } : null;
     }
+    case GAME_ACTION.EVOLVE_SKILL: {
+      const skill = SKILL_DEFINITIONS[action.skillId];
+      if (!skill) return null;
+      const recipe = getSkillEvolutionRecipe(action.skillId);
+      const item = recipe ? ITEM_DEFINITIONS[recipe.materialId] : null;
+      return {
+        category: ACTION_LOG_CATEGORY.SKILL,
+        message: getSkillDisplayName(action.skillId, true) + "に進化！" +
+          (item ? item.name + " ×" + recipe.materialQuantity + "と" : "") +
+          (before.inventory.gold - after.inventory.gold) + "Gを使用",
+      };
+    }
     case GAME_ACTION.EQUIP_SKILL: {
       const skill = action.skillId ? SKILL_DEFINITIONS[action.skillId] : null;
       return {
@@ -822,6 +859,7 @@ export function isValidSavedGameState(saved) {
     p.defensePower !== p.baseDefensePower + equipmentBonuses.defenseBonus ||
     !items || typeof items !== "object" || Array.isArray(items) ||
     !isValidSkillLevels(saved.skillLevels) ||
+    !isValidEvolvedSkillIds(saved.evolvedSkillIds, saved.skillLevels) ||
     !isValidEquippedSkillIds(saved.equippedSkillIds) ||
     !isValidBattleEffects(saved.battleEffects) ||
     !isValidActionLog(saved.actionLog) ||
@@ -880,6 +918,7 @@ function copySavedGameState(saved) {
     phase: saved.phase,
     pausedFrom: saved.pausedFrom,
     skillLevels: { ...saved.skillLevels },
+    evolvedSkillIds: [...saved.evolvedSkillIds],
     equippedSkillIds: [...saved.equippedSkillIds],
     battleEffects: { ...saved.battleEffects },
     player: {

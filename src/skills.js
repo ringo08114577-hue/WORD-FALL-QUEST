@@ -43,6 +43,51 @@ export function getSkillDefinition(skillId) {
     : null;
 }
 
+export const SKILL_EVOLUTION_GOLD_COST = 200;
+const FOREST_EVOLUTION_MATERIAL = "forest-dragon-seal";
+const FROZEN_EVOLUTION_MATERIAL = "ice-dragon-core";
+
+export function getSkillEvolutionRecipe(skillId) {
+  const skill = getSkillDefinition(skillId);
+  if (!skill) return null;
+  return Object.freeze({
+    materialId: skill.category === "attack" ? FOREST_EVOLUTION_MATERIAL : FROZEN_EVOLUTION_MATERIAL,
+    materialQuantity: 1,
+    gold: SKILL_EVOLUTION_GOLD_COST,
+  });
+}
+
+export function getSkillDisplayName(skillId, evolved = false) {
+  const skill = getSkillDefinition(skillId);
+  if (!skill) return "スキル";
+  return evolved && typeof skill.evolvedName === "string" ? skill.evolvedName : skill.name;
+}
+
+export function isValidEvolvedSkillIds(skillIds, skillLevels) {
+  if (!Array.isArray(skillIds) || !skillLevels ||
+      typeof skillLevels !== "object" || Array.isArray(skillLevels)) return false;
+  const seen = new Set();
+  for (const id of skillIds) {
+    const skill = getSkillDefinition(id);
+    if (!skill || seen.has(id) || skillLevels[id] !== (skill.maxLevel ?? 5)) return false;
+    seen.add(id);
+  }
+  return true;
+}
+
+export function normalizeEvolvedSkillIds(skillIds, skillLevels) {
+  if (!Array.isArray(skillIds)) return [];
+  const normalized = [];
+  const seen = new Set();
+  for (const id of skillIds) {
+    const skill = getSkillDefinition(id);
+    if (!skill || seen.has(id) || skillLevels?.[id] !== (skill.maxLevel ?? 5)) continue;
+    normalized.push(id);
+    seen.add(id);
+  }
+  return normalized;
+}
+
 export const SKILL_CATEGORY_LABELS = Object.freeze({
   attack: "攻撃",
   heal: "回復",
@@ -60,25 +105,26 @@ export function getSkillWordDifficultyRange(skillId, currentLevel) {
   return { min: range.min, max: range.max };
 }
 
-/** Read the effect a skill has at its current level. */
-export function getSkillEffectForLevel(skillId, currentLevel) {
+/** Read the effect a skill has at its current level, including a permanent evolution bonus. */
+export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
   const skill = getSkillDefinition(skillId);
   if (!skill) return null;
   const level = currentLevel ?? skill.startingLevel ?? 1;
   if (!Number.isInteger(level) || level < 1 || level > (skill.maxLevel ?? 5)) return null;
   const index = level - 1;
   const effect = skill.effect;
-  if (!effect) return { type: "attack", damageMultiplier: skill.damageMultiplier ?? 1 };
-  if (effect.type === "heal") {
-    return { type: "heal", amount: effect.amountByLevel[index] };
-  }
-  if (effect.type === "defense") {
-    return { type: "defense", bonus: effect.bonusByLevel[index], hits: effect.hits };
-  }
-  if (effect.type === "attack-buff") {
-    return { type: "attack-buff", multiplier: effect.multiplierByLevel[index], uses: effect.uses };
-  }
-  return null;
+  let result;
+  if (!effect) result = { type: "attack", damageMultiplier: skill.damageMultiplier ?? 1 };
+  else if (effect.type === "heal") result = { type: "heal", amount: effect.amountByLevel[index] };
+  else if (effect.type === "defense") result = { type: "defense", bonus: effect.bonusByLevel[index], hits: effect.hits };
+  else if (effect.type === "attack-buff") result = { type: "attack-buff", multiplier: effect.multiplierByLevel[index], uses: effect.uses };
+  else return null;
+  if (!evolved) return result;
+  if (result.type === "attack") return { ...result, damageMultiplier: Number((result.damageMultiplier * 1.2).toFixed(1)) };
+  if (result.type === "heal") return { ...result, amount: result.amount + 1 };
+  if (result.type === "defense") return { ...result, bonus: result.bonus + 1 };
+  if (result.type === "attack-buff") return { ...result, multiplier: Number((result.multiplier + 0.2).toFixed(1)) };
+  return result;
 }
 
 export function createInitialSkillLevels() {
