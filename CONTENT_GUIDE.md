@@ -52,7 +52,11 @@ src/
 - 技：`src/data/skills.js` に追加。各技は `category`（attack / heal / defense / support）、対応する文字数、`startingLevel`、`maxLevel`、`upgradeCosts` を持ちます。補助系は `wordDifficultyRange: { min: 1, max: 2 }` を指定すると、レベルに関係なく簡単な単語で発動します。
 - 強化費用はLv.1→2が50G、Lv.2→3が100G、Lv.3→4が200G、Lv.4→5が400Gです。強化は街のスキル工房で行い、戦闘中と敗北中はできません。
 - スキルレベルはゲーム本体のセーブ状態に保存されます。過去のセーブにスキルレベル情報がない場合は、各技Lv.1として補完します。
-- お題：`src/data/words.js` に `id`、`japanese`、大文字の `word`、`difficulty`（1〜6）を追加します。
+- お題：`src/data/words.js` に `id`、`japanese`、大文字の `word`、`difficulty`（1〜6）、`partOfSpeech` を追加します。
+- `id` は小文字英数字とハイフンの安定した一意IDにします。既存IDは変更せず、既存単語の配列順も変えず、追加語は末尾へ追加します（進行中セーブの番号ずれ防止）。
+- `partOfSpeech` は `noun` / `verb` / `adjective` / `adverb` / `preposition` / `conjunction` / `pronoun` / `determiner` / `interjection` / `other` のいずれかです。
+- 必要な場合は `alternateMeanings` に追加の日本語訳を文字列配列で指定できます。主表示には従来どおり `japanese` を使います。
+- 追加前に `validateWordCatalog`（`src/data/word-validation.js`）でID・意味・スペル・難易度・品詞・重複を検査します。同じスペルで異なる品詞は警告として確認します。
 - 攻撃スキルのLv.1〜5の出題範囲は `src/word-difficulty.js` で管理します（Lv.1：難易度1〜2、Lv.2：1〜3、Lv.3：2〜4、Lv.4：3〜5、Lv.5：4〜6）。回復・防御・補助スキルは定義側の難易度範囲を優先できます。
 - 出題は範囲内の難易度ウェイト（35/25/18/12/7/3）で抽選し、その難易度の候補から単語を選びます。候補がない難易度は抽選対象から除外してウェイトを再計算します。
 - 難易度別攻撃倍率（1/1.5/2.2/3.2/4.8/7）は `src/word-difficulty.js` にあります。技の威力倍率と掛け合わせ、敵の軽減を適用します。
