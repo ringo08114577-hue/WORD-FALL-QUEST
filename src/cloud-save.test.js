@@ -73,7 +73,7 @@ test("クラウドセーブはユーザーID付きで保存し、別セッショ
   const saved = await firstCloud.saveToCloud();
   assert.equal(saved.saved, true);
   assert.equal(client.rows.get("player-1").user_id, "player-1");
-  assert.equal(client.rows.get("player-1").save_version, 8);
+  assert.equal(client.rows.get("player-1").save_version, 9);
 
   const second = createAppSession({ storage: memoryStorage() });
   const secondCloud = controllerFor(second, client);

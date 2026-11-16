@@ -146,7 +146,7 @@ export function resolveCombatEvent(gameState, event) {
     ? gameState.battleEffects.attackMultiplier : 1;
   const baseDamage = Math.ceil(
     positivePower(gameState.player.attackPower) *
-    (skill?.damageMultiplier ?? 1) *
+    (skillEffect?.damageMultiplier ?? skill?.damageMultiplier ?? 1) *
     difficultyMultiplier *
     activeAttackMultiplier,
   );
