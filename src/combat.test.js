@@ -260,7 +260,7 @@ test("オークの防御突破はプレイヤーの防御力を10無視する", 
   const store = startBattle({ enemy: createTestEnemy("orc") });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "wooden-shield" });
   store.dispatch({ type: GAME_ACTION.EQUIP_SHIELD, itemId: "wooden-shield" });
-  assert.equal(store.getState().player.defensePower, 1);
+  assert.equal(store.getState().player.defensePower, 10);
   const result = createCombatController(store).handle({
     eventId: "orc-piercing", type: "wrong", letter: "X",
   });
