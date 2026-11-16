@@ -17,7 +17,7 @@ test("battle layout keeps gameplay, HP, and inventory while hiding manual save c
   for (const id of [
     "japanesePrompt", "spellingProgress", "arena", "lettersLayer",
     "leftButton", "confirmButton", "rightButton", "startButton",
-    "nextButton", "enemyHp", "enemyHpFill", "playerHp", "playerHpFill",
+    "nextButton", "homeButton", "enemyHp", "enemyHpFill", "playerHp", "playerHpFill",
     "enemyAttackTimer", "inventoryItems", "townBackLink",
   ]) {
     assert.match(html, new RegExp('id="' + id + '"'));
@@ -130,6 +130,15 @@ test("battle status displays the selected dungeon name from the saved controller
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ progress\.floor/);
 });
 
+
+test("敗北時とダンジョン制覇後だけホームへ戻るボタンを表示する", () => {
+  assert.match(html, /id="homeButton" hidden>ホームへ戻る/);
+  assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \|\|\s*\(state\.phase === GAME_PHASE\.VICTORY && dungeonProgress\.dungeonCleared\)/);
+  assert.match(html, /\$\("homeButton"\)\.addEventListener\("click", returnHome\)/);
+  assert.match(html, /function returnHome\(\)[\s\S]*?const canReturnHome = phase === GAME_PHASE\.DEFEAT \|\|\s*\(phase === GAME_PHASE\.VICTORY && progress\.dungeonCleared\)/);
+  assert.match(html, /town\.returnToTown\(\);[\s\S]*?saveProgress\(\);[\s\S]*?window\.location\.assign\("\.\/index\.html"\)/);
+  assert.match(html, /\$\("startButton"\)\.hidden = !dungeonProgress\.dungeonCleared/);
+});
 
 test("敗北してもプレイヤーの育成データを消さず、現在の階から再挑戦する", () => {
   assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \? "この階から再挑戦"/);
