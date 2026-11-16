@@ -316,6 +316,28 @@ export function createSaveController({
       }
     },
 
+    getLocalSaveInfo() {
+      try {
+        const target = getStorage();
+        if (!target) return { exists: false, reason: "storage-unavailable" };
+        const raw = target.getItem(SAVE_STORAGE_KEY);
+        if (!raw) return { exists: false, reason: "save-not-found" };
+        const snapshot = migrateSnapshot(JSON.parse(raw));
+        if (!snapshot || !store.isValidState(snapshot.gameState) ||
+            !dungeon.isValidSaveData(snapshot.dungeonState, snapshot.gameState) ||
+            !validateExtraData(snapshot.extra)) {
+          return { exists: false, reason: "invalid-save" };
+        }
+        return {
+          exists: true,
+          savedAt: snapshot.savedAt ?? null,
+          version: snapshot.version,
+        };
+      } catch {
+        return { exists: false, reason: "storage-read-failed" };
+      }
+    },
+
     clear() {
       try {
         const target = getStorage();

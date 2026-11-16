@@ -457,6 +457,7 @@
     } from "./src/game-state.js";
     import { createDungeonController } from "./src/dungeon.js";
     import { createSaveController } from "./src/save-system.js";
+    import { attachAutoCloudSync } from "./src/auto-cloud-sync.js";
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
@@ -524,6 +525,7 @@
       },
     });
     const initialSave = saveController.load();
+    attachAutoCloudSync({ saveController });
     let statusText = "「冒険を始める」を押してゲームを開始しよう。";
     let statusTone = "";
 

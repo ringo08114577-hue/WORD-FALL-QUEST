@@ -640,3 +640,23 @@ test("攻撃・防御の一時効果はセーブとロードで維持される",
     defenseBonus: 3, defenseHitsRemaining: 2,
   });
 });
+
+test("ローカルセーブの有無と更新日時を安全に確認できる", () => {
+  const storage = memoryStorage();
+  const data = setup(storage, {
+    wordState: createWordBattleState(),
+    spawnElapsed: 0,
+  });
+  assert.equal(data.controller.getLocalSaveInfo().exists, false);
+
+  data.dungeon.start();
+  assert.equal(data.controller.save().saved, true);
+  const info = data.controller.getLocalSaveInfo();
+  assert.equal(info.exists, true);
+  assert.equal(info.version, 8);
+  assert.equal(typeof info.savedAt, "string");
+  assert.equal(Number.isFinite(Date.parse(info.savedAt)), true);
+
+  storage.setItem(SAVE_STORAGE_KEY, "{broken");
+  assert.equal(data.controller.getLocalSaveInfo().exists, false);
+});

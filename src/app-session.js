@@ -52,6 +52,15 @@ export function createAppSession({ storage } = {}) {
     },
   });
   const initialLoad = saves.load();
+
+  // Browser pages share this session factory, so attach cloud sync here once.
+  // The dynamic import keeps Node-based game tests independent from browser auth.
+  if (typeof window !== "undefined" && typeof document !== "undefined") {
+    import("./auto-cloud-sync.js")
+      .then(({ attachAutoCloudSync }) => attachAutoCloudSync({ saveController: saves }))
+      .catch((error) => console.warn("WORD FALL QUEST cloud sync could not start:", error));
+  }
+
   return {
     store,
     dungeon,
