@@ -467,7 +467,7 @@ test("バージョン3のセーブは旧敵編成を保ったまま能力デー�
   assert.equal(second.store.getState().enemy.isBoss, false);
   assert.equal(second.dungeon.getSaveData().encounterSetVersion, 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });
 
 
@@ -626,7 +626,7 @@ test("旧バージョン4のセーブはダンジョン進行マップを追加�
   assert.equal(second.dungeon.getUnlockedFloor("forest-ruins"), 1);
   assert.equal(second.dungeon.getUnlockedFloor("frozen-cavern"), 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });
 
 
@@ -686,7 +686,7 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });
 
 
@@ -734,7 +734,7 @@ test("バージョン6のセーブデータには空の行動ログを追加し�
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().actionLog, []);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });
 
 
@@ -759,7 +759,7 @@ test("バージョン7のセーブへ一時効果の空状態を追加して移�
     defenseBonus: 0, defenseHitsRemaining: 0,
   });
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 10);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });
 
 test("攻撃・防御の一時効果はセーブとロードで維持される", () => {
@@ -798,7 +798,7 @@ test("ローカルセーブの有無と更新日時を安全に確認できる",
   assert.equal(data.controller.save().saved, true);
   const info = data.controller.getLocalSaveInfo();
   assert.equal(info.exists, true);
-  assert.equal(info.version, 10);
+  assert.equal(info.version, SAVE_VERSION);
   assert.equal(typeof info.savedAt, "string");
   assert.equal(Number.isFinite(Date.parse(info.savedAt)), true);
 
@@ -820,7 +820,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 10);
+  assert.equal(SAVE_VERSION, 11);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createAppSession } from "./app-session.js";
 import { GAME_ACTION } from "./game-state.js";
+import { SAVE_VERSION } from "./save-system.js";
 import { createCloudSaveController } from "./cloud-save.js";
 
 function memoryStorage() {
@@ -73,7 +74,7 @@ test("クラウドセーブはユーザーID付きで保存し、別セッショ
   const saved = await firstCloud.saveToCloud();
   assert.equal(saved.saved, true);
   assert.equal(client.rows.get("player-1").user_id, "player-1");
-  assert.equal(client.rows.get("player-1").save_version, 10);
+  assert.equal(client.rows.get("player-1").save_version, SAVE_VERSION);
 
   const second = createAppSession({ storage: memoryStorage() });
   const secondCloud = controllerFor(second, client);
