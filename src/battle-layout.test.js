@@ -125,6 +125,23 @@ test("バトルで選べる技はステータス画面で装備したスキル�
   assert.match(html, /currentState\.equippedSkillIds\.includes\(skillId\)/);
 });
 
+test("バトルのスキル選択ボタンはスキル定義から全6種類を自動生成する", () => {
+  assert.match(html, /id="skillOptions"/);
+  assert.match(html, /function buildSkillButtons\(\)/);
+  assert.match(html, /Object\.entries\(SKILL_DEFINITIONS\)/);
+  assert.match(html, /button\.dataset\.skill = skillId/);
+  assert.match(html, /buildSkillButtons\(\)/);
+  assert.match(html, /getSkillWordDifficultyRange\(skillId, level\)/);
+  assert.match(html, /getSkillEffectForLevel\(skillId, level, evolved\)/);
+  for (const skillId of [
+    "quick-strike", "power-strike", "ultimate-strike",
+    "healing-light", "iron-guard", "battle-cry",
+  ]) {
+    assert.ok(html.includes('"' + skillId + '"') || html.includes('data-skill="' + skillId + '"'));
+  }
+  assert.doesNotMatch(html, /getSkillLevelDifficultyRange\(level\)/);
+});
+
 test("battle status displays the selected dungeon name from the saved controller state", () => {
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ dungeonProgress\.floor/);
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ progress\.floor/);

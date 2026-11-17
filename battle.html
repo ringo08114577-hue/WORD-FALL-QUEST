@@ -142,7 +142,7 @@
     .home-button:hover:not(:disabled) { background:#15803d; }
     .next-button[hidden], .start-button[hidden], .home-button[hidden] { display:none; }
     .skill-panel[hidden] { display:none; }
-    .skill-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-top:9px; }
+    .skill-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; margin-top:9px; }
     .skill-button { min-width:0; min-height:62px; padding:8px 5px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
     .skill-button strong { font-size:.78rem; }
     .skill-button span { color:#c5d2e5; font-size:.65rem; font-weight:650; }
@@ -356,17 +356,7 @@
         <h2>⚔️ 次に使う技を選ぼう</h2>
         <span class="phase">選択中は時間停止</span>
       </div>
-      <div class="skill-options">
-        <button class="skill-button" data-skill="quick-strike">
-          <strong>すばやい斬撃</strong><span>3〜4文字 · 威力 ×1</span>
-        </button>
-        <button class="skill-button" data-skill="power-strike">
-          <strong>強力な斬撃</strong><span>5〜6文字 · 威力 ×2</span>
-        </button>
-        <button class="skill-button" data-skill="ultimate-strike">
-          <strong>必殺技</strong><span>7〜8文字 · 威力 ×3</span>
-        </button>
-      </div>
+      <div class="skill-options" id="skillOptions"></div>
       <p class="shop-note" style="grid-column:1 / -1">長い単語ほど強力。ただし完成まで敵の攻撃を受ける可能性があるよ。</p>
     </section>
 
@@ -465,10 +455,29 @@
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
-    import { SKILL_DEFINITIONS, getSkillLevelDifficultyRange, getSkillDisplayName } from "./src/skills.js";
+    import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
     const $ = (id) => document.getElementById(id);
+
+    // Build buttons from the skill catalog so every equipped skill can be used.
+    function buildSkillButtons() {
+      const root = $("skillOptions");
+      root.replaceChildren();
+      for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "skill-button";
+        button.dataset.skill = skillId;
+        const name = document.createElement("strong");
+        name.textContent = skill.name;
+        const detail = document.createElement("span");
+        button.append(name, detail);
+        root.append(button);
+      }
+    }
+    buildSkillButtons();
+
     const store = createGameStore();
     const combat = createCombatController(store);
     const dungeon = createDungeonController(store);
@@ -749,12 +758,23 @@
         button.disabled = !(active && awaitingSkill && isEquipped);
         if (!isEquipped) continue;
         visibleSkillCount += 1;
-        const level = state.skillLevels[skillId] ?? SKILL_DEFINITIONS[skillId].startingLevel;
-        const range = getSkillLevelDifficultyRange(level);
-        button.querySelector("strong").textContent = getSkillDisplayName(skillId,
-          state.evolvedSkillIds?.includes(skillId) === true);
+        const skill = SKILL_DEFINITIONS[skillId];
+        const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
+        const evolved = state.evolvedSkillIds?.includes(skillId) === true;
+        const range = getSkillWordDifficultyRange(skillId, level);
+        const effect = getSkillEffectForLevel(skillId, level, evolved);
+        const effectLabel = effect.type === "attack"
+          ? "攻撃 ×" + effect.damageMultiplier
+          : effect.type === "heal"
+            ? "HP +" + effect.amount
+            : effect.type === "defense"
+              ? "防御 +" + effect.bonus
+              : "次の攻撃 ×" + effect.multiplier;
+        button.querySelector("strong").textContent =
+          getSkillDisplayName(skillId, evolved);
         button.querySelector("span").textContent =
-          "Lv." + level + " · 単語難易度 " + range.min + "〜" + range.max;
+          "Lv." + level + " · 難易度 " + range.min + "〜" + range.max +
+          " · " + effectLabel;
       }
       const skillNote = $("skillPanel").querySelector(".shop-note");
       skillNote.textContent = visibleSkillCount > 0
