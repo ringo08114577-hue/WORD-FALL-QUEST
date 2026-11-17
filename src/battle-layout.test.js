@@ -36,9 +36,9 @@ test("enemy panel contains an image element that follows the active enemy sprite
   assert.match(html, /const enemyImagePath = getEnemyImagePath\(enemy\)/);
   assert.ok(html.includes('new URL(enemyImagePath.replace(/^\\/+/, ""), document.baseURI).href'));
   assert.match(html, /enemyImage\.src = source/);
-  assert.match(html, /enemyImage\.addEventListener\("load"/);
-  assert.match(html, /enemyImage\.addEventListener\("error"/);
-  assert.match(html, /enemyImage\.hidden = false/);
+  assert.match(html, /enemyImageElement\\.addEventListener\("load"/);
+  assert.match(html, /enemyImageElement\\.addEventListener\("error"/);
+  assert.match(html, /enemyImageElement\\.hidden = false/);
   assert.match(html, /enemyImage\.hidden = true/);
 });
 
