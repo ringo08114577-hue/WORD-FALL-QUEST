@@ -136,8 +136,6 @@
     .move-button { min-width:95px; font-size:.95rem; }
     .action-row { position:relative; z-index:10; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:8px; pointer-events:auto; }
     .action-row button { min-width:130px; }
-    .pause-button { background:#58421c; border-color:#8b6b2d; }
-    .pause-button:hover:not(:disabled) { background:#705526; }
     .home-button { background:#166534; border-color:#22c55e; }
     .home-button:hover:not(:disabled) { background:#15803d; }
     .next-button[hidden], .start-button[hidden], .home-button[hidden] { display:none; }
@@ -380,7 +378,6 @@
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
-        <button class="pause-button" id="pauseButton" hidden aria-pressed="false">一時停止</button>
         <button class="home-button" id="homeButton" hidden>ホームへ戻る</button>
       </div>
     </section>
@@ -539,6 +536,13 @@
       },
     });
     const initialSave = saveController.load();
+    // Resume battles saved by older versions while the pause feature existed.
+    const resumedLegacyPause = initialSave.loaded &&
+      store.getState().phase === GAME_PHASE.PAUSED;
+    if (resumedLegacyPause) {
+      store.dispatch({ type: GAME_ACTION.RESUME_BATTLE });
+      saveController.save();
+    }
     attachAutoCloudSync({ saveController });
     let statusText = "「冒険を始める」を押してゲームを開始しよう。";
     let statusTone = "";
@@ -548,7 +552,6 @@
       [GAME_PHASE.BATTLE]: "バトル中",
       [GAME_PHASE.VICTORY]: "勝利",
       [GAME_PHASE.DEFEAT]: "敗北",
-      [GAME_PHASE.PAUSED]: "一時停止",
     };
 
     function setStatus(message, tone = "") {
@@ -722,12 +725,8 @@
       $("enemyTraits").className = "enemy-traits" + (enemy?.isBoss ? " boss" : "");
 
       const active = state.phase === GAME_PHASE.BATTLE;
-      const paused = state.phase === GAME_PHASE.PAUSED;
-      const inBattle = active || paused;
+      const inBattle = active;
       const canControl = active && !awaitingSkill && wordState.phase === "active";
-      $("pauseButton").hidden = !inBattle;
-      $("pauseButton").textContent = paused ? "再開する" : "一時停止";
-      $("pauseButton").setAttribute("aria-pressed", String(paused));
       $("leftButton").disabled = !canControl;
       $("rightButton").disabled = !canControl;
       $("confirmButton").disabled = !(
@@ -798,19 +797,14 @@
       );
       $("enemyAttackTimer").textContent = !inBattle
         ? "戦闘中に敵の時間攻撃が発生"
-        : paused
-          ? "一時停止中 · 時間停止"
-          : !attackClockRunning
+        : !attackClockRunning
             ? "技選択中 · 時間停止"
           : attackClock.isWarning
             ? "⚠ 攻撃予告！あと " + (attackClock.remainingMs / 1000).toFixed(1) + "秒"
             : "次の攻撃まで " +
               (attackClock.remainingMs / 1000).toFixed(1) + "秒";
 
-      if (state.phase === GAME_PHASE.PAUSED) {
-        $("coverTitle").textContent = "一時停止中";
-        $("coverNote").textContent = "再開するまで敵の攻撃時間は止まっているよ。下の「再開する」を押して続けよう。";
-      } else if (state.phase === GAME_PHASE.VICTORY) {
+      if (state.phase === GAME_PHASE.VICTORY) {
         const floorCleared = dungeonProgress.floorCleared;
         $("coverTitle").textContent = (state.enemy?.name ?? "敵") + "を倒した！";
         $("coverNote").textContent = floorCleared
@@ -930,30 +924,6 @@
       setStatus(dungeon.getDungeonInfo().name + " · " + progress.floor + "階 " + progress.enemyNumber + "体目！まずは使う技を選ぼう。");
       render();
       saveProgress();
-    }
-
-    function toggleBattlePause() {
-      const phase = store.getState().phase;
-      if (phase === GAME_PHASE.BATTLE) {
-        setStatus("バトルを一時停止したよ。準備ができたら「再開する」を押そう。");
-        store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
-      } else if (phase === GAME_PHASE.PAUSED) {
-        store.dispatch({ type: GAME_ACTION.RESUME_BATTLE });
-        setStatus("バトル再開！敵の攻撃までの時間は一時停止したところから続くよ。");
-      } else {
-        return;
-      }
-      render();
-      saveProgress();
-    }
-
-    function pauseBattleForInterruption(message) {
-      if (store.getState().phase !== GAME_PHASE.BATTLE) return false;
-      setStatus(message);
-      store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
-      render();
-      saveProgress();
-      return true;
     }
 
     function move(direction) {
@@ -1102,7 +1072,6 @@
       }
       startGame();
     });
-    $("pauseButton").addEventListener("click", toggleBattlePause);
     $("homeButton").addEventListener("click", returnHome);
     $("nextButton").addEventListener("click", () => {
       if (store.getState().phase !== GAME_PHASE.BATTLE ||
@@ -1149,10 +1118,6 @@
       }
       if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") move(-1);
       if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") move(1);
-      if ((event.key === "p" || event.key === "P") && !event.repeat) {
-        event.preventDefault();
-        toggleBattlePause();
-      }
       if (event.key === "Enter") {
         event.preventDefault();
         confirmLaneLetter();
@@ -1164,18 +1129,12 @@
       if (action) saveProgress();
     });
     render();
-    if (initialSave.loaded && store.getState().phase === GAME_PHASE.PAUSED) {
-      setStatus("前回のバトルは一時停止中だよ。「再開する」を押すと続きから戦えるよ。");
+    if (resumedLegacyPause) {
+      setStatus("前回のバトルの続きを再開したよ。");
     } else if (initialSave.reason === "invalid-save") {
       setStatus("保存データを読み込めなかったよ。新しく冒険を始めてね。", "bad");
     }
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        pauseBattleForInterruption("画面を離れたためバトルを一時停止したよ。戻ったら「再開する」を押してね。");
-      }
-    });
     window.addEventListener("pagehide", () => {
-      pauseBattleForInterruption("画面を離れたためバトルを一時停止して保存したよ。");
       saveProgress();
     });
 

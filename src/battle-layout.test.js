@@ -102,21 +102,17 @@ test("enemy attack countdown shows a visible three-second warning and progress m
 });
 
 
-test("battle can be paused and resumed from touch controls without showing start-game", () => {
-  assert.match(html, /id="pauseButton" hidden aria-pressed="false">一時停止/);
-  assert.match(html, /\$\("pauseButton"\)\.textContent = paused \? "再開する" : "一時停止"/);
+test("バトル画面に一時停止ボタンや自動一時停止処理を表示しない", () => {
+  assert.doesNotMatch(html, /pauseButton|toggleBattlePause|pauseBattleForInterruption/);
+  assert.doesNotMatch(html, /visibilitychange/);
+  assert.doesNotMatch(html, /一時停止中/);
+  assert.match(html, /window\.addEventListener\("pagehide", \(\) => \{\s*saveProgress\(\);\s*\}\)/);
   assert.match(html, /\$\("startButton"\)\.hidden = inBattle/);
-  assert.match(html, /state\.phase === GAME_PHASE\.PAUSED[\s\S]*?一時停止中/);
-  assert.match(html, /\$\("pauseButton"\)\.addEventListener\("click", toggleBattlePause\)/);
 });
 
-test("leaving the battle tab automatically pauses and preserves the enemy timer", () => {
-  assert.match(html, /document\.addEventListener\("visibilitychange"/);
-  assert.match(html, /if \(document\.hidden\)/);
-  assert.match(html, /pauseBattleForInterruption\(/);
-  assert.match(html, /window\.addEventListener\("pagehide"/);
-  assert.match(html, /GAME_PHASE\.PAUSED[\s\S]*?一時停止中 · 時間停止/);
-  assert.match(html, /inBattle \? attackClock\.progress \* 100 : 0/);
+test("旧セーブが一時停止状態ならロード時に自動でバトルを再開する", () => {
+  assert.match(html, /const resumedLegacyPause = initialSave\.loaded &&\s*store\.getState\(\)\.phase === GAME_PHASE\.PAUSED/);
+  assert.match(html, /if \(resumedLegacyPause\) \{\s*store\.dispatch\(\{ type: GAME_ACTION\.RESUME_BATTLE \}\);\s*saveController\.save\(\);/);
 });
 
 
