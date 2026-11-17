@@ -18,7 +18,7 @@ test("battle layout keeps gameplay, HP, and inventory while hiding manual save c
   for (const id of [
     "japanesePrompt", "spellingProgress", "arena", "lettersLayer",
     "leftButton", "confirmButton", "rightButton", "startButton",
-    "nextButton", "homeButton", "enemyHp", "enemyHpFill", "playerHp", "playerHpFill",
+    "nextButton", "homeButton", "enemyImage", "enemyHp", "enemyHpFill", "playerHp", "playerHpFill",
     "enemyAttackTimer", "inventoryItems", "townBackLink",
   ]) {
     assert.match(html, new RegExp('id="' + id + '"'));
@@ -29,6 +29,15 @@ test("battle layout keeps gameplay, HP, and inventory while hiding manual save c
   assert.doesNotMatch(html, /aria-label="セーブデータ"|💾 セーブデータ/);
   assert.match(html, /const initialSave = saveController\.load\(\)/);
   assert.match(html, /function saveProgress\(\)\s*\{\s*return saveController\.save\(\);\s*\}/);
+});
+
+test("enemy panel contains an image element that follows the active enemy sprite definition", () => {
+  assert.match(html, /<img class="enemy-image" id="enemyImage" alt="" hidden>/);
+  assert.match(html, /const enemyImagePath = enemy/);
+  assert.match(html, /ENEMY_DEFINITIONS\[enemy\.id\]\?\.image/);
+  assert.match(html, /enemyImage\.src = source/);
+  assert.match(html, /enemyImage\.hidden = false/);
+  assert.match(html, /enemyImage\.hidden = true/);
 });
 
 test("mobile layout retains a single-column fallback", () => {

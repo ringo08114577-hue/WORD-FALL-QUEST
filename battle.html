@@ -53,6 +53,13 @@
     .vital { background:#111d30; border-radius:11px; padding:9px; }
     .vital-head { display:flex; justify-content:space-between; gap:8px; margin-bottom:5px; font-size:.76rem; font-weight:800; }
     .hp-text { color:#d8e5f8; font-variant-numeric:tabular-nums; }
+    .enemy-vital-content { display:flex; align-items:center; gap:10px; min-width:0; }
+    .enemy-image {
+      display:block; flex:0 0 auto; width:clamp(72px, 9vw, 112px); height:108px;
+      object-fit:contain; filter:drop-shadow(0 7px 9px rgba(0,0,0,.32));
+    }
+    .enemy-image[hidden] { display:none; }
+    .enemy-info { flex:1; min-width:0; }
     .enemy-traits { min-height:1em; margin-top:6px; color:#a8bdd7; font-size:.68rem; line-height:1.4; }
     .enemy-traits.boss { color:#fda4af; font-weight:850; }
     .bar { height:8px; background:#26354b; overflow:hidden; border-radius:99px; }
@@ -273,6 +280,8 @@
       .battle-status .message { margin:2px 0 4px; font-size:.68rem; line-height:1.2; }
       .battle-status .progression { margin:1px 0 4px; font-size:.6rem; }
       .question-panel { padding:6px 8px; margin:4px 0; }
+      .enemy-vital-content { gap:5px; align-items:flex-start; }
+      .enemy-image { width:58px; height:68px; }
       .enemy-traits { max-height:1em; overflow:hidden; font-size:.58rem; margin-top:2px; }
       .enemy-attack-timer { margin-top:2px; font-size:.6rem; }
       .panel-title h2 { font-size:.82rem; }
@@ -397,11 +406,16 @@
           <div class="progression" id="playerProgression">LV.1 · EXP 0 / 100</div>
         </div>
         <div class="vital enemy-vital">
-          <div class="vital-head"><span id="enemyName">🟢 スライム</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
-          <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
-          <div class="enemy-traits" id="enemyTraits" aria-live="polite"></div>
-          <div class="enemy-attack-timer" id="enemyAttackTimer">技を選んで戦闘開始</div>
-          <div class="enemy-attack-meter" id="enemyAttackMeter" aria-hidden="true"><div class="enemy-attack-meter-fill" id="enemyAttackMeterFill"></div></div>
+          <div class="enemy-vital-content">
+            <img class="enemy-image" id="enemyImage" alt="" hidden>
+            <div class="enemy-info">
+              <div class="vital-head"><span id="enemyName">敵</span><span class="hp-text" id="enemyHp">HP 3 / 3</span></div>
+              <div class="bar" id="enemyHpBar" role="progressbar" aria-label="敵HP" aria-valuemin="0" aria-valuemax="3" aria-valuenow="3"><div class="bar-fill enemy" id="enemyHpFill"></div></div>
+              <div class="enemy-traits" id="enemyTraits" aria-live="polite"></div>
+              <div class="enemy-attack-timer" id="enemyAttackTimer">技を選んで戦闘開始</div>
+              <div class="enemy-attack-meter" id="enemyAttackMeter" aria-hidden="true"><div class="enemy-attack-meter-fill" id="enemyAttackMeterFill"></div></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -451,7 +465,7 @@
     import { attachAutoCloudSync } from "./src/auto-cloud-sync.js";
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
-    import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
+    import { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS } from "./src/enemies.js";
     import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
@@ -706,9 +720,23 @@
       renderInventory(state);
 
       const enemy = state.enemy;
+      const enemyImage = $("enemyImage");
+      const enemyImagePath = enemy
+        ? (enemy.image ?? ENEMY_DEFINITIONS[enemy.id]?.image ?? null)
+        : null;
+      if (enemyImagePath) {
+        const source = "./" + enemyImagePath;
+        if (enemyImage.getAttribute("src") !== source) enemyImage.src = source;
+        enemyImage.alt = enemy.name + "の画像";
+        enemyImage.hidden = false;
+      } else {
+        enemyImage.hidden = true;
+        enemyImage.removeAttribute("src");
+        enemyImage.alt = "";
+      }
       $("enemyName").textContent = enemy
-        ? (enemy.isBoss ? "🐉 BOSS " : "🟢 ") + enemy.name
-        : "🟢 敵";
+        ? (enemy.isBoss ? "🐉 BOSS " : "") + enemy.name
+        : "敵";
       const enemyHp = enemy ? enemy.hp : 3;
       const enemyMaxHp = enemy ? enemy.maxHp : 3;
       $("enemyHp").textContent = "HP " + enemyHp + " / " + enemyMaxHp;

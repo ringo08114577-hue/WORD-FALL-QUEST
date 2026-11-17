@@ -24,20 +24,28 @@ export const ENEMY_ABILITY_DEFINITIONS = Object.freeze({
 
 export const ENEMY_DEFINITIONS = Object.freeze({
   slime: Object.freeze({
-    id: "slime", name: "スライム", maxHp: 160, attackPower: 20,
-    experienceReward: 100, abilities: Object.freeze([]),
+    id: "slime", name: "グリーンスライム", image: "assets/enemies/green-slime.webp",
+    maxHp: 160, attackPower: 20, experienceReward: 100, abilities: Object.freeze([]),
+  }),
+  "orange-slime": Object.freeze({
+    id: "orange-slime", name: "オレンジスライム",
+    image: "assets/enemies/orange-slime.webp",
+    maxHp: 190, attackPower: 23, experienceReward: 130,
+    abilities: Object.freeze([]),
   }),
   bat: Object.freeze({
-    id: "bat", name: "コウモリ", maxHp: 180, attackPower: 25,
-    experienceReward: 120, abilities: Object.freeze(["swift"]),
+    id: "bat", name: "お化けコウモリ", image: "assets/enemies/ghost-bat.webp",
+    maxHp: 180, attackPower: 25, experienceReward: 120,
+    abilities: Object.freeze(["swift"]),
   }),
   goblin: Object.freeze({
     id: "goblin", name: "ゴブリン", maxHp: 230, attackPower: 25,
     experienceReward: 150, abilities: Object.freeze(["guard"]),
   }),
   orc: Object.freeze({
-    id: "orc", name: "オーク", maxHp: 300, attackPower: 35,
-    experienceReward: 200, abilities: Object.freeze(["piercing"]),
+    id: "orc", name: "オーク", image: "assets/enemies/orc.webp",
+    maxHp: 300, attackPower: 35, experienceReward: 200,
+    abilities: Object.freeze(["piercing"]),
   }),
   "moss-golem": Object.freeze({
     id: "moss-golem", name: "こけゴーレム", maxHp: 420, attackPower: 40,

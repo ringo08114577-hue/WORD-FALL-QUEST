@@ -6,14 +6,28 @@ import {
 } from "./enemies.js";
 
 test("敵カタログには基本敵・追加敵・ボスが登録されている", () => {
-  assert.deepEqual(Object.keys(ENEMY_DEFINITIONS).slice(0, 6), [
-    "slime", "bat", "goblin", "orc", "moss-golem", "forest-dragon",
+  assert.deepEqual(Object.keys(ENEMY_DEFINITIONS).slice(0, 7), [
+    "slime", "orange-slime", "bat", "goblin", "orc", "moss-golem", "forest-dragon",
   ]);
-  assert.deepEqual(Object.keys(ENEMY_DEFINITIONS).slice(6), [
+  assert.deepEqual(Object.keys(ENEMY_DEFINITIONS).slice(7), [
     "ice-wolf", "ice-golem", "ice-dragon",
   ]);
   assert.equal(ENEMY_DEFINITIONS["forest-dragon"].isBoss, true);
   assert.equal(Object.isFrozen(ENEMY_DEFINITIONS), true);
+});
+
+test("4体のキャラクター名と透過画像パスが登録され、生成後の敵にも引き継がれる", () => {
+  const expected = {
+    slime: ["グリーンスライム", "assets/enemies/green-slime.webp"],
+    "orange-slime": ["オレンジスライム", "assets/enemies/orange-slime.webp"],
+    bat: ["お化けコウモリ", "assets/enemies/ghost-bat.webp"],
+    orc: ["オーク", "assets/enemies/orc.webp"],
+  };
+  for (const [id, [name, image]] of Object.entries(expected)) {
+    assert.equal(ENEMY_DEFINITIONS[id].name, name);
+    assert.equal(ENEMY_DEFINITIONS[id].image, image);
+    assert.equal(createEnemy(id).image, image);
+  }
 });
 
 test("敵の能力IDから戦闘効果を集計できる", () => {
@@ -36,7 +50,7 @@ test("敵の能力一覧は個別生成され、呼び出し元の変更が定�
 });
 
 test("フロア編成は5階分あり、最深部にボスがいる", () => {
-  assert.deepEqual(getFloorEnemyIds(1), ["slime", "bat", "goblin"]);
+  assert.deepEqual(getFloorEnemyIds(1), ["slime", "orange-slime", "goblin"]);
   assert.deepEqual(getFloorEnemyIds(2), ["bat", "orc", "moss-golem"]);
   assert.deepEqual(getFloorEnemyIds(3), ["goblin", "orc", "moss-golem"]);
   assert.deepEqual(getFloorEnemyIds(4), ["orc", "moss-golem", "goblin"]);

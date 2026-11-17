@@ -7,7 +7,7 @@ import { createEnemy, getFloorEnemyIds, getLegacyFloorEnemyIds } from "./enemies
 import { getDungeonFloorReward } from "./game-config.js";
 import { DEFAULT_DUNGEON_ID, DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
-export const CURRENT_ENCOUNTER_SET_VERSION = 3;
+export const CURRENT_ENCOUNTER_SET_VERSION = 4;
 export const MAX_DUNGEON_FLOORS = 5;
 
 const dungeonIds = Object.keys(DUNGEON_DEFINITIONS);
@@ -32,6 +32,15 @@ function getLegacyV2EncounterIds(floor, dungeonId) {
     throw new RangeError("旧編成に対応していないダンジョンです: " + dungeonId);
   }
   return [...sets[(floor - 1) % sets.length]];
+}
+
+function getLegacyV3EncounterIds(floor, dungeonId) {
+  const dungeonInfo = DUNGEON_DEFINITIONS[dungeonId];
+  const sets = dungeonInfo?.legacyEncounterSetsV3;
+  if (!Array.isArray(sets) || !sets[floor - 1]) {
+    throw new RangeError("旧編成バージョン3に対応していないダンジョンです: " + dungeonId);
+  }
+  return [...sets[floor - 1]];
 }
 
 function normalizedProgressMap(raw, fallbackFactory, validateValue) {
@@ -72,6 +81,7 @@ export function createDungeonController(
   const getEncounterIds = (targetFloor = floor, version = encounterSetVersion, targetId = dungeonId) => {
     if (version === 1) return getLegacyFloorEnemyIds(targetId);
     if (version === 2) return getLegacyV2EncounterIds(targetFloor, targetId);
+    if (version === 3) return getLegacyV3EncounterIds(targetFloor, targetId);
     return getFloorEnemyIds(targetFloor, targetId);
   };
 
@@ -288,7 +298,7 @@ export function createDungeonController(
       const version = data.encounterSetVersion ?? 1;
       if (!Number.isSafeInteger(data.floor) || data.floor < 1 ||
           !Number.isSafeInteger(data.enemyIndex) || data.enemyIndex < 0 ||
-          ![1, 2, CURRENT_ENCOUNTER_SET_VERSION].includes(version) ||
+          ![1, 2, 3, CURRENT_ENCOUNTER_SET_VERSION].includes(version) ||
           typeof data.started !== "boolean" || typeof data.rewardClaimed !== "boolean") {
         return false;
       }

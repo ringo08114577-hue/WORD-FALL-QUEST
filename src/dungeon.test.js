@@ -32,6 +32,17 @@ test("ダンジョンは5階構成で、最初の敵から開始する", () => {
   assert.equal(dungeon.start().reason, "already-started");
 });
 
+test("森の序盤にオレンジスライムが登場する", () => {
+  const store = createGameStore();
+  const dungeon = createDungeonController(store);
+  dungeon.start();
+  winCurrentEnemy(store);
+  const next = dungeon.advance();
+  assert.equal(next.enemy.id, "orange-slime");
+  assert.equal(next.enemy.name, "オレンジスライム");
+  assert.equal(next.enemy.image, "assets/enemies/orange-slime.webp");
+});
+
 test("階層を全員倒して報酬を受け取ると次の階が解放される", () => {
   const store = createGameStore();
   const dungeon = createDungeonController(store);
@@ -179,6 +190,23 @@ test("旧バージョン2の途中階層セーブは旧敵編成で検証でき�
     started: true,
     rewardClaimed: false,
     encounterSetVersion: 2,
+  }), true);
+});
+
+test("旧バージョン3のセーブも旧敵編成として検証できる", () => {
+  const store = createGameStore();
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: createEnemy("moss-golem", { floor: 3 }),
+  });
+  const dungeon = createDungeonController(store);
+  assert.equal(dungeon.isValidSaveData({
+    dungeonId: "forest-ruins",
+    floor: 3,
+    enemyIndex: 2,
+    started: true,
+    rewardClaimed: false,
+    encounterSetVersion: 3,
   }), true);
 });
 

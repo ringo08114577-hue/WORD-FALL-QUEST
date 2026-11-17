@@ -19,8 +19,15 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
       Object.freeze(["bat", "orc", "moss-golem"]),
       Object.freeze(["goblin", "moss-golem", "forest-dragon"]),
     ]),
-    encounterSets: Object.freeze([
+    legacyEncounterSetsV3: Object.freeze([
       Object.freeze(["slime", "bat", "goblin"]),
+      Object.freeze(["bat", "orc", "moss-golem"]),
+      Object.freeze(["goblin", "orc", "moss-golem"]),
+      Object.freeze(["orc", "moss-golem", "goblin"]),
+      Object.freeze(["moss-golem", "goblin", "forest-dragon"]),
+    ]),
+    encounterSets: Object.freeze([
+      Object.freeze(["slime", "orange-slime", "goblin"]),
       Object.freeze(["bat", "orc", "moss-golem"]),
       Object.freeze(["goblin", "orc", "moss-golem"]),
       Object.freeze(["orc", "moss-golem", "goblin"]),
@@ -50,6 +57,13 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
     legacyEncounterSetsV2: Object.freeze([
       Object.freeze(["ice-wolf", "orc", "ice-golem"]),
       Object.freeze(["ice-wolf", "ice-golem", "ice-dragon"]),
+      Object.freeze(["orc", "ice-golem", "ice-dragon"]),
+    ]),
+    legacyEncounterSetsV3: Object.freeze([
+      Object.freeze(["ice-wolf", "orc", "ice-golem"]),
+      Object.freeze(["ice-wolf", "ice-golem", "orc"]),
+      Object.freeze(["orc", "ice-golem", "ice-wolf"]),
+      Object.freeze(["ice-golem", "orc", "ice-wolf"]),
       Object.freeze(["orc", "ice-golem", "ice-dragon"]),
     ]),
     encounterSets: Object.freeze([
