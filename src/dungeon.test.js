@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createDungeonController, MAX_DUNGEON_FLOORS } from "./dungeon.js";
-import { createEnemy } from "./enemies.js";
+import { createEnemy, ENEMY_DEFINITIONS } from "./enemies.js";
 
 function winCurrentEnemy(store) {
   store.dispatch({
@@ -40,7 +40,7 @@ test("森の序盤にオレンジスライムが登場する", () => {
   const next = dungeon.advance();
   assert.equal(next.enemy.id, "orange-slime");
   assert.equal(next.enemy.name, "オレンジスライム");
-  assert.equal(next.enemy.image, "assets/enemies/orange-slime.webp");
+  assert.equal(ENEMY_DEFINITIONS[next.enemy.id].image, "assets/enemies/orange-slime.webp");
 });
 
 test("階層を全員倒して報酬を受け取ると次の階が解放される", () => {

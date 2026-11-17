@@ -33,7 +33,8 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
   const slime = createEnemy("slime");
   assert.deepEqual(slime, {
     id: "slime",
-    name: "スライム",
+    name: "グリーンスライム",
+    image: "assets/enemies/green-slime.webp",
     maxHp: 160,
     attackPower: 20,
     experienceReward: 100,
