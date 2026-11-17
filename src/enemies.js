@@ -7,6 +7,21 @@ import { DEFAULT_DUNGEON_ID, DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
 export { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS };
 
+/**
+ * Prefer the current catalog image over an image value persisted in an old save.
+ * Unknown legacy enemies may still use their saved image path as a fallback.
+ */
+export function getEnemyImagePath(enemy) {
+  if (!enemy || typeof enemy !== "object" || Array.isArray(enemy)) return null;
+  if (typeof enemy.id === "string" && Object.hasOwn(ENEMY_DEFINITIONS, enemy.id)) {
+    const image = ENEMY_DEFINITIONS[enemy.id].image;
+    return typeof image === "string" && image.trim() ? image : null;
+  }
+  return typeof enemy.image === "string" && enemy.image.trim()
+    ? enemy.image
+    : null;
+}
+
 export function getLegacyFloorEnemyIds(dungeonId = DEFAULT_DUNGEON_ID) {
   const dungeon = Object.hasOwn(DUNGEON_DEFINITIONS, dungeonId)
     ? DUNGEON_DEFINITIONS[dungeonId]

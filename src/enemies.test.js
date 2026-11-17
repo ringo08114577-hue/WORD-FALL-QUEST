@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
 import {
   ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS, createEnemy,
-  getEnemyAbilityEffects, getFloorEnemyIds,
+  getEnemyAbilityEffects, getEnemyImagePath, getFloorEnemyIds,
 } from "./enemies.js";
 
 test("敵カタログには基本敵・追加敵・ボスが登録されている", () => {
@@ -28,6 +29,28 @@ test("4体のキャラクター名と透過画像パスが登録され、生成�
     assert.equal(ENEMY_DEFINITIONS[id].image, image);
     assert.equal(createEnemy(id).image, image);
   }
+});
+
+test("敵カタログに設定した画像ファイルがすべて実在し、WebPとして読める", () => {
+  const imageEntries = Object.entries(ENEMY_DEFINITIONS)
+    .filter(([, definition]) => definition.image);
+  assert.equal(imageEntries.length, 4);
+  for (const [id, definition] of imageEntries) {
+    const path = new URL("../" + definition.image, import.meta.url);
+    assert.ok(existsSync(path), id + " の画像ファイルがありません: " + definition.image);
+    const image = readFileSync(path);
+    assert.equal(image.toString("ascii", 8, 12), "WEBP", id + " の画像がWebP形式ではありません");
+  }
+});
+
+test("既知の敵は古いセーブ内の画像パスではなく最新カタログの画像を使う", () => {
+  assert.equal(
+    getEnemyImagePath({ id: "slime", image: "assets/old-green-slime.webp" }),
+    "assets/enemies/green-slime.webp",
+  );
+  assert.equal(getEnemyImagePath({ id: "goblin", image: "assets/old-goblin.webp" }), null);
+  assert.equal(getEnemyImagePath({ id: "legacy-enemy", image: "assets/legacy.webp" }), "assets/legacy.webp");
+  assert.equal(getEnemyImagePath(null), null);
 });
 
 test("敵の能力IDから戦闘効果を集計できる", () => {

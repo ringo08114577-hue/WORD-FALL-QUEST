@@ -465,11 +465,19 @@
     import { attachAutoCloudSync } from "./src/auto-cloud-sync.js";
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
-    import { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS } from "./src/enemies.js";
+    import { ENEMY_ABILITY_DEFINITIONS, getEnemyImagePath } from "./src/enemies.js";
     import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
     const $ = (id) => document.getElementById(id);
+
+    const enemyImageElement = $("enemyImage");
+    enemyImageElement.addEventListener("load", () => {
+      enemyImageElement.hidden = false;
+    });
+    enemyImageElement.addEventListener("error", () => {
+      enemyImageElement.hidden = true;
+    });
 
     // Build buttons from the skill catalog so every equipped skill can be used.
     function buildSkillButtons() {
@@ -721,14 +729,16 @@
 
       const enemy = state.enemy;
       const enemyImage = $("enemyImage");
-      const enemyImagePath = enemy
-        ? (enemy.image ?? ENEMY_DEFINITIONS[enemy.id]?.image ?? null)
-        : null;
+      const enemyImagePath = getEnemyImagePath(enemy);
       if (enemyImagePath) {
-        const source = "./" + enemyImagePath;
-        if (enemyImage.getAttribute("src") !== source) enemyImage.src = source;
+        // Resolve from the current page URL so images also work under the
+        // /WORD-FALL-QUEST/ GitHub Pages project path.
+        const source = new URL(enemyImagePath.replace(/^\/+/, ""), document.baseURI).href;
+        if (enemyImage.getAttribute("src") !== source) {
+          enemyImage.hidden = true;
+          enemyImage.src = source;
+        }
         enemyImage.alt = enemy.name + "の画像";
-        enemyImage.hidden = false;
       } else {
         enemyImage.hidden = true;
         enemyImage.removeAttribute("src");

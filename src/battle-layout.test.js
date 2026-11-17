@@ -33,9 +33,11 @@ test("battle layout keeps gameplay, HP, and inventory while hiding manual save c
 
 test("enemy panel contains an image element that follows the active enemy sprite definition", () => {
   assert.match(html, /<img class="enemy-image" id="enemyImage" alt="" hidden>/);
-  assert.match(html, /const enemyImagePath = enemy/);
-  assert.match(html, /ENEMY_DEFINITIONS\[enemy\.id\]\?\.image/);
+  assert.match(html, /const enemyImagePath = getEnemyImagePath\(enemy\)/);
+  assert.ok(html.includes('new URL(enemyImagePath.replace(/^\\/+/, ""), document.baseURI).href'));
   assert.match(html, /enemyImage\.src = source/);
+  assert.match(html, /enemyImage\.addEventListener\("load"/);
+  assert.match(html, /enemyImage\.addEventListener\("error"/);
   assert.match(html, /enemyImage\.hidden = false/);
   assert.match(html, /enemyImage\.hidden = true/);
 });
