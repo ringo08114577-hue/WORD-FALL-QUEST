@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { SKILL_DEFINITIONS } from "./skills.js";
 import { readFileSync } from "node:fs";
 
 const html = readFileSync(new URL("../battle.html", import.meta.url), "utf8");
@@ -133,12 +134,10 @@ test("バトルのスキル選択ボタンはスキル定義から全6種類を�
   assert.match(html, /buildSkillButtons\(\)/);
   assert.match(html, /getSkillWordDifficultyRange\(skillId, level\)/);
   assert.match(html, /getSkillEffectForLevel\(skillId, level, evolved\)/);
-  for (const skillId of [
+  assert.deepEqual(Object.keys(SKILL_DEFINITIONS), [
     "quick-strike", "power-strike", "ultimate-strike",
     "healing-light", "iron-guard", "battle-cry",
-  ]) {
-    assert.ok(html.includes('"' + skillId + '"') || html.includes('data-skill="' + skillId + '"'));
-  }
+  ]);
   assert.doesNotMatch(html, /getSkillLevelDifficultyRange\(level\)/);
 });
 
