@@ -168,7 +168,6 @@ test("敵撃破後は未制覇なら次の敵・宝箱・次階層へ進むボ�
   assert.match(html, /: "宝箱を開ける"/);
   assert.match(html, /: "次の階へ"/);
 });
-});
 
 test("敗北してもプレイヤーの育成データを消さず、現在の階から再挑戦する", () => {
   assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \? "この階から再挑戦"/);
