@@ -385,7 +385,7 @@
         <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
-      <p class="howto">操作：PCは数字キー1〜5で対応レーンへ移動、同じ数字でもう一度押すと決定。スマホはレーンをタップして選択、同じレーンをもう一度タップすると決定！画面下のボタンも使えるよ。</p>
+      <p class="howto">操作：PCは数字キー1〜5を1回押すだけで移動・決定。スマホもレーンを1回タップするだけで決定！画面下のボタンも使えるよ。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -515,8 +515,6 @@
     let enemyAttackCount = 0;
     let awaitingSkill = false;
     let selectedSkillId = null;
-    // The same number key twice in a row selects and confirms a lane.
-    let lastSelectedLane = null;
     const saveController = createSaveController({
       store,
       dungeon,
@@ -973,7 +971,6 @@
     }
 
     function move(direction) {
-      lastSelectedLane = null;
       if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
       wordState = movePlayer(wordState, direction);
       render();
@@ -993,7 +990,6 @@
       wordState = spawnLaneWave(wordState);
       selectedSkillId = skillId;
       awaitingSkill = false;
-      lastSelectedLane = null;
       spawnElapsed = 0;
       setStatus(
         getSkillDisplayName(skillId, currentState.evolvedSkillIds?.includes(skillId) === true) +
@@ -1006,7 +1002,6 @@
     }
 
     function confirmLaneLetter() {
-      lastSelectedLane = null;
       if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
       const picked = collectCurrentLaneLetter(wordState);
       if (picked.result === "waiting" || !picked.event) return;
@@ -1029,23 +1024,15 @@
       saveProgress();
     }
 
-    function selectLaneWithRepeatedInput(lane) {
+    function selectLaneAndConfirm(lane) {
       const state = store.getState();
       if (state.phase !== GAME_PHASE.BATTLE || awaitingSkill || wordState.phase !== "active") {
-        lastSelectedLane = null;
         return;
       }
 
-      if (lastSelectedLane === lane) {
-        lastSelectedLane = null;
-        wordState = setPlayerLane(wordState, lane);
-        confirmLaneLetter();
-        return;
-      }
-
-      lastSelectedLane = lane;
+      // One number-key press or one lane tap immediately confirms the lane.
       wordState = setPlayerLane(wordState, lane);
-      render();
+      confirmLaneLetter();
     }
 
     function flashDamage(target) {
@@ -1187,7 +1174,7 @@
       if (!bounds.width || event.clientX < bounds.left || event.clientX >= bounds.right) return;
       const relativeX = (event.clientX - bounds.left) / bounds.width;
       const lane = Math.min(wordState.laneCount - 1, Math.floor(relativeX * wordState.laneCount));
-      selectLaneWithRepeatedInput(lane);
+      selectLaneAndConfirm(lane);
     });
 
     window.addEventListener("keydown", (event) => {
@@ -1205,7 +1192,7 @@
         // Holding a key must not count as pressing the same number a second time.
         if (event.repeat) return;
 
-        selectLaneWithRepeatedInput(numberKey - 1);
+        selectLaneAndConfirm(numberKey - 1);
         return;
       }
 
