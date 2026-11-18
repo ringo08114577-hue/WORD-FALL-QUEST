@@ -5,6 +5,7 @@ import {
   ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS, createEnemy,
   getEnemyAbilityEffects, getEnemyImagePath, getFloorEnemyIds,
 } from "./enemies.js";
+import { CHARACTER_IMAGE_CATALOG, DEFAULT_CHARACTER_IMAGE, getCharacterImagePath } from "./character-images.js";
 
 test("敵カタログには基本敵・追加敵・ボスが登録されている", () => {
   assert.deepEqual(Object.keys(ENEMY_DEFINITIONS).slice(0, 7), [
@@ -17,7 +18,7 @@ test("敵カタログには基本敵・追加敵・ボスが登録されてい�
   assert.equal(Object.isFrozen(ENEMY_DEFINITIONS), true);
 });
 
-test("4体のキャラクター名と透過画像パスが登録され、生成後の敵にも引き継がれる", () => {
+test("キャラクター画像は共通カタログで管理され、未登録キャラは仮画像になる", () => {
   const expected = {
     slime: ["グリーンスライム", "assets/enemies/green-slime.webp"],
     "orange-slime": ["オレンジスライム", "assets/enemies/orange-slime.webp"],
@@ -26,13 +27,20 @@ test("4体のキャラクター名と透過画像パスが登録され、生成�
   };
   for (const [id, [name, image]] of Object.entries(expected)) {
     assert.equal(ENEMY_DEFINITIONS[id].name, name);
-    assert.equal(ENEMY_DEFINITIONS[id].image, image);
-    assert.equal(createEnemy(id).image, image);
+    assert.equal(CHARACTER_IMAGE_CATALOG[id].image, image);
+    assert.equal(getCharacterImagePath(id), image);
+    assert.equal(getEnemyImagePath(createEnemy(id)), image);
+  }
+  for (const id of Object.keys(ENEMY_DEFINITIONS)) {
+    assert.ok(Object.hasOwn(CHARACTER_IMAGE_CATALOG, id), id + " の画像登録枠がありません");
+  }
+  for (const id of ["hero", "goblin", "moss-golem", "forest-dragon", "ice-wolf", "ice-golem", "ice-dragon"]) {
+    assert.equal(getCharacterImagePath(id), DEFAULT_CHARACTER_IMAGE);
   }
 });
 
-test("敵カタログに設定した画像ファイルがすべて実在し、WebPとして読める", () => {
-  const imageEntries = Object.entries(ENEMY_DEFINITIONS)
+test("共通カタログに登録した専用画像がすべて実在し、WebPとして読める", () => {
+  const imageEntries = Object.entries(CHARACTER_IMAGE_CATALOG)
     .filter(([, definition]) => definition.image);
   assert.equal(imageEntries.length, 4);
   for (const [id, definition] of imageEntries) {
@@ -41,15 +49,18 @@ test("敵カタログに設定した画像ファイルがすべて実在し、We
     const image = readFileSync(path);
     assert.equal(image.toString("ascii", 8, 12), "WEBP", id + " の画像がWebP形式ではありません");
   }
+  const placeholderPath = new URL("../" + DEFAULT_CHARACTER_IMAGE, import.meta.url);
+  assert.ok(existsSync(placeholderPath), "共通仮画像がありません");
+  assert.match(readFileSync(placeholderPath, "utf8"), /<svg\s/);
 });
 
-test("既知の敵は古いセーブ内の画像パスではなく最新カタログの画像を使う", () => {
+test("古いセーブの画像パスは無視し、未登録キャラを共通仮画像へ切り替える", () => {
   assert.equal(
     getEnemyImagePath({ id: "slime", image: "assets/old-green-slime.webp" }),
     "assets/enemies/green-slime.webp",
   );
-  assert.equal(getEnemyImagePath({ id: "goblin", image: "assets/old-goblin.webp" }), null);
-  assert.equal(getEnemyImagePath({ id: "legacy-enemy", image: "assets/legacy.webp" }), "assets/legacy.webp");
+  assert.equal(getEnemyImagePath({ id: "goblin", image: "assets/old-goblin.webp" }), DEFAULT_CHARACTER_IMAGE);
+  assert.equal(getEnemyImagePath({ id: "legacy-enemy", image: "assets/legacy.webp" }), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getEnemyImagePath(null), null);
 });
 

@@ -113,13 +113,14 @@
       transform:scale(1.08);
     }
     .player {
-      position:absolute; z-index:3; bottom:7px; width:44px; height:44px;
-      margin-left:-22px; display:grid; place-items:center;
-      border-radius:13px; background:rgba(37,99,235,.22);
-      border:1px solid #60a5fa; font-size:1.8rem;
+      position:absolute; z-index:3; bottom:5px; width:60px; height:66px;
+      margin-left:-30px; display:block; object-fit:contain;
+      border:0; border-radius:0; background:transparent;
       transition:left .09s ease;
-      filter:drop-shadow(0 5px 5px rgba(0,0,0,.25));
+      filter:drop-shadow(0 5px 5px rgba(0,0,0,.3));
+      pointer-events:none;
     }
+    .player[hidden] { display:none; }
     .arena-cover {
       position:absolute; z-index:4; inset:0; display:flex; flex-direction:column;
       align-items:center; justify-content:center; gap:6px; padding:12px;
@@ -372,7 +373,7 @@
         <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
         <div id="lettersLayer"></div>
         
-        <div class="player" id="playerSprite" aria-label="プレイヤー">🧙</div>
+        <img class="player" id="playerSprite" alt="主人公" hidden>
         <div class="arena-cover" id="arenaCover">
           <div class="cover-title" id="coverTitle">冒険の準備はできた？</div>
           <div class="cover-note" id="coverNote">左右に移動して、必要な文字のレーンで決定しよう。</div>
@@ -465,18 +466,17 @@
     import { attachAutoCloudSync } from "./src/auto-cloud-sync.js";
     import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
     import { createCombatController } from "./src/combat.js";
-    import { ENEMY_ABILITY_DEFINITIONS, getEnemyImagePath } from "./src/enemies.js";
+    import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
+    import { setCharacterImage, clearCharacterImage } from "./src/character-images.js";
     import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
 
     const $ = (id) => document.getElementById(id);
 
-    const enemyImageElement = $("enemyImage");
-    enemyImageElement.addEventListener("load", () => {
-      enemyImageElement.hidden = false;
-    });
-    enemyImageElement.addEventListener("error", () => {
-      enemyImageElement.hidden = true;
+    const playerImageElement = $("playerSprite");
+    setCharacterImage(playerImageElement, "hero", {
+      alt: "主人公の画像",
+      baseUrl: document.baseURI,
     });
 
     // Build buttons from the skill catalog so every equipped skill can be used.
@@ -729,20 +729,13 @@
 
       const enemy = state.enemy;
       const enemyImage = $("enemyImage");
-      const enemyImagePath = getEnemyImagePath(enemy);
-      if (enemyImagePath) {
-        // Resolve from the current page URL so images also work under the
-        // /WORD-FALL-QUEST/ GitHub Pages project path.
-        const source = new URL(enemyImagePath.replace(/^\/+/, ""), document.baseURI).href;
-        if (enemyImage.getAttribute("src") !== source) {
-          enemyImage.hidden = true;
-          enemyImage.src = source;
-        }
-        enemyImage.alt = enemy.name + "の画像";
+      if (enemy) {
+        setCharacterImage(enemyImage, enemy.id, {
+          alt: enemy.name + "の画像",
+          baseUrl: document.baseURI,
+        });
       } else {
-        enemyImage.hidden = true;
-        enemyImage.removeAttribute("src");
-        enemyImage.alt = "";
+        clearCharacterImage(enemyImage);
       }
       $("enemyName").textContent = enemy
         ? (enemy.isBoss ? "🐉 BOSS " : "") + enemy.name

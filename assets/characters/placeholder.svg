@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="キャラクター仮画像">
+  <defs>
+    <linearGradient id="cloak" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4d8bd"/><stop offset="1" stop-color="#dcae8c"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="10"/><feOffset dy="9"/>
+      <feComponentTransfer><feFuncA type="linear" slope=".24"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)" stroke="#18243b" stroke-width="15" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M112 444c8-88 58-137 144-137s136 49 144 137" fill="url(#cloak)"/>
+    <path d="M158 188c0-77 43-126 98-126s98 49 98 126v69c0 60-43 106-98 106s-98-46-98-106z" fill="url(#face)"/>
+    <path d="M139 196c-6-88 29-151 117-151 91 0 123 58 117 151-19-31-44-49-76-59-24 27-72 43-158 43z" fill="#263b5a"/>
+    <path d="M145 196c34-7 70-22 101-48 27 23 74 39 121 44" fill="none" stroke="#7dd3fc" stroke-width="17"/>
+    <path d="M215 239h2m79 0h2" stroke="#263b5a" stroke-width="18"/>
+    <path d="M237 288c13 13 27 13 40 0" fill="none" stroke="#9a5e54" stroke-width="10"/>
+    <path d="M214 334l42 39 42-39" fill="#facc15"/>
+    <path d="M178 390l78 54 78-54" fill="none" stroke="#dbeafe" stroke-width="12"/>
+  </g>
+  <circle cx="383" cy="122" r="25" fill="#facc15" opacity=".9"/>
+  <path d="M383 82v-21m0 122v-21m40-40h21m-122 0h21m68-28 15-15m-86 86 15-15m56 0 15 15m-86-86 15 15" stroke="#facc15" stroke-width="8" stroke-linecap="round" opacity=".9"/>
+</svg>

@@ -3,23 +3,19 @@
  */
 import { GAME_CONFIG } from "./game-config.js";
 import { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS } from "./data/enemies.js";
+import { getCharacterImagePath } from "./character-images.js";
 import { DEFAULT_DUNGEON_ID, DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
 export { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS };
 
 /**
- * Prefer the current catalog image over an image value persisted in an old save.
- * Unknown legacy enemies may still use their saved image path as a fallback.
+ * Resolve every enemy through the shared character image catalog.
+ * Missing or unknown registrations use the common placeholder.
+ * Image paths stored in older save data are deliberately ignored.
  */
 export function getEnemyImagePath(enemy) {
   if (!enemy || typeof enemy !== "object" || Array.isArray(enemy)) return null;
-  if (typeof enemy.id === "string" && Object.hasOwn(ENEMY_DEFINITIONS, enemy.id)) {
-    const image = ENEMY_DEFINITIONS[enemy.id].image;
-    return typeof image === "string" && image.trim() ? image : null;
-  }
-  return typeof enemy.image === "string" && enemy.image.trim()
-    ? enemy.image
-    : null;
+  return getCharacterImagePath(enemy.id);
 }
 
 export function getLegacyFloorEnemyIds(dungeonId = DEFAULT_DUNGEON_ID) {
