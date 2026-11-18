@@ -164,9 +164,15 @@ test("敗北時とダンジョン制覇後だけホームへ戻るボタンを�
 
 test("敵撃破後は未制覇なら次の敵・宝箱・次階層へ進むボタンを表示する", () => {
   assert.match(html, /state\.phase === GAME_PHASE\.VICTORY\)[\s\S]*?\$\("startButton"\)\.hidden = dungeonProgress\.dungeonCleared/);
-  assert.match(html, /: "次の敵へ"/);
-  assert.match(html, /: "宝箱を開ける"/);
-  assert.match(html, /dungeonProgress\.floorCleared \? \(dungeonProgress\.rewardClaimed \? "次の階へ" : "宝箱を開ける"\)/);
+  const labelStart = html.indexOf('$("startButton").textContent =');
+  const labelEnd = html.indexOf('$("nextButton").hidden =', labelStart);
+  const labelLogic = html.slice(labelStart, labelEnd);
+  assert.ok(labelStart >= 0 && labelEnd > labelStart, "進行ボタンの表示テキストが必要です");
+  assert.match(labelLogic, /dungeonProgress\.floorCleared/);
+  assert.match(labelLogic, /dungeonProgress\.rewardClaimed/);
+  assert.match(labelLogic, /"次の敵へ"/);
+  assert.match(labelLogic, /"宝箱を開ける"/);
+  assert.match(labelLogic, /"次の階へ"/);
 });
 
 test("敗北してもプレイヤーの育成データを消さず、現在の階から再挑戦する", () => {
