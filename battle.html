@@ -98,6 +98,19 @@
     .lane-lines { position:absolute; inset:0; display:grid; grid-template-columns:repeat(5,1fr); pointer-events:none; }
     .lane-lines span { border-right:1px solid rgba(148,173,202,.12); }
     .lane-lines span:last-child { border:0; }
+    .lane-focus {
+      position:absolute; z-index:1; top:0; bottom:0; left:40%; width:20%;
+      border-left:1px solid rgba(125,211,252,.28);
+      border-right:1px solid rgba(125,211,252,.28);
+      background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035));
+      box-shadow:inset 0 0 18px rgba(56,189,248,.09);
+      pointer-events:none; transition:left .1s ease;
+    }
+    .lane-focus.pulse { animation:laneFocusPulse .24s ease-out; }
+    @keyframes laneFocusPulse {
+      0% { background:rgba(125,211,252,.25); box-shadow:inset 0 0 28px rgba(125,211,252,.24); }
+      100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
+    }
     .lane-letter {
       position:absolute; z-index:2; top:50%; display:grid; place-items:center;
       width:56px; height:60px; margin-left:-28px; margin-top:-30px;
@@ -128,6 +141,28 @@
       text-align:center; background:rgba(5,12,23,.78);
     }
     .arena-cover[hidden] { display:none; }
+    .judgement-feedback {
+      position:absolute; z-index:5; top:12px; left:50%;
+      max-width:calc(100% - 24px); padding:8px 14px;
+      border:1px solid; border-radius:999px;
+      font-size:clamp(.9rem,3vw,1.1rem); font-weight:950;
+      white-space:nowrap; pointer-events:none;
+      transform:translateX(-50%); box-shadow:0 5px 18px rgba(0,0,0,.28);
+    }
+    .judgement-feedback[hidden] { display:none; }
+    .judgement-feedback.good { color:#bbf7d0; border-color:rgba(74,222,128,.65); background:rgba(20,83,45,.92); }
+    .judgement-feedback.bad { color:#fecdd3; border-color:rgba(251,113,133,.65); background:rgba(136,19,55,.94); }
+    .judgement-feedback.show { animation:judgementPop .72s ease-out both; }
+    @keyframes judgementPop {
+      0% { opacity:0; margin-top:5px; }
+      14%,72% { opacity:1; margin-top:0; }
+      100% { opacity:0; margin-top:-4px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lane-focus { transition:none; }
+      .lane-focus.pulse, .judgement-feedback.show { animation:none; }
+      .judgement-feedback.show { opacity:1; }
+    }
     .cover-title { font-size:1rem; font-weight:900; }
     .cover-note { color:#b7c7dc; font-size:.78rem; line-height:1.45; }
     .controls { display:flex; justify-content:center; gap:8px; margin-top:8px; }
@@ -372,6 +407,7 @@
     <section class="panel arena-wrap">
       <div class="arena" id="arena" aria-label="5レーンの固定アルファベット選択画面">
         <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="lane-focus" id="laneFocus" aria-hidden="true"></div>
         <div id="lettersLayer"></div>
         
         <img class="player" id="playerSprite" alt="主人公" hidden>
@@ -379,6 +415,7 @@
           <div class="cover-title" id="coverTitle">冒険の準備はできた？</div>
           <div class="cover-note" id="coverNote">左右に移動して、必要な文字のレーンで決定しよう。</div>
         </div>
+        <div class="judgement-feedback" id="judgementFeedback" role="status" aria-live="polite" hidden></div>
       </div>
       <div class="controls">
         <button class="move-button" id="leftButton" aria-label="左へ移動" disabled>◀ 左へ</button>
@@ -570,6 +607,9 @@
     attachAutoCloudSync({ saveController });
     let statusText = "「冒険を始める」を押してゲームを開始しよう。";
     let statusTone = "";
+    let lastRenderedPlayerLane = null;
+    let judgementFeedbackTimer = null;
+    let battleAudioContext = null;
 
     const phaseLabels = {
       [GAME_PHASE.TITLE]: "開始前",
@@ -889,8 +929,16 @@
       $("score").textContent = String(wordState.score);
       $("mistakes").textContent = String(wordState.mistakes);
 
-      $("playerSprite").style.left =
-        (((wordState.playerLane + 0.5) / wordState.laneCount) * 100) + "%";
+      const lanePosition = (((wordState.playerLane + 0.5) / wordState.laneCount) * 100) + "%";
+      $("playerSprite").style.left = lanePosition;
+      const laneFocus = $("laneFocus");
+      laneFocus.style.left = (wordState.playerLane / wordState.laneCount * 100) + "%";
+      if (lastRenderedPlayerLane !== null && lastRenderedPlayerLane !== wordState.playerLane) {
+        laneFocus.classList.remove("pulse");
+        void laneFocus.offsetWidth;
+        laneFocus.classList.add("pulse");
+      }
+      lastRenderedPlayerLane = wordState.playerLane;
 
       const layer = $("lettersLayer");
       layer.replaceChildren();
@@ -1035,6 +1083,65 @@
       confirmLaneLetter();
     }
 
+    function showJudgementFeedback(type, letter, expected) {
+      const isCorrect = type === "correct" || type === "word-complete";
+      if (!isCorrect && type !== "wrong") return;
+      const feedback = $("judgementFeedback");
+      feedback.textContent = isCorrect
+        ? (type === "word-complete" ? "正解！ 単語完成！" : "正解！")
+        : "不正解！" + (expected ? " 正解は " + expected : "");
+      feedback.className = "judgement-feedback " + (isCorrect ? "good" : "bad");
+      feedback.hidden = false;
+      feedback.classList.remove("show");
+      void feedback.offsetWidth;
+      feedback.classList.add("show");
+      if (judgementFeedbackTimer !== null) window.clearTimeout(judgementFeedbackTimer);
+      judgementFeedbackTimer = window.setTimeout(() => {
+        feedback.hidden = true;
+        feedback.classList.remove("show");
+        judgementFeedbackTimer = null;
+      }, 760);
+    }
+
+    function playJudgementSe(type) {
+      const isCorrect = type === "correct" || type === "word-complete";
+      if (!isCorrect && type !== "wrong") return;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+
+      try {
+        if (!battleAudioContext) battleAudioContext = new AudioContextClass();
+        const context = battleAudioContext;
+        const play = () => {
+          if (context.state !== "running") return;
+          const tones = isCorrect
+            ? [{ frequency:740, offset:0, duration:.12 }, { frequency:988, offset:.095, duration:.15 }]
+            : [{ frequency:245, offset:0, duration:.17 }];
+          for (const tone of tones) {
+            const startAt = context.currentTime + tone.offset;
+            const oscillator = context.createOscillator();
+            const volume = context.createGain();
+            oscillator.type = isCorrect ? "sine" : "triangle";
+            oscillator.frequency.setValueAtTime(tone.frequency, startAt);
+            volume.gain.setValueAtTime(.0001, startAt);
+            volume.gain.exponentialRampToValueAtTime(isCorrect ? .07 : .055, startAt + .012);
+            volume.gain.exponentialRampToValueAtTime(.0001, startAt + tone.duration);
+            oscillator.connect(volume);
+            volume.connect(context.destination);
+            oscillator.start(startAt);
+            oscillator.stop(startAt + tone.duration + .02);
+          }
+        };
+        if (context.state === "suspended") {
+          context.resume().then(play).catch(() => {});
+        } else {
+          play();
+        }
+      } catch {
+        // Sound is an optional enhancement; gameplay must work without Web Audio.
+      }
+    }
+
     function flashDamage(target) {
       const element = $(target === "player" ? "playerHpFill" : "enemyHpFill");
       if (!element) return;
@@ -1049,6 +1156,10 @@
         const result = combat.handle(event);
         if (result.ignored) continue;
 
+        if (event.type === "correct" || event.type === "wrong" || event.type === "word-complete") {
+          showJudgementFeedback(event.type, event.letter, event.expected);
+          playJudgementSe(event.type);
+        }
         if (result.damageTarget) flashDamage(result.damageTarget);
         setStatus(result.message, result.tone);
 
@@ -1167,7 +1278,7 @@
     bindLaneMoveButton("rightButton", 1);
     $("confirmButton").addEventListener("click", confirmLaneLetter);
 
-    // Mobile: tap any point in a lane to select it; tap that lane again to confirm.
+    // Mobile: one tap selects the touched lane and immediately confirms its letter.
     $("arena").addEventListener("click", (event) => {
       const arena = event.currentTarget;
       const bounds = arena.getBoundingClientRect();
