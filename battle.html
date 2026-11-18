@@ -767,7 +767,7 @@
         (state.phase === GAME_PHASE.VICTORY && dungeonProgress.dungeonCleared);
       $("homeButton").hidden = !(
         state.phase === GAME_PHASE.DEFEAT ||
-        (state.phase === GAME_PHASE.VICTORY && dungeonProgress.dungeonCleared)
+        (state.phase === GAME_PHASE.VICTORY && dungeonProgress.floorCleared)
       );
       $("startButton").textContent =
         state.phase === GAME_PHASE.VICTORY
@@ -837,19 +837,22 @@
 
       if (state.phase === GAME_PHASE.VICTORY) {
         const floorCleared = dungeonProgress.floorCleared;
-        $("coverTitle").textContent = (state.enemy?.name ?? "敵") + "を倒した！";
+        $("coverTitle").textContent = floorCleared
+          ? dungeonProgress.floor + "階クリア！"
+          : (state.enemy?.name ?? "敵") + "を倒した！";
         $("coverNote").textContent = floorCleared
           ? (dungeonProgress.rewardClaimed
-              ? "宝箱の報酬を受け取った！次の階へ進もう。"
-              : "この階の敵をすべて倒した！宝箱を開けよう。")
+              ? "報酬を獲得したよ！「次の階へ」進むか「ホームへ戻る」を選ぼう。"
+              : "この階の敵をすべて倒したよ！宝箱を開けるか、ホームへ戻ろう。")
           : "次の敵が待っている。準備ができたら進もう。";
-        // Keep progression available after every victory; hide it only after the full dungeon is cleared.
+        // A cleared floor always offers both progression and a safe return home.
         $("startButton").hidden = dungeonProgress.dungeonCleared;
+        $("homeButton").hidden = !floorCleared;
         setStatus(
           floorCleared
             ? (dungeonProgress.rewardClaimed
-                ? dungeonProgress.floor + "階クリア！次の階へ進もう。"
-                : dungeonProgress.floor + "階クリア！宝箱を開けよう。")
+                ? dungeonProgress.floor + "階クリア！報酬を獲得したよ。次の階へ進むかホームへ戻ろう。"
+                : dungeonProgress.floor + "階クリア！宝箱を開けよう。ホームへ戻ることもできるよ。")
             : (state.enemy?.name ?? "敵") + "を倒した！次の敵へ進もう。",
           "good",
         );
@@ -914,8 +917,15 @@
       const phase = store.getState().phase;
       const progress = dungeon.getProgress();
       const canReturnHome = phase === GAME_PHASE.DEFEAT ||
-        (phase === GAME_PHASE.VICTORY && progress.dungeonCleared);
+        (phase === GAME_PHASE.VICTORY && progress.floorCleared);
       if (!canReturnHome) return;
+
+      // If the player returns home immediately after clearing a floor,
+      // award the chest reward first so it is never lost.
+      if (phase === GAME_PHASE.VICTORY && !progress.rewardClaimed) {
+        const reward = dungeon.claimFloorReward();
+        if (!reward.claimed) return;
+      }
 
       combat.reset();
       town.returnToTown();

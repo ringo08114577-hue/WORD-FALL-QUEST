@@ -153,13 +153,20 @@ test("battle status displays the selected dungeon name from the saved controller
 });
 
 
-test("敗北時とダンジョン制覇後だけホームへ戻るボタンを表示する", () => {
+test("敗北時と各階クリア後にホームへ戻るボタンを表示する", () => {
   assert.match(html, /id="homeButton" hidden>ホームへ戻る/);
-  assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \|\|\s*\(state\.phase === GAME_PHASE\.VICTORY && dungeonProgress\.dungeonCleared\)/);
+  assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \|\|\s*\(state\.phase === GAME_PHASE\.VICTORY && dungeonProgress\.floorCleared\)/);
   assert.match(html, /\$\("homeButton"\)\.addEventListener\("click", returnHome\)/);
-  assert.match(html, /function returnHome\(\)[\s\S]*?const canReturnHome = phase === GAME_PHASE\.DEFEAT \|\|\s*\(phase === GAME_PHASE\.VICTORY && progress\.dungeonCleared\)/);
+  assert.match(html, /function returnHome\(\)[\s\S]*?const canReturnHome = phase === GAME_PHASE\.DEFEAT \|\|\s*\(phase === GAME_PHASE\.VICTORY && progress\.floorCleared\)/);
+  assert.match(html, /if \(phase === GAME_PHASE\.VICTORY && !progress\.rewardClaimed\)[\s\S]*?dungeon\.claimFloorReward\(\)/);
   assert.match(html, /town\.returnToTown\(\);[\s\S]*?saveProgress\(\);[\s\S]*?window\.location\.assign\("\.\/index\.html"\)/);
   assert.match(html, /\$\("startButton"\)\.hidden = dungeonProgress\.dungeonCleared/);
+});
+
+test("各階クリア時は階層クリア表示とホームへの案内を出す", () => {
+  assert.match(html, /dungeonProgress\.floor \+ "階クリア！"/);
+  assert.match(html, /「ホームへ戻る」を選ぼう/);
+  assert.match(html, /\$\("homeButton"\)\.hidden = !floorCleared/);
 });
 
 test("敵撃破後は未制覇なら次の敵・宝箱・次階層へ進むボタンを表示する", () => {
