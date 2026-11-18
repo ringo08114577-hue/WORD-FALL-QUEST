@@ -166,7 +166,7 @@ test("敵撃破後は未制覇なら次の敵・宝箱・次階層へ進むボ�
   assert.match(html, /state\.phase === GAME_PHASE\.VICTORY\)[\s\S]*?\$\("startButton"\)\.hidden = dungeonProgress\.dungeonCleared/);
   assert.match(html, /: "次の敵へ"/);
   assert.match(html, /: "宝箱を開ける"/);
-  assert.match(html, /: "次の階へ"/);
+  assert.match(html, /dungeonProgress\.floorCleared \? \(dungeonProgress\.rewardClaimed \? "次の階へ" : "宝箱を開ける"\)/);
 });
 
 test("敗北してもプレイヤーの育成データを消さず、現在の階から再挑戦する", () => {
