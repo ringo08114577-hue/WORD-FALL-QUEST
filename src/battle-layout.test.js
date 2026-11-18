@@ -31,15 +31,14 @@ test("battle layout keeps gameplay, HP, and inventory while hiding manual save c
   assert.match(html, /function saveProgress\(\)\s*\{\s*return saveController\.save\(\);\s*\}/);
 });
 
-test("enemy panel contains an image element that follows the active enemy sprite definition", () => {
+test("主人公と敵は共通画像ローダーを使い、画像未登録時は仮画像へ切り替える", () => {
   assert.match(html, /<img class="enemy-image" id="enemyImage" alt="" hidden>/);
-  assert.match(html, /const enemyImagePath = getEnemyImagePath\(enemy\)/);
-  assert.ok(html.includes('new URL(enemyImagePath.replace(/^\\/+/, ""), document.baseURI).href'));
-  assert.match(html, /enemyImage\.src = source/);
-  assert.match(html, /enemyImageElement\.addEventListener\("load"/);
-  assert.match(html, /enemyImageElement\.addEventListener\("error"/);
-  assert.match(html, /enemyImageElement\.hidden = false/);
-  assert.match(html, /enemyImage\.hidden = true/);
+  assert.match(html, /<img class="player" id="playerSprite" alt="主人公" hidden>/);
+  assert.match(html, /import \{ setCharacterImage, clearCharacterImage \} from "\.\/src\/character-images\.js"/);
+  assert.match(html, /setCharacterImage\(playerImageElement, "hero"/);
+  assert.match(html, /setCharacterImage\(enemyImage, enemy\.id/);
+  assert.match(html, /clearCharacterImage\(enemyImage\)/);
+  assert.match(html, /baseUrl: document\.baseURI/);
 });
 
 test("mobile layout retains a single-column fallback", () => {

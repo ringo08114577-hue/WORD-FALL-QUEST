@@ -34,7 +34,6 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
   assert.deepEqual(slime, {
     id: "slime",
     name: "グリーンスライム",
-    image: "assets/enemies/green-slime.webp",
     maxHp: 160,
     attackPower: 20,
     experienceReward: 100,
