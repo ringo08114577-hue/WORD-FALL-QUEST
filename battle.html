@@ -83,6 +83,7 @@
     .arena-wrap { padding:10px; margin:6px 0; }
     .arena {
       position:relative; height:clamp(230px, 38svh, 340px); min-height:230px; overflow:hidden; border-radius:14px;
+      touch-action:manipulation; cursor:pointer;
       border:1px solid #344963;
       background:
         linear-gradient(180deg, rgba(20,45,73,.75), rgba(13,25,43,.96)),
@@ -384,7 +385,7 @@
         <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
-      <p class="howto">操作：数字キー1〜5で対応レーンへ直接移動。同じ数字をもう一度押すと決定！ ← → / A D でも移動でき、Enterでも決定できるよ。スマホは画面下のボタンで操作してね。</p>
+      <p class="howto">操作：PCは数字キー1〜5で対応レーンへ移動、同じ数字でもう一度押すと決定。スマホはレーンをタップして選択、同じレーンをもう一度タップすると決定！画面下のボタンも使えるよ。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -515,7 +516,7 @@
     let awaitingSkill = false;
     let selectedSkillId = null;
     // The same number key twice in a row selects and confirms a lane.
-    let lastNumberLane = null;
+    let lastSelectedLane = null;
     const saveController = createSaveController({
       store,
       dungeon,
@@ -972,7 +973,7 @@
     }
 
     function move(direction) {
-      lastNumberLane = null;
+      lastSelectedLane = null;
       if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
       wordState = movePlayer(wordState, direction);
       render();
@@ -992,7 +993,7 @@
       wordState = spawnLaneWave(wordState);
       selectedSkillId = skillId;
       awaitingSkill = false;
-      lastNumberLane = null;
+      lastSelectedLane = null;
       spawnElapsed = 0;
       setStatus(
         getSkillDisplayName(skillId, currentState.evolvedSkillIds?.includes(skillId) === true) +
@@ -1005,7 +1006,7 @@
     }
 
     function confirmLaneLetter() {
-      lastNumberLane = null;
+      lastSelectedLane = null;
       if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
       const picked = collectCurrentLaneLetter(wordState);
       if (picked.result === "waiting" || !picked.event) return;
@@ -1026,6 +1027,25 @@
       }
       render();
       saveProgress();
+    }
+
+    function selectLaneWithRepeatedInput(lane) {
+      const state = store.getState();
+      if (state.phase !== GAME_PHASE.BATTLE || awaitingSkill || wordState.phase !== "active") {
+        lastSelectedLane = null;
+        return;
+      }
+
+      if (lastSelectedLane === lane) {
+        lastSelectedLane = null;
+        wordState = setPlayerLane(wordState, lane);
+        confirmLaneLetter();
+        return;
+      }
+
+      lastSelectedLane = lane;
+      wordState = setPlayerLane(wordState, lane);
+      render();
     }
 
     function flashDamage(target) {
@@ -1160,6 +1180,16 @@
     bindLaneMoveButton("rightButton", 1);
     $("confirmButton").addEventListener("click", confirmLaneLetter);
 
+    // Mobile: tap any point in a lane to select it; tap that lane again to confirm.
+    $("arena").addEventListener("click", (event) => {
+      const arena = event.currentTarget;
+      const bounds = arena.getBoundingClientRect();
+      if (!bounds.width || event.clientX < bounds.left || event.clientX >= bounds.right) return;
+      const relativeX = (event.clientX - bounds.left) / bounds.width;
+      const lane = Math.min(wordState.laneCount - 1, Math.floor(relativeX * wordState.laneCount));
+      selectLaneWithRepeatedInput(lane);
+    });
+
     window.addEventListener("keydown", (event) => {
       // Do not steal number input while the player is typing in a form field.
       const target = event.target;
@@ -1175,23 +1205,7 @@
         // Holding a key must not count as pressing the same number a second time.
         if (event.repeat) return;
 
-        const state = store.getState();
-        if (state.phase !== GAME_PHASE.BATTLE || awaitingSkill || wordState.phase !== "active") {
-          lastNumberLane = null;
-          return;
-        }
-
-        const lane = numberKey - 1;
-        if (lastNumberLane === lane) {
-          lastNumberLane = null;
-          wordState = setPlayerLane(wordState, lane);
-          confirmLaneLetter();
-          return;
-        }
-
-        lastNumberLane = lane;
-        wordState = setPlayerLane(wordState, lane);
-        render();
+        selectLaneWithRepeatedInput(numberKey - 1);
         return;
       }
 
