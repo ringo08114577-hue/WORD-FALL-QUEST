@@ -217,12 +217,12 @@ test("バトル画面は共通の初期能力値HP100・攻撃力20を使う", (
 
 
 test("数字キー1〜5で直接レーンを選択し、同じ数字の再入力で決定する", () => {
-  assert.match(html, /setPlayerLane,\\s*canCollectCurrentLaneLetter/);
+  assert.match(html, /setPlayerLane,\s*canCollectCurrentLaneLetter/);
   assert.match(html, /let lastNumberLane = null/);
-  assert.match(html, /const numberKey = \/\\^\\[1-5\\]\\$\/\.test\(event\.key\)/);
-  assert.match(html, /if \\(event\.repeat\\) return/);
-  assert.match(html, /if \\(lastNumberLane === lane\\)[\\s\\S]*?confirmLaneLetter\\(\\)/);
-  assert.match(html, /wordState = setPlayerLane\\(wordState, lane\\)/);
+  assert.match(html, /const numberKey = \/\^\[1-5\]\$\/\.test\(event\.key\)/);
+  assert.match(html, /if \(event\.repeat\) return/);
+  assert.match(html, /if \(lastNumberLane === lane\)[\s\S]*?confirmLaneLetter\(\)/);
+  assert.match(html, /wordState = setPlayerLane\(wordState, lane\)/);
   assert.match(html, /数字キー1〜5で対応レーンへ直接移動。同じ数字をもう一度押すと決定/);
   assert.match(html, /target\.isContentEditable/);
 });
