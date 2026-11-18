@@ -216,26 +216,22 @@ test("バトル画面は共通の初期能力値HP100・攻撃力20を使う", (
 });
 
 
-test("数字キー1〜5で直接レーンを選択し、同じ数字の再入力で決定する", () => {
-  assert.match(html, /setPlayerLane,\s*canCollectCurrentLaneLetter/);
-  assert.match(html, /let lastSelectedLane = null/);
-  assert.match(html, /const numberKey = \/\^\[1-5\]\$\/\.test\(event\.key\)/);
-  assert.match(html, /if \(event\.repeat\) return/);
-  assert.match(html, /selectLaneWithRepeatedInput\(numberKey - 1\)/);
-  assert.match(html, /lastSelectedLane === lane/);
-  assert.match(html, /wordState = setPlayerLane\(wordState, lane\)/);
-  assert.match(html, /PCは数字キー1〜5[\s\S]*?同じ数字でもう一度押すと決定/);
-  assert.match(html, /target\.isContentEditable/);
+
+test("数字キー1〜5を1回押すだけでレーンを選択して決定する", () => {
+  assert.ok(html.includes("function selectLaneAndConfirm(lane)"));
+  assert.ok(html.includes("selectLaneAndConfirm(numberKey - 1);"));
+  assert.ok(html.includes("if (event.repeat) return;"));
+  assert.ok(html.includes("wordState = setPlayerLane(wordState, lane);\\n      confirmLaneLetter();"));
+  assert.ok(html.includes("PCは数字キー1〜5を1回押すだけで移動・決定"));
+  assert.ok(html.includes("target.isContentEditable"));
 });
 
 
-test("スマホではレーンをタップして選択し、同じレーンの再タップで決定する", () => {
-  assert.match(html, /touch-action:\s*manipulation/);
-  assert.match(html, /function selectLaneWithRepeatedInput\(lane\)/);
-  assert.match(html, /lastSelectedLane === lane/);
-  assert.match(html, /\$\("arena"\)\.addEventListener\("click"/);
-  assert.match(html, /getBoundingClientRect\(\)/);
-  assert.match(html, /Math\.floor\(relativeX \* wordState\.laneCount\)/);
-  assert.match(html, /selectLaneWithRepeatedInput\(lane\)/);
-  assert.match(html, /PCは数字キー1〜5[\s\S]*?スマホはレーンをタップして選択、同じレーンをもう一度タップすると決定/);
+test("スマホはレーンを1回タップするだけで選択・決定する", () => {
+  assert.ok(html.includes('$("arena").addEventListener("click"'));
+  assert.ok(html.includes("selectLaneAndConfirm(lane);"));
+  assert.ok(html.includes("getBoundingClientRect()"));
+  assert.ok(html.includes("Math.floor(relativeX * wordState.laneCount)"));
+  assert.ok(html.includes("スマホもレーンを1回タップするだけで決定"));
+  assert.ok(html.includes("touch-action:manipulation"));
 });
