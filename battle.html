@@ -384,7 +384,7 @@
         <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
-      <p class="howto">操作：← → / A D でレーン移動。必要な文字を選んで「決定」。正解・ミスのあとに文字が入れ替わるよ。文字は時間で変わらず、敵は時間経過で攻撃してくるよ。</p>
+      <p class="howto">操作：数字キー1〜5で対応レーンへ直接移動。同じ数字をもう一度押すと決定！ ← → / A D でも移動でき、Enterでも決定できるよ。正解・ミスのあとに文字が入れ替わるよ。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -449,6 +449,7 @@
       getSpellingProgress,
       spawnLaneWave,
       movePlayer,
+      setPlayerLane,
       canCollectCurrentLaneLetter,
       collectCurrentLaneLetter,
       selectChallengeForSkill,
@@ -513,6 +514,8 @@
     let enemyAttackCount = 0;
     let awaitingSkill = false;
     let selectedSkillId = null;
+    // The same number key twice in a row selects and confirms a lane.
+    let lastNumberLane = null;
     const saveController = createSaveController({
       store,
       dungeon,
@@ -969,6 +972,7 @@
     }
 
     function move(direction) {
+      lastNumberLane = null;
       if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
       wordState = movePlayer(wordState, direction);
       render();
@@ -988,6 +992,7 @@
       wordState = spawnLaneWave(wordState);
       selectedSkillId = skillId;
       awaitingSkill = false;
+      lastNumberLane = null;
       spawnElapsed = 0;
       setStatus(
         getSkillDisplayName(skillId, currentState.evolvedSkillIds?.includes(skillId) === true) +
@@ -1000,6 +1005,7 @@
     }
 
     function confirmLaneLetter() {
+      lastNumberLane = null;
       if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
       const picked = collectCurrentLaneLetter(wordState);
       if (picked.result === "waiting" || !picked.event) return;
@@ -1155,6 +1161,40 @@
     $("confirmButton").addEventListener("click", confirmLaneLetter);
 
     window.addEventListener("keydown", (event) => {
+      // Do not steal number input while the player is typing in a form field.
+      const target = event.target;
+      if (target instanceof HTMLElement &&
+          (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
+        return;
+      }
+
+      // The number row and numeric keypad both report "1" through "5" here.
+      const numberKey = /^[1-5]$/.test(event.key) ? Number(event.key) : null;
+      if (numberKey !== null) {
+        event.preventDefault();
+        // Holding a key must not count as pressing the same number a second time.
+        if (event.repeat) return;
+
+        const state = store.getState();
+        if (state.phase !== GAME_PHASE.BATTLE || awaitingSkill) {
+          lastNumberLane = null;
+          return;
+        }
+
+        const lane = numberKey - 1;
+        if (lastNumberLane === lane) {
+          lastNumberLane = null;
+          wordState = setPlayerLane(wordState, lane);
+          confirmLaneLetter();
+          return;
+        }
+
+        lastNumberLane = lane;
+        wordState = setPlayerLane(wordState, lane);
+        render();
+        return;
+      }
+
       if (["ArrowLeft", "ArrowRight", "a", "A", "d", "D"].includes(event.key)) {
         event.preventDefault();
       }
