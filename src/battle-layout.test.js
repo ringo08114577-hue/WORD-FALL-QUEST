@@ -253,7 +253,7 @@ test("レーン選択は控えめに光り、正解・不正解を一瞬表示�
 test("正誤判定SEはWeb Audioで鳴り、非対応環境でもゲームを止めない", () => {
   assert.match(html, /function playJudgementSe\(type\)/);
   assert.match(html, /window\.AudioContext \|\| window\.webkitAudioContext/);
-  assert.match(html, /oscillator\.createOscillator/);
+  assert.match(html, /context\.createOscillator\(\)/);
   assert.match(html, /oscillator\.frequency\.setValueAtTime/);
   assert.match(html, /context\.resume\(\)\.then\(play\)\.catch\(\(\) => \{\}\)/);
   assert.match(html, /catch \{\s*\/\/ Sound is an optional enhancement/);
