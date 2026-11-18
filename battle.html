@@ -384,7 +384,7 @@
         <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
-      <p class="howto">操作：数字キー1〜5で対応レーンへ直接移動。同じ数字をもう一度押すと決定！ ← → / A D でも移動でき、Enterでも決定できるよ。正解・ミスのあとに文字が入れ替わるよ。</p>
+      <p class="howto">操作：数字キー1〜5で対応レーンへ直接移動。同じ数字をもう一度押すと決定！ ← → / A D でも移動でき、Enterでも決定できるよ。スマホは画面下のボタンで操作してね。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -1176,7 +1176,7 @@
         if (event.repeat) return;
 
         const state = store.getState();
-        if (state.phase !== GAME_PHASE.BATTLE || awaitingSkill) {
+        if (state.phase !== GAME_PHASE.BATTLE || awaitingSkill || wordState.phase !== "active") {
           lastNumberLane = null;
           return;
         }
