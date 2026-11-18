@@ -236,3 +236,26 @@ test("スマホはレーンを1回タップするだけで選択・決定する"
   assert.ok(html.includes("スマホもレーンを1回タップするだけで決定"));
   assert.ok(html.includes("touch-action:manipulation"));
 });
+
+
+test("レーン選択は控えめに光り、正解・不正解を一瞬表示する", () => {
+  assert.match(html, /id="laneFocus"/);
+  assert.match(html, /\.lane-focus\s*\{[\s\S]*?box-shadow:inset 0 0 18px/);
+  assert.match(html, /\.lane-focus\.pulse\s*\{\s*animation:laneFocusPulse/);
+  assert.match(html, /id="judgementFeedback" role="status"/);
+  assert.match(html, /function showJudgementFeedback\(type, letter, expected\)/);
+  assert.match(html, /"正解！"/);
+  assert.match(html, /"不正解！" \+ \(expected \? " 正解は " \+ expected : ""\)/);
+  assert.match(html, /showJudgementFeedback\(event\.type, event\.letter, event\.expected\)/);
+  assert.match(html, /}, 760\)/);
+});
+
+test("正誤判定SEはWeb Audioで鳴り、非対応環境でもゲームを止めない", () => {
+  assert.match(html, /function playJudgementSe\(type\)/);
+  assert.match(html, /window\.AudioContext \|\| window\.webkitAudioContext/);
+  assert.match(html, /oscillator\.createOscillator/);
+  assert.match(html, /oscillator\.frequency\.setValueAtTime/);
+  assert.match(html, /context\.resume\(\)\.then\(play\)\.catch\(\(\) => \{\}\)/);
+  assert.match(html, /catch \{\s*\/\/ Sound is an optional enhancement/);
+  assert.match(html, /playJudgementSe\(event\.type\)/);
+});
