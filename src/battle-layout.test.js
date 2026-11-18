@@ -159,7 +159,15 @@ test("敗北時とダンジョン制覇後だけホームへ戻るボタンを�
   assert.match(html, /\$\("homeButton"\)\.addEventListener\("click", returnHome\)/);
   assert.match(html, /function returnHome\(\)[\s\S]*?const canReturnHome = phase === GAME_PHASE\.DEFEAT \|\|\s*\(phase === GAME_PHASE\.VICTORY && progress\.dungeonCleared\)/);
   assert.match(html, /town\.returnToTown\(\);[\s\S]*?saveProgress\(\);[\s\S]*?window\.location\.assign\("\.\/index\.html"\)/);
-  assert.match(html, /\$\("startButton"\)\.hidden = !dungeonProgress\.dungeonCleared/);
+  assert.match(html, /\$\("startButton"\)\.hidden = dungeonProgress\.dungeonCleared/);
+});
+
+test("敵撃破後は未制覇なら次の敵・宝箱・次階層へ進むボタンを表示する", () => {
+  assert.match(html, /state\.phase === GAME_PHASE\.VICTORY\)[\s\S]*?\$\("startButton"\)\.hidden = dungeonProgress\.dungeonCleared/);
+  assert.match(html, /: "次の敵へ"/);
+  assert.match(html, /: "宝箱を開ける"/);
+  assert.match(html, /: "次の階へ"/);
+});
 });
 
 test("敗北してもプレイヤーの育成データを消さず、現在の階から再挑戦する", () => {

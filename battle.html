@@ -843,7 +843,8 @@
               ? "宝箱の報酬を受け取った！次の階へ進もう。"
               : "この階の敵をすべて倒した！宝箱を開けよう。")
           : "次の敵が待っている。準備ができたら進もう。";
-        $("startButton").hidden = !dungeonProgress.dungeonCleared;
+        // Keep progression available after every victory; hide it only after the full dungeon is cleared.
+        $("startButton").hidden = dungeonProgress.dungeonCleared;
         setStatus(
           floorCleared
             ? (dungeonProgress.rewardClaimed
