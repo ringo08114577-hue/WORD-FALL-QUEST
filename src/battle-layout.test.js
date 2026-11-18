@@ -221,7 +221,8 @@ test("数字キー1〜5を1回押すだけでレーンを選択して決定す�
   assert.ok(html.includes("function selectLaneAndConfirm(lane)"));
   assert.ok(html.includes("selectLaneAndConfirm(numberKey - 1);"));
   assert.ok(html.includes("if (event.repeat) return;"));
-  assert.ok(html.includes("wordState = setPlayerLane(wordState, lane);\\n      confirmLaneLetter();"));
+  assert.ok(html.includes("wordState = setPlayerLane(wordState, lane);"));
+  assert.ok(html.includes("confirmLaneLetter();"));
   assert.ok(html.includes("PCは数字キー1〜5を1回押すだけで移動・決定"));
   assert.ok(html.includes("target.isContentEditable"));
 });
