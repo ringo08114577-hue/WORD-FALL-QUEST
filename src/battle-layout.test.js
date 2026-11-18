@@ -226,3 +226,15 @@ test("数字キー1〜5で直接レーンを選択し、同じ数字の再入力
   assert.match(html, /数字キー1〜5で対応レーンへ直接移動。同じ数字をもう一度押すと決定/);
   assert.match(html, /target\.isContentEditable/);
 });
+
+
+test("スマホではレーンをタップして選択し、同じレーンの再タップで決定する", () => {
+  assert.match(html, /touch-action:\s*manipulation/);
+  assert.match(html, /function selectLaneWithRepeatedInput\(lane\)/);
+  assert.match(html, /lastSelectedLane === lane/);
+  assert.match(html, /\$\("arena"\)\.addEventListener\("click"/);
+  assert.match(html, /getBoundingClientRect\(\)/);
+  assert.match(html, /Math\.floor\(relativeX \* wordState\.laneCount\)/);
+  assert.match(html, /selectLaneWithRepeatedInput\(lane\)/);
+  assert.match(html, /PCは数字キー1〜5[\s\S]*?スマホはレーンをタップして選択、同じレーンをもう一度タップすると決定/);
+});
