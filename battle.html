@@ -111,6 +111,14 @@
       0% { background:rgba(125,211,252,.25); box-shadow:inset 0 0 28px rgba(125,211,252,.24); }
       100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
     }
+    /* Mobile taps keep the lane pulse subtle; the steady lane highlight stays unchanged. */
+    @media (max-width:480px) {
+      .lane-focus.pulse { animation:laneFocusPulseMobile .2s ease-out; }
+      @keyframes laneFocusPulseMobile {
+        0% { background:rgba(125,211,252,.13); box-shadow:inset 0 0 14px rgba(125,211,252,.11); }
+        100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
+      }
+    }
     .lane-letter {
       position:absolute; z-index:2; top:50%; display:grid; place-items:center;
       width:56px; height:60px; margin-left:-28px; margin-top:-30px;
