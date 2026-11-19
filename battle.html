@@ -25,6 +25,7 @@
     .topline { display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .eyebrow { color:#7dd3fc; font-size:.68rem; font-weight:850; letter-spacing:.15em; }
     .back-link { color:#bfdbfe; text-decoration:none; font-size:.76rem; font-weight:750; }
+    .battle-nav-links { display:flex; align-items:center; gap:12px; }
     h1 { margin:5px 0 2px; font-size:clamp(1.45rem,5vw,2.1rem); letter-spacing:.03em; }
     .subtitle { color:#9eacc2; font-size:.88rem; margin:0 0 10px; line-height:1.45; }
     .panel {
@@ -255,7 +256,6 @@
 
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
-    .lane-flash-setting { display:none; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
     /* Narrow screens keep the vertical flow and show battle status first. */
     .battle-layout { display:flex; flex-direction:column; }
@@ -380,15 +380,6 @@
       .skill-button strong { font-size:.68rem; }
       .skill-button span { font-size:.57rem; }
       .howto { margin:4px 1px 0; font-size:.64rem; line-height:1.3; }
-      .lane-flash-setting {
-        display:flex; align-items:center; justify-content:space-between; gap:8px;
-        margin:7px 1px 0; color:#b8c8dc; font-size:.68rem;
-      }
-      .lane-flash-setting select {
-        min-width:112px; min-height:34px; padding:5px 9px;
-        border:1px solid #3b506e; border-radius:8px;
-        color:#f2f6ff; background:#17263b; font:inherit; font-weight:750;
-      }
       .action-row { gap:6px; margin-top:5px; }
       .action-row button { flex:1; min-width:0; }
       .footer { display:none; }
@@ -405,7 +396,10 @@
   <main>
     <div class="topline">
       <div class="eyebrow">WORD FALL QUEST · DEVELOPMENT BUILD</div>
-      <a class="back-link" id="townBackLink" href="./index.html">街へ戻る</a>
+      <div class="battle-nav-links">
+        <a class="back-link" href="./settings.html">⚙ 設定</a>
+        <a class="back-link" id="townBackLink" href="./index.html">街へ戻る</a>
+      </div>
     </div>
     <h1>英単語バトル</h1>
     <p class="subtitle">PC・タブレットでは英単語ゲームを広く表示。スマホでは縦並びで操作しやすく表示。</p>
@@ -452,15 +446,6 @@
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
       <p class="howto">操作：PCは数字キー1〜5を1回押すだけで移動・決定。スマホもレーンを1回タップするだけで決定！画面下のボタンも使えるよ。</p>
-      <div class="lane-flash-setting">
-        <label for="laneFlashIntensity">タップ時の光</label>
-        <select id="laneFlashIntensity" aria-label="タップ時の光の強さ">
-          <option value="none">なし</option>
-          <option value="weak" selected>弱</option>
-          <option value="normal">標準</option>
-          <option value="strong">強</option>
-        </select>
-      </div>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -649,7 +634,7 @@
     let judgementFeedbackTimer = null;
     let battleAudioContext = null;
 
-    // Keep the mobile lane flash preference across reloads. Default to the subtle setting.
+    // Read the lane-flash preference configured on the dedicated settings page.
     const laneFlashStorageKey = "wordFallQuestLaneFlashIntensity";
     const laneFlashIntensityOptions = ["none", "weak", "normal", "strong"];
     let initialLaneFlashIntensity = "weak";
@@ -659,21 +644,9 @@
         initialLaneFlashIntensity = savedIntensity;
       }
     } catch {
-      // The setting still works for this session when storage is unavailable.
+      // Use the subtle default when browser storage is unavailable.
     }
-    const laneFlashSelect = $("laneFlashIntensity");
     $("laneFocus").dataset.flashIntensity = initialLaneFlashIntensity;
-    laneFlashSelect.value = initialLaneFlashIntensity;
-    laneFlashSelect.addEventListener("change", (event) => {
-      const intensity = event.currentTarget.value;
-      if (!laneFlashIntensityOptions.includes(intensity)) return;
-      $("laneFocus").dataset.flashIntensity = intensity;
-      try {
-        window.localStorage.setItem(laneFlashStorageKey, intensity);
-      } catch {
-        // Keep the selected value active for this session if storage is unavailable.
-      }
-    });
 
     const phaseLabels = {
       [GAME_PHASE.TITLE]: "開始前",
