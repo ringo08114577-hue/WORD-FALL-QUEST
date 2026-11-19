@@ -44,7 +44,6 @@ test("施設ページのID参照先がすべてHTML内に存在する", () => {
   assert.equal(ids.length, new Set(ids).size);
 });
 
-
 test("ステータス画面は4枠のスキル装備を行い、強化はスキル工房に分ける", () => {
   const html = read("status.html");
   const script = read("src/status-page.js");
@@ -63,9 +62,6 @@ test("ホームには開発用画面へのリンクを表示せず、開発用�
   assert.throws(() => read("debug-state.html"), { code: "ENOENT" });
 });
 
-
-
-
 test("ホームと各施設の初期表示は新しい冒険者の能力値と一致する", () => {
   for (const file of ["index.html", "status.html", "skills.html", "items.html", "equipment.html"]) {
     const html = read(file);
@@ -82,8 +78,7 @@ test("ホームと各施設の初期表示は新しい冒険者の能力値と�
   assert.match(status, /aria-valuemax="100" aria-valuenow="0" id="expBar"/);
 });
 
-
-test("ゲーム設定ページはレーン発光の4段階を保存し、ホームとバトルへ戻れる", () => {
+test("ゲーム設定ページは演出設定を保存し、ホームへ戻れる", () => {
   const html = read("settings.html");
   assert.match(html, /ゲーム設定/);
   assert.match(html, /id="laneFlashIntensity"/);
@@ -94,5 +89,5 @@ test("ゲーム設定ページはレーン発光の4段階を保存し、ホー�
   assert.match(html, /wordFallQuestLaneFlashIntensity/);
   assert.match(html, /localStorage\.setItem\(laneFlashStorageKey, intensity\)/);
   assert.match(html, /href="\.\/index\.html"/);
-  assert.match(html, /href="\.\/battle\.html"/);
+  assert.doesNotMatch(html, /href="\.\/battle\.html"/);
 });

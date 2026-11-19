@@ -31,10 +31,21 @@ test("キャラクター画像は共通カタログで管理され、未登録�
     assert.equal(getCharacterImagePath(id), image);
     assert.equal(getEnemyImagePath(createEnemy(id)), image);
   }
+  const addedArtwork = {
+    hero: "assets/characters/hero.webp",
+    goblin: "assets/enemies/goblin.webp",
+    "moss-golem": "assets/enemies/moss-golem.webp",
+    "forest-dragon": "assets/enemies/forest-dragon.webp",
+    "ice-wolf": "assets/enemies/ice-wolf.webp",
+  };
+  for (const [id, image] of Object.entries(addedArtwork)) {
+    assert.equal(getCharacterImagePath(id), image);
+    if (id !== "hero") assert.equal(getEnemyImagePath(createEnemy(id)), image);
+  }
   for (const id of Object.keys(ENEMY_DEFINITIONS)) {
     assert.ok(Object.hasOwn(CHARACTER_IMAGE_CATALOG, id), id + " の画像登録枠がありません");
   }
-  for (const id of ["hero", "goblin", "moss-golem", "forest-dragon", "ice-wolf", "ice-golem", "ice-dragon"]) {
+  for (const id of ["ice-golem", "ice-dragon"]) {
     assert.equal(getCharacterImagePath(id), DEFAULT_CHARACTER_IMAGE);
   }
 });
@@ -42,7 +53,7 @@ test("キャラクター画像は共通カタログで管理され、未登録�
 test("共通カタログに登録した専用画像がすべて実在し、WebPとして読める", () => {
   const imageEntries = Object.entries(CHARACTER_IMAGE_CATALOG)
     .filter(([, definition]) => definition.image);
-  assert.equal(imageEntries.length, 4);
+  assert.equal(imageEntries.length, 9);
   for (const [id, definition] of imageEntries) {
     const path = new URL("../" + definition.image, import.meta.url);
     assert.ok(existsSync(path), id + " の画像ファイルがありません: " + definition.image);
@@ -59,7 +70,10 @@ test("古いセーブの画像パスは無視し、未登録キャラを共通�
     getEnemyImagePath({ id: "slime", image: "assets/old-green-slime.webp" }),
     "assets/enemies/green-slime.webp",
   );
-  assert.equal(getEnemyImagePath({ id: "goblin", image: "assets/old-goblin.webp" }), DEFAULT_CHARACTER_IMAGE);
+  assert.equal(
+    getEnemyImagePath({ id: "goblin", image: "assets/old-goblin.webp" }),
+    "assets/enemies/goblin.webp",
+  );
   assert.equal(getEnemyImagePath({ id: "legacy-enemy", image: "assets/legacy.webp" }), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getEnemyImagePath(null), null);
 });
