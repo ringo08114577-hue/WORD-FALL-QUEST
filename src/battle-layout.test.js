@@ -261,19 +261,14 @@ test("正誤判定SEはWeb Audioで鳴り、非対応環境でもゲームを止
 });
 
 
-test("スマホのタップ時発光をゲーム内で変更でき、設定を保存する", () => {
-  assert.match(html, /id="laneFlashIntensity"/);
-  assert.match(html, /<option value="none">なし<\/option>/);
-  assert.match(html, /<option value="weak" selected>弱<\/option>/);
-  assert.match(html, /<option value="normal">標準<\/option>/);
-  assert.match(html, /<option value="strong">強<\/option>/);
-  assert.match(html, /data-flash-intensity="weak"/);
+test("バトル画面は専用設定ページのレーン発光設定を読み込む", () => {
+  assert.doesNotMatch(html, /id="laneFlashIntensity"/);
+  assert.match(html, /href="\.\/settings\.html">⚙ 設定<\/a>/);
   assert.match(html, /wordFallQuestLaneFlashIntensity/);
-  assert.match(html, /laneFlashSelect\.addEventListener\("change"/);
-  assert.match(html, /window\.localStorage\.setItem\(laneFlashStorageKey, intensity\)/);
+  assert.match(html, /laneFlashIntensityOptions\.includes\(savedIntensity\)/);
+  assert.match(html, /laneFocus"\)\.dataset\.flashIntensity = initialLaneFlashIntensity/);
   assert.match(html, /\.lane-focus\[data-flash-intensity="none"\]\.pulse\s*\{\s*animation:none/);
   assert.match(html, /\.lane-focus\[data-flash-intensity="weak"\]\.pulse/);
   assert.match(html, /\.lane-focus\[data-flash-intensity="normal"\]\.pulse/);
   assert.match(html, /\.lane-focus\[data-flash-intensity="strong"\]\.pulse/);
-  assert.match(html, /\.lane-flash-setting\s*\{\s*display:flex/);
 });
