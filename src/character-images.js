@@ -5,15 +5,15 @@
 export const DEFAULT_CHARACTER_IMAGE = "assets/characters/placeholder.svg";
 
 export const CHARACTER_IMAGE_CATALOG = Object.freeze({
-  hero: Object.freeze({ image: null }),
+  hero: Object.freeze({ image: "assets/characters/hero.webp" }),
   slime: Object.freeze({ image: "assets/enemies/green-slime.webp" }),
   "orange-slime": Object.freeze({ image: "assets/enemies/orange-slime.webp" }),
   bat: Object.freeze({ image: "assets/enemies/ghost-bat.webp" }),
-  goblin: Object.freeze({ image: null }),
+  goblin: Object.freeze({ image: "assets/enemies/goblin.webp" }),
   orc: Object.freeze({ image: "assets/enemies/orc.webp" }),
-  "moss-golem": Object.freeze({ image: null }),
-  "forest-dragon": Object.freeze({ image: null }),
-  "ice-wolf": Object.freeze({ image: null }),
+  "moss-golem": Object.freeze({ image: "assets/enemies/moss-golem.webp" }),
+  "forest-dragon": Object.freeze({ image: "assets/enemies/forest-dragon.webp" }),
+  "ice-wolf": Object.freeze({ image: "assets/enemies/ice-wolf.webp" }),
   "ice-golem": Object.freeze({ image: null }),
   "ice-dragon": Object.freeze({ image: null }),
 });

@@ -25,9 +25,16 @@ test("主人公を含む全キャラクターに画像登録枠がある", () =>
   }
 });
 
+test("今回追加した5体に専用画像が登録されている", () => {
+  assert.equal(getCharacterImagePath("hero"), "assets/characters/hero.webp");
+  assert.equal(getCharacterImagePath("ice-wolf"), "assets/enemies/ice-wolf.webp");
+  assert.equal(getCharacterImagePath("forest-dragon"), "assets/enemies/forest-dragon.webp");
+  assert.equal(getCharacterImagePath("goblin"), "assets/enemies/goblin.webp");
+  assert.equal(getCharacterImagePath("moss-golem"), "assets/enemies/moss-golem.webp");
+});
+
 test("画像未登録・未知のキャラクターは共通仮画像を返す", () => {
-  assert.equal(getCharacterImagePath("hero"), DEFAULT_CHARACTER_IMAGE);
-  assert.equal(getCharacterImagePath("goblin"), DEFAULT_CHARACTER_IMAGE);
+  assert.equal(getCharacterImagePath("ice-golem"), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getCharacterImagePath("not-registered"), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getCharacterImagePath(null), DEFAULT_CHARACTER_IMAGE);
 });
@@ -61,7 +68,7 @@ test("専用画像の読み込みに失敗したら共通仮画像へ一度だ�
 
 test("仮画像自体が読み込めない場合は再試行を繰り返さず非表示にする", () => {
   const image = createFakeImage();
-  setCharacterImage(image, "goblin", {
+  setCharacterImage(image, "ice-golem", {
     baseUrl: "https://example.com/WORD-FALL-QUEST/battle.html",
   });
   const originalSource = image.src;
