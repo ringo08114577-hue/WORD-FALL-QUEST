@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>WORD FALL QUEST | ゲーム設定</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0b1220;
+      color: #eef4ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh; margin: 0; padding: 16px 12px 30px;
+      background: radial-gradient(circle at 50% 0%, rgba(56,117,201,.23), transparent 38rem), #0b1220;
+    }
+    main { width: min(100%, 760px); margin: 0 auto; }
+    .topline { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .eyebrow { color:#7dd3fc; font-size:.68rem; font-weight:850; letter-spacing:.14em; }
+    .nav-links { display:flex; align-items:center; gap:12px; }
+    .back-link { color:#bfdbfe; font-size:.76rem; font-weight:800; text-decoration:none; }
+    h1 { margin:8px 0 3px; font-size:clamp(1.6rem,5vw,2.2rem); }
+    .subtitle { margin:0 0 16px; color:#9eacc2; font-size:.84rem; line-height:1.5; }
+    .panel {
+      margin:10px 0; padding:16px; border:1px solid #29384f; border-radius:16px;
+      background:rgba(18,29,47,.94); box-shadow:0 10px 26px rgba(0,0,0,.14);
+    }
+    .panel h2 { margin:0; font-size:1rem; }
+    .panel-description { margin:7px 0 14px; color:#a9bad0; font-size:.78rem; line-height:1.55; }
+    .setting-row { display:flex; justify-content:space-between; align-items:center; gap:14px; }
+    .setting-copy { min-width:0; }
+    .setting-name { display:block; font-size:.88rem; font-weight:850; }
+    .setting-help { display:block; margin-top:4px; color:#91a4be; font-size:.7rem; line-height:1.45; }
+    select {
+      flex:0 0 auto; min-width:128px; min-height:44px; padding:8px 30px 8px 11px;
+      border:1px solid #49617f; border-radius:10px; background:#17263b; color:#f2f6ff;
+      font:inherit; font-size:.82rem; font-weight:800;
+    }
+    .save-status { min-height:1.4em; margin:13px 0 0; color:#86efac; font-size:.72rem; line-height:1.5; }
+    .preview-area {
+      position:relative; display:grid; grid-template-columns:repeat(5,1fr); gap:0;
+      height:104px; margin:12px 0; overflow:hidden; border:1px solid #344963; border-radius:12px;
+      background:linear-gradient(180deg,rgba(20,45,73,.78),rgba(13,25,43,.96));
+    }
+    .preview-area span { border-right:1px solid rgba(148,173,202,.16); }
+    .preview-area span:last-child { border-right:0; }
+    .preview-focus {
+      position:absolute; top:0; bottom:0; left:40%; width:20%;
+      border-left:1px solid rgba(125,211,252,.28); border-right:1px solid rgba(125,211,252,.28);
+      background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035));
+      box-shadow:inset 0 0 18px rgba(56,189,248,.09); pointer-events:none;
+    }
+    .preview-focus[data-flash-intensity="none"].preview-pulse { animation:none; }
+    .preview-focus[data-flash-intensity="weak"].preview-pulse { animation:previewFlashWeak .55s ease-out; }
+    .preview-focus[data-flash-intensity="normal"].preview-pulse { animation:previewFlashNormal .55s ease-out; }
+    .preview-focus[data-flash-intensity="strong"].preview-pulse { animation:previewFlashStrong .55s ease-out; }
+    @keyframes previewFlashWeak {
+      0% { background:rgba(125,211,252,.13); box-shadow:inset 0 0 14px rgba(125,211,252,.11); }
+      100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
+    }
+    @keyframes previewFlashNormal {
+      0% { background:rgba(125,211,252,.21); box-shadow:inset 0 0 22px rgba(125,211,252,.18); }
+      100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
+    }
+    @keyframes previewFlashStrong {
+      0% { background:rgba(125,211,252,.30); box-shadow:inset 0 0 30px rgba(125,211,252,.28); }
+      100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
+    }
+    .preview-button, .reset-button {
+      min-height:42px; padding:9px 14px; border:1px solid #456184; border-radius:10px;
+      background:#223752; color:#eef4ff; font:inherit; font-size:.76rem; font-weight:850; cursor:pointer;
+    }
+    .preview-button { width:100%; background:#1d4ed8; border-color:#3b82f6; }
+    .reset-button { margin-top:12px; background:transparent; border-color:#3b506e; }
+    .button-row { display:flex; justify-content:flex-start; }
+    .note { margin:12px 2px 0; color:#8396b0; font-size:.68rem; line-height:1.5; }
+    .footer { margin-top:20px; color:#64748b; text-align:center; font-size:.68rem; }
+    @media(max-width:520px) {
+      body { padding:10px 8px 22px; }
+      .panel { padding:13px 12px; margin:8px 0; }
+      .topline { align-items:flex-start; }
+      .nav-links { gap:9px; }
+      .back-link { font-size:.68rem; }
+      .setting-row { align-items:flex-start; flex-direction:column; gap:10px; }
+      select { width:100%; }
+      .preview-area { height:88px; }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      .preview-focus.preview-pulse { animation:none; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="topline">
+      <div class="eyebrow">WORD FALL QUEST · SETTINGS</div>
+      <nav class="nav-links" aria-label="ページ移動">
+        <a class="back-link" href="./index.html">ホームへ戻る</a>
+        <a class="back-link" href="./battle.html">バトルへ戻る</a>
+      </nav>
+    </div>
+    <h1>ゲーム設定</h1>
+    <p class="subtitle">遊びやすいように、ゲーム中の演出を調整できるよ。</p>
+
+    <section class="panel" aria-labelledby="operationSettingsTitle">
+      <h2 id="operationSettingsTitle">操作・画面演出</h2>
+      <p class="panel-description">スマホでレーンをタップしたときの発光の強さを変更できます。普段のレーンの光は、この設定では変わりません。</p>
+      <div class="setting-row">
+        <div class="setting-copy">
+          <label class="setting-name" for="laneFlashIntensity">タップ時の光</label>
+          <span class="setting-help">レーンをタップした瞬間だけ光る強さです。</span>
+        </div>
+        <select id="laneFlashIntensity" aria-label="タップ時の光の強さ">
+          <option value="none">なし</option>
+          <option value="weak">弱</option>
+          <option value="normal">標準</option>
+          <option value="strong">強</option>
+        </select>
+      </div>
+      <p class="save-status" id="saveStatus" role="status" aria-live="polite">設定を読み込んでいます。</p>
+    </section>
+
+    <section class="panel" aria-labelledby="previewTitle">
+      <h2 id="previewTitle">光り方のプレビュー</h2>
+      <p class="panel-description">選んだ強さを試せます。設定を変えたあとにボタンを押して確認してね。</p>
+      <div class="preview-area" aria-label="レーン発光プレビュー">
+        <span></span><span></span><span></span><span></span><span></span>
+        <div class="preview-focus" id="previewFocus" data-flash-intensity="weak"></div>
+      </div>
+      <button class="preview-button" id="previewButton" type="button">光り方を確認する</button>
+      <div class="button-row">
+        <button class="reset-button" id="resetButton" type="button">初期設定（弱）に戻す</button>
+      </div>
+      <p class="note">設定はこのブラウザに自動保存されます。同じ端末・ブラウザでプレイするときに引き継がれます。</p>
+    </section>
+
+    <p class="footer">WORD FALL QUEST · GAME SETTINGS</p>
+  </main>
+  <script>
+    (() => {
+      const laneFlashStorageKey = "wordFallQuestLaneFlashIntensity";
+      const validIntensities = ["none", "weak", "normal", "strong"];
+      const labels = { none: "なし", weak: "弱", normal: "標準", strong: "強" };
+      const selector = document.getElementById("laneFlashIntensity");
+      const preview = document.getElementById("previewFocus");
+      const status = document.getElementById("saveStatus");
+
+      function readSavedIntensity() {
+        try {
+          const saved = window.localStorage.getItem(laneFlashStorageKey);
+          return validIntensities.includes(saved) ? saved : "weak";
+        } catch {
+          return "weak";
+        }
+      }
+
+      function updatePreview(intensity) {
+        preview.dataset.flashIntensity = intensity;
+        preview.classList.remove("preview-pulse");
+      }
+
+      function saveIntensity(intensity) {
+        if (!validIntensities.includes(intensity)) return;
+        selector.value = intensity;
+        updatePreview(intensity);
+        try {
+          window.localStorage.setItem(laneFlashStorageKey, intensity);
+          status.textContent = "「" + labels[intensity] + "」に設定して保存したよ。バトル画面に反映されます。";
+        } catch {
+          status.textContent = "「" + labels[intensity] + "」に変更したよ。この環境では保存できないため、ページを閉じると元に戻る場合があります。";
+        }
+      }
+
+      selector.value = readSavedIntensity();
+      updatePreview(selector.value);
+      status.textContent = "現在の設定：" + labels[selector.value] + "（自動保存）";
+      selector.addEventListener("change", (event) => saveIntensity(event.currentTarget.value));
+
+      document.getElementById("previewButton").addEventListener("click", () => {
+        preview.classList.remove("preview-pulse");
+        void preview.offsetWidth;
+        preview.classList.add("preview-pulse");
+      });
+
+      document.getElementById("resetButton").addEventListener("click", () => {
+        saveIntensity("weak");
+      });
+    })();
+  </script>
+</body>
+</html>
