@@ -110,3 +110,23 @@ test("コンテンツ定義は変更できない", () => {
   assert.equal(Object.isFrozen(WORD_CHALLENGES), true);
   assert.equal(Object.isFrozen(DUNGEON_DEFINITIONS[DEFAULT_DUNGEON_ID].encounterSets), true);
 });
+
+test("単語データはID・英単語の重複がなく、難易度1〜6を正しく保持する", () => {
+  const ids = WORD_CHALLENGES.map((challenge) => challenge.id);
+  const words = WORD_CHALLENGES.map((challenge) => challenge.word);
+  assert.equal(WORD_CHALLENGES.length, 102);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.equal(new Set(words).size, words.length);
+  for (const challenge of WORD_CHALLENGES) {
+    assert.match(challenge.word, /^[A-Z]{3,8}$/);
+    assert.ok(challenge.japanese.length > 0);
+    assert.ok(Number.isInteger(challenge.difficulty) && challenge.difficulty >= 1 && challenge.difficulty <= 6);
+    assert.ok(["noun", "verb", "adjective", "preposition"].includes(challenge.partOfSpeech));
+  }
+  assert.deepEqual(
+    Object.fromEntries([1, 2, 3, 4, 5, 6].map((difficulty) => [
+      difficulty, WORD_CHALLENGES.filter((challenge) => challenge.difficulty === difficulty).length,
+    ])),
+    { 1: 20, 2: 16, 3: 18, 4: 16, 5: 16, 6: 16 },
+  );
+});
