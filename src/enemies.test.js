@@ -33,10 +33,10 @@ test("キャラクター画像は共通カタログで管理され、未登録�
   }
   const addedArtwork = {
     hero: "assets/characters/hero.webp",
-    goblin: "assets/enemies/goblin.webp",
-    "moss-golem": "assets/enemies/moss-golem.webp",
-    "forest-dragon": "assets/enemies/forest-dragon.webp",
-    "ice-wolf": "assets/enemies/ice-wolf.webp",
+    goblin: "assets/enemies/goblin.svg",
+    "moss-golem": "assets/enemies/moss-golem.svg",
+    "forest-dragon": "assets/enemies/forest-dragon.svg",
+    "ice-wolf": "assets/enemies/ice-wolf.svg",
   };
   for (const [id, image] of Object.entries(addedArtwork)) {
     assert.equal(getCharacterImagePath(id), image);
@@ -50,7 +50,7 @@ test("キャラクター画像は共通カタログで管理され、未登録�
   }
 });
 
-test("共通カタログに登録した専用画像がすべて実在し、WebPとして読める", () => {
+test("共通カタログに登録した専用画像がすべて実在し、形式も正しい", () => {
   const imageEntries = Object.entries(CHARACTER_IMAGE_CATALOG)
     .filter(([, definition]) => definition.image);
   assert.equal(imageEntries.length, 9);
@@ -58,7 +58,16 @@ test("共通カタログに登録した専用画像がすべて実在し、WebP�
     const path = new URL("../" + definition.image, import.meta.url);
     assert.ok(existsSync(path), id + " の画像ファイルがありません: " + definition.image);
     const image = readFileSync(path);
-    assert.equal(image.toString("ascii", 8, 12), "WEBP", id + " の画像がWebP形式ではありません");
+    if (definition.image.endsWith(".webp")) {
+      assert.equal(image.toString("ascii", 0, 4), "RIFF", id + " のWebPヘッダーが不正です");
+      assert.equal(image.toString("ascii", 8, 12), "WEBP", id + " の画像がWebP形式ではありません");
+    } else if (definition.image.endsWith(".svg")) {
+      const svg = image.toString("utf8");
+      assert.match(svg, /<svg\s/, id + " のSVG画像が不正です");
+      assert.match(svg, /viewBox=/, id + " のSVGにviewBoxがありません");
+    } else {
+      assert.fail(id + " の画像形式が未対応です: " + definition.image);
+    }
   }
   const placeholderPath = new URL("../" + DEFAULT_CHARACTER_IMAGE, import.meta.url);
   assert.ok(existsSync(placeholderPath), "共通仮画像がありません");
@@ -72,7 +81,7 @@ test("古いセーブの画像パスは無視し、未登録キャラを共通�
   );
   assert.equal(
     getEnemyImagePath({ id: "goblin", image: "assets/old-goblin.webp" }),
-    "assets/enemies/goblin.webp",
+    "assets/enemies/goblin.svg",
   );
   assert.equal(getEnemyImagePath({ id: "legacy-enemy", image: "assets/legacy.webp" }), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getEnemyImagePath(null), null);
