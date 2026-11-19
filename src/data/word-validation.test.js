@@ -7,12 +7,12 @@ import {
   validateWordCatalog,
 } from "./word-validation.js";
 
-test("現在の単語一覧42語は新しいデータ形式の検査に合格する", () => {
+test("現在の単語一覧102語は新しいデータ形式の検査に合格する", () => {
   const result = validateWordCatalog(WORD_CHALLENGES);
   assert.equal(result.valid, true, result.errors.join("\n"));
   assert.deepEqual(result.errors, []);
-  assert.equal(result.stats.total, 42);
-  assert.equal(Object.values(result.stats.byDifficulty).reduce((sum, count) => sum + count, 0), 42);
+  assert.equal(result.stats.total, 102);
+  assert.equal(Object.values(result.stats.byDifficulty).reduce((sum, count) => sum + count, 0), 102);
   assert.equal(Object.values(result.stats.byPartOfSpeech).reduce((sum, count) => sum + count, 0), 42);
 });
 
