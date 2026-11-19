@@ -7,7 +7,7 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
   const html = read("index.html");
-  for (const link of ["status.html", "items.html", "equipment.html", "skills.html", "dungeons.html"]) {
+  for (const link of ["status.html", "items.html", "equipment.html", "skills.html", "dungeons.html", "settings.html"]) {
     assert.ok(html.includes('href="./' + link + '"'), link);
   }
   assert.match(html, /createAppSession/);
@@ -80,4 +80,19 @@ test("ホームと各施設の初期表示は新しい冒険者の能力値と�
   const status = read("status.html");
   assert.match(status, /EXP 0 \/ 100/);
   assert.match(status, /aria-valuemax="100" aria-valuenow="0" id="expBar"/);
+});
+
+
+test("ゲーム設定ページはレーン発光の4段階を保存し、ホームとバトルへ戻れる", () => {
+  const html = read("settings.html");
+  assert.match(html, /ゲーム設定/);
+  assert.match(html, /id="laneFlashIntensity"/);
+  assert.match(html, /<option value="none">なし<\/option>/);
+  assert.match(html, /<option value="weak">弱<\/option>/);
+  assert.match(html, /<option value="normal">標準<\/option>/);
+  assert.match(html, /<option value="strong">強<\/option>/);
+  assert.match(html, /wordFallQuestLaneFlashIntensity/);
+  assert.match(html, /localStorage\.setItem\(laneFlashStorageKey, intensity\)/);
+  assert.match(html, /href="\.\/index\.html"/);
+  assert.match(html, /href="\.\/battle\.html"/);
 });
