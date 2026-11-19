@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">Forest Dragon</title><desc id="desc">A cute green forest dragon with leafy wings, branch-like horns and a leafy tail.</desc>
+<defs>
+ <linearGradient id="dragon" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a9df69"/><stop offset=".58" stop-color="#5da94e"/><stop offset="1" stop-color="#34764a"/></linearGradient>
+ <linearGradient id="wing" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b8dd75"/><stop offset="1" stop-color="#4a9451"/></linearGradient>
+ <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f5d98b"/><stop offset="1" stop-color="#c6ad68"/></linearGradient>
+</defs>
+<g stroke="#263d38" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+ <!-- tail and leaf tip -->
+ <path d="M334 337q93 14 105-58 10-53-26-79" fill="none" stroke="url(#dragon)" stroke-width="34"/>
+ <path d="M408 204q43-44 84-17-18 46-68 39 30 22 28 56-46-10-60-53" fill="#78bc55" stroke-width="9"/>
+ <!-- wings -->
+ <path d="M204 243q-72-117-139-75 30 26 17 70 33-10 54 23-28 16-29 52 55-7 92-36M316 241q71-116 137-74-30 27-17 70-34-10-54 23 28 16 29 52-55-7-92-36" fill="url(#wing)"/>
+ <path d="m171 245-55-60m55 60-63 16m63-16-46 55m213-55 55-60m-55 60 63 16m-63-16 46 55" fill="none" stroke="#4d8848" stroke-width="8"/>
+ <!-- legs -->
+ <path d="m185 341-13 68 28 30 53-8 5-76M311 342l17 67-29 30-53-8-4-75" fill="url(#dragon)"/>
+ <path d="m198 429-22 17 9 20 58-4 11-18M305 429l24 17-9 20-58-4-11-18" fill="#e8c86d" stroke-width="8"/>
+ <path d="m185 461 13-12 13 12m81 0 13-12 13 12" fill="none" stroke="#263d38" stroke-width="7"/>
+ <!-- body -->
+ <path d="M156 260q-4-57 54-83 50-24 104 0 56 24 56 86l-18 96q-44 37-103 37-64 0-111-38Z" fill="url(#dragon)"/>
+ <path d="M211 259q45-25 88 0l17 100q-43 33-91 0Z" fill="url(#belly)"/>
+ <path d="M220 285q34 14 70 0M223 316q35 14 67 0M230 346q29 11 52 0" fill="none" stroke="#b99d5e" stroke-width="7"/>
+ <!-- neck and head -->
+ <path d="M191 236q-25-42-4-81 29-45 84-39 63 5 81 54 11 40-20 75-41 29-95 12Z" fill="url(#dragon)"/>
+ <path d="m215 130-20-51 47 30M311 124l32-45 5 65" fill="#6eaa4e"/>
+ <path d="M186 177q-35-23-54-4 20 34 60 31M350 177q35-23 54-4-20 34-60 31" fill="#8bc658" stroke-width="9"/>
+ <ellipse cx="233" cy="179" rx="12" ry="18" fill="#fff5c8" stroke-width="6"/><ellipse cx="309" cy="179" rx="12" ry="18" fill="#fff5c8" stroke-width="6"/>
+ <ellipse cx="237" cy="183" rx="5" ry="10" fill="#263d38" stroke="none"/><ellipse cx="305" cy="183" rx="5" ry="10" fill="#263d38" stroke="none"/>
+ <path d="M248 215q22 15 45-1" fill="none" stroke="#315b42" stroke-width="8"/>
+ <path d="m252 218 7 12 8-10M275 217l7 11 8-14" fill="#fff0c1" stroke-width="5"/>
+ <!-- leaf crest -->
+ <path d="M248 105q-25-42-4-62 34 24 20 63 28-43 54-24-9 38-57 46" fill="#76b84e" stroke-width="8"/>
+ <!-- back spikes -->
+ <path d="m173 239-26-22 34 4m161 12 29-23-35 5" fill="#d4c76e" stroke-width="7"/>
+</g>
+</svg>

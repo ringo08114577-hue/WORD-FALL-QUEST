@@ -27,12 +27,31 @@ test("主人公を含む全キャラクターに画像登録枠がある", () =>
 
 test("今回追加した5体に専用画像が登録されている", () => {
   assert.equal(getCharacterImagePath("hero"), "assets/characters/hero.webp");
-  assert.equal(getCharacterImagePath("ice-wolf"), "assets/enemies/ice-wolf.webp");
-  assert.equal(getCharacterImagePath("forest-dragon"), "assets/enemies/forest-dragon.webp");
-  assert.equal(getCharacterImagePath("goblin"), "assets/enemies/goblin.webp");
-  assert.equal(getCharacterImagePath("moss-golem"), "assets/enemies/moss-golem.webp");
+  assert.equal(getCharacterImagePath("ice-wolf"), "assets/enemies/ice-wolf.svg");
+  assert.equal(getCharacterImagePath("forest-dragon"), "assets/enemies/forest-dragon.svg");
+  assert.equal(getCharacterImagePath("goblin"), "assets/enemies/goblin.svg");
+  assert.equal(getCharacterImagePath("moss-golem"), "assets/enemies/moss-golem.svg");
 });
 
+test("登録済みのキャラクター画像は存在し、画像形式も正しい", () => {
+  for (const [characterId, definition] of Object.entries(CHARACTER_IMAGE_CATALOG)) {
+    if (!definition.image) continue;
+    const assetUrl = new URL("../" + definition.image, import.meta.url);
+    assert.ok(existsSync(assetUrl), characterId + " の画像ファイルがありません");
+
+    if (definition.image.endsWith(".webp")) {
+      const bytes = readFileSync(assetUrl);
+      assert.equal(bytes.toString("ascii", 0, 4), "RIFF", characterId + " のWebPヘッダーが不正です");
+      assert.equal(bytes.toString("ascii", 8, 12), "WEBP", characterId + " のWebP形式が不正です");
+    } else if (definition.image.endsWith(".svg")) {
+      const svg = readFileSync(assetUrl, "utf8");
+      assert.match(svg, /<svg\s/, characterId + " のSVG画像が不正です");
+      assert.match(svg, /viewBox=/, characterId + " のSVGにviewBoxがありません");
+    } else {
+      assert.fail(characterId + " の画像形式が未対応です: " + definition.image);
+    }
+  }
+});
 test("画像未登録・未知のキャラクターは共通仮画像を返す", () => {
   assert.equal(getCharacterImagePath("ice-golem"), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getCharacterImagePath("not-registered"), DEFAULT_CHARACTER_IMAGE);

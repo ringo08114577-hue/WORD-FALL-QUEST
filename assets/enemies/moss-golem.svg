@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">Moss Golem</title><desc id="desc">A friendly, bulky stone golem covered in moss, leaves and tiny plants.</desc>
+<defs>
+ <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b9b8a0"/><stop offset=".55" stop-color="#858d78"/><stop offset="1" stop-color="#58685e"/></linearGradient>
+ <linearGradient id="moss" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a8d35b"/><stop offset="1" stop-color="#437e42"/></linearGradient>
+</defs>
+<g stroke="#293d3a" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+ <!-- back sprout -->
+ <path d="M253 103q-7-36 10-61" fill="none" stroke="#477c42" stroke-width="12"/>
+ <path d="M259 73q-40-48-70-17 22 43 70 34M264 61q27-48 63-25-8 44-56 54" fill="#78b84c" stroke-width="9"/>
+ <!-- feet -->
+ <path d="m172 375-17 62 28 31 80-7 9-52M303 391l13 49-19 29-79-8-4-44" fill="url(#stone)"/>
+ <path d="m157 440 29 12 25-12M315 444l-26 12-27-10" fill="none" stroke="#58685e" stroke-width="8"/>
+ <!-- arms -->
+ <path d="M163 207q-45-13-66 22l-34 68q-8 28 18 43l53 14 42-42 17-68M350 208q46-14 68 22l34 69q8 28-18 43l-54 13-41-42-17-67" fill="url(#stone)"/>
+ <path d="m69 306 36 12 27-13M443 306l-36 12-27-13" fill="none" stroke="#59685d" stroke-width="8"/>
+ <!-- torso -->
+ <path d="M160 192q22-48 95-54 75 2 98 58l15 131q-22 69-115 80-94-9-114-79Z" fill="url(#stone)"/>
+ <path d="M168 184q34-31 88-25 54-8 92 28l-7 32q-41 23-83 10-49 12-91-9Z" fill="url(#moss)"/>
+ <!-- stone plates -->
+ <path d="m174 241 42-22 29 31-28 39-45-10M290 250l31-29 36 31-9 43-45-4M188 316l41-29 26 34-18 43-42-10M279 322l37-26 29 26-18 43-43-3" fill="#a4a48d" stroke="#52645b" stroke-width="8"/>
+ <!-- face -->
+ <path d="M194 249q27-20 48 0M275 248q27-20 48 0" fill="none" stroke="#445448" stroke-width="11"/>
+ <ellipse cx="222" cy="263" rx="10" ry="14" fill="#f7d879" stroke-width="5"/><ellipse cx="296" cy="263" rx="10" ry="14" fill="#f7d879" stroke-width="5"/>
+ <path d="M228 301q31 17 63-1" fill="none" stroke="#4b5b4f" stroke-width="9"/>
+ <path d="m244 298 10 8 10-8" fill="#536c55" stroke-width="5"/>
+ <!-- vines -->
+ <path d="M173 203q-24 37-7 70 16 26 3 52M344 205q22 39 5 67-14 20-4 46" fill="none" stroke="#4d8c47" stroke-width="10"/>
+ <path d="M160 256q-24-21-36-4 13 29 38 28M350 246q25-24 39-6-15 31-40 30M173 331q-27-14-35 5 19 23 38 14M337 337q24-18 37 1-17 25-38 13" fill="#78ae4c" stroke-width="7"/>
+ <!-- moss shoulder tufts -->
+ <path d="M164 196q-25-27-42-8 18 26 43 24M184 171q-8-31 13-40 20 28-2 50M343 180q13-29 34-20-4 30-32 35" fill="#84bd4c" stroke-width="7"/>
+</g>
+<!-- small pebbles -->
+<g fill="#7a8775" stroke="#293d3a" stroke-width="7"><path d="m116 418 18-12 17 15-8 22-23-2Z"/><path d="m377 410 17-12 18 16-8 23-24-3Z"/></g>
+</svg>
