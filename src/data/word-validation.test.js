@@ -13,7 +13,7 @@ test("現在の単語一覧102語は新しいデータ形式の検査に合格�
   assert.deepEqual(result.errors, []);
   assert.equal(result.stats.total, 102);
   assert.equal(Object.values(result.stats.byDifficulty).reduce((sum, count) => sum + count, 0), 102);
-  assert.equal(Object.values(result.stats.byPartOfSpeech).reduce((sum, count) => sum + count, 0), 42);
+  assert.equal(Object.values(result.stats.byPartOfSpeech).reduce((sum, count) => sum + count, 0), 102);
 });
 
 test("英単語は品詞・意味・難易度を含む正しい形式で登録されている", () => {
