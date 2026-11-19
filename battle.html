@@ -111,11 +111,22 @@
       0% { background:rgba(125,211,252,.25); box-shadow:inset 0 0 28px rgba(125,211,252,.24); }
       100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
     }
-    /* Mobile taps keep the lane pulse subtle; the steady lane highlight stays unchanged. */
+    /* Mobile tap-flash intensity is user-adjustable; the steady lane highlight stays unchanged. */
     @media (max-width:480px) {
-      .lane-focus.pulse { animation:laneFocusPulseMobile .2s ease-out; }
-      @keyframes laneFocusPulseMobile {
+      .lane-focus[data-flash-intensity="none"].pulse { animation:none; }
+      .lane-focus[data-flash-intensity="weak"].pulse { animation:laneFocusPulseWeak .2s ease-out; }
+      .lane-focus[data-flash-intensity="normal"].pulse { animation:laneFocusPulseNormal .22s ease-out; }
+      .lane-focus[data-flash-intensity="strong"].pulse { animation:laneFocusPulseStrong .24s ease-out; }
+      @keyframes laneFocusPulseWeak {
         0% { background:rgba(125,211,252,.13); box-shadow:inset 0 0 14px rgba(125,211,252,.11); }
+        100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
+      }
+      @keyframes laneFocusPulseNormal {
+        0% { background:rgba(125,211,252,.21); box-shadow:inset 0 0 22px rgba(125,211,252,.18); }
+        100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
+      }
+      @keyframes laneFocusPulseStrong {
+        0% { background:rgba(125,211,252,.30); box-shadow:inset 0 0 30px rgba(125,211,252,.28); }
         100% { background:linear-gradient(180deg,rgba(56,189,248,.10),rgba(56,189,248,.035)); box-shadow:inset 0 0 18px rgba(56,189,248,.09); }
       }
     }
@@ -244,6 +255,7 @@
 
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
     .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
+    .lane-flash-setting { display:none; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
     /* Narrow screens keep the vertical flow and show battle status first. */
     .battle-layout { display:flex; flex-direction:column; }
@@ -368,6 +380,15 @@
       .skill-button strong { font-size:.68rem; }
       .skill-button span { font-size:.57rem; }
       .howto { margin:4px 1px 0; font-size:.64rem; line-height:1.3; }
+      .lane-flash-setting {
+        display:flex; align-items:center; justify-content:space-between; gap:8px;
+        margin:7px 1px 0; color:#b8c8dc; font-size:.68rem;
+      }
+      .lane-flash-setting select {
+        min-width:112px; min-height:34px; padding:5px 9px;
+        border:1px solid #3b506e; border-radius:8px;
+        color:#f2f6ff; background:#17263b; font:inherit; font-weight:750;
+      }
       .action-row { gap:6px; margin-top:5px; }
       .action-row button { flex:1; min-width:0; }
       .footer { display:none; }
@@ -415,7 +436,7 @@
     <section class="panel arena-wrap">
       <div class="arena" id="arena" aria-label="5レーンの固定アルファベット選択画面">
         <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
-        <div class="lane-focus" id="laneFocus" aria-hidden="true"></div>
+        <div class="lane-focus" id="laneFocus" data-flash-intensity="weak" aria-hidden="true"></div>
         <div id="lettersLayer"></div>
         
         <img class="player" id="playerSprite" alt="主人公" hidden>
@@ -431,6 +452,15 @@
         <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
       </div>
       <p class="howto">操作：PCは数字キー1〜5を1回押すだけで移動・決定。スマホもレーンを1回タップするだけで決定！画面下のボタンも使えるよ。</p>
+      <div class="lane-flash-setting">
+        <label for="laneFlashIntensity">タップ時の光</label>
+        <select id="laneFlashIntensity" aria-label="タップ時の光の強さ">
+          <option value="none">なし</option>
+          <option value="weak" selected>弱</option>
+          <option value="normal">標準</option>
+          <option value="strong">強</option>
+        </select>
+      </div>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -618,6 +648,32 @@
     let lastRenderedPlayerLane = null;
     let judgementFeedbackTimer = null;
     let battleAudioContext = null;
+
+    // Keep the mobile lane flash preference across reloads. Default to the subtle setting.
+    const laneFlashStorageKey = "wordFallQuestLaneFlashIntensity";
+    const laneFlashIntensityOptions = ["none", "weak", "normal", "strong"];
+    let initialLaneFlashIntensity = "weak";
+    try {
+      const savedIntensity = window.localStorage.getItem(laneFlashStorageKey);
+      if (laneFlashIntensityOptions.includes(savedIntensity)) {
+        initialLaneFlashIntensity = savedIntensity;
+      }
+    } catch {
+      // The setting still works for this session when storage is unavailable.
+    }
+    const laneFlashSelect = $("laneFlashIntensity");
+    $("laneFocus").dataset.flashIntensity = initialLaneFlashIntensity;
+    laneFlashSelect.value = initialLaneFlashIntensity;
+    laneFlashSelect.addEventListener("change", (event) => {
+      const intensity = event.currentTarget.value;
+      if (!laneFlashIntensityOptions.includes(intensity)) return;
+      $("laneFocus").dataset.flashIntensity = intensity;
+      try {
+        window.localStorage.setItem(laneFlashStorageKey, intensity);
+      } catch {
+        // Keep the selected value active for this session if storage is unavailable.
+      }
+    });
 
     const phaseLabels = {
       [GAME_PHASE.TITLE]: "開始前",
