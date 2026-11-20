@@ -373,6 +373,9 @@ test("間違えた文字と引っかけ1つだけを無効化し、文字の位�
   assert.equal(blocked.result, "disabled");
   assert.equal(blocked.event, null);
   assert.equal(blocked.state, wrong.state);
+  const directBlocked = collectLetter(wrong.state, disabled[0].id);
+  assert.equal(directBlocked.result, "ignored");
+  assert.equal(directBlocked.state, wrong.state);
 
   const correctTry = collectCurrentLaneLetter(
     { ...wrong.state, playerLane: correctLetter.lane },

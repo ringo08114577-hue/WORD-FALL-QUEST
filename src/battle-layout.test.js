@@ -238,16 +238,19 @@ test("スマホはレーンを1回タップするだけで選択・決定する"
 });
 
 
-test("レーン選択は控えめに光り、正解・不正解を一瞬表示する", () => {
+test("レーン選択は控えめに光り、間違えた文字と引っかけ1つを無効化して表示する", () => {
   assert.match(html, /id="laneFocus"/);
   assert.match(html, /\.lane-focus\s*\{[\s\S]*?box-shadow:inset 0 0 18px/);
   assert.match(html, /\.lane-focus\.pulse\s*\{\s*animation:laneFocusPulse/);
   assert.match(html, /id="judgementFeedback" role="status"/);
   assert.match(html, /function showJudgementFeedback\(type, letter, expected\)/);
   assert.match(html, /"正解！"/);
-  assert.match(html, /"不正解！" \+ \(expected \? " 正解は " \+ expected : ""\)/);
+  assert.match(html, /"不正解！選んだ文字と引っかけ1つを無効にしたよ。並びはそのまま！"/);
+  assert.match(html, /\.lane-letter-disabled\s*\{/);
+  assert.match(html, /isDisabled \? " lane-letter-disabled" : ""/);
   assert.match(html, /showJudgementFeedback\(event\.type, event\.letter, event\.expected\)/);
-  assert.match(html, /}, 760\)/);
+  assert.match(html, /type === "wrong" \? 1400 : 760/);
+  assert.doesNotMatch(html, /正解は " \+ expected/);
 });
 
 test("正誤判定SEはWeb Audioで鳴り、非対応環境でもゲームを止めない", () => {

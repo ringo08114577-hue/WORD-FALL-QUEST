@@ -428,7 +428,7 @@ export function collectLetter(state, letterId) {
   }
 
   const letter = state.letters.find((item) => item.id === letterId);
-  if (!letter) return { state, result: "ignored", letter: null };
+  if (!letter || letter.disabled === true) return { state, result: "ignored", letter: null };
 
   const letters = state.letters.filter((item) => item.id !== letterId);
   const expected = getExpectedLetter(state);
