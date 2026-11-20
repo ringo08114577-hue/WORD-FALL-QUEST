@@ -343,20 +343,46 @@ test("決定ボタンで選択中レーンの固定文字を1つ判定し、行�
   assert.equal(refreshed.letters.filter((letter) => letter.role === "needed")[0].value, "P");
 });
 
-test("ミスした場合も決定後に5レーンの文字行を作り直せる", () => {
+test("間違えた文字と引っかけ1つだけを無効化し、文字の位置と並びを維持する", () => {
   let state = spawnLaneWave(createWordBattleState(), { random: () => 0 });
-  state = { ...state, playerLane: 1 };
-  const wrong = collectCurrentLaneLetter(state);
+  const originalOrder = state.letters.map(({ lane, value }) => ({ lane, value }));
+  const correctLetter = state.letters.find((letter) => letter.role === "needed");
+  const wrongLetter = state.letters.find((letter) => letter.role === "distractor");
+  state = { ...state, playerLane: wrongLetter.lane };
+
+  const wrong = collectCurrentLaneLetter(state, { random: () => 0 });
   assert.equal(wrong.result, "wrong");
   assert.equal(wrong.event.type, "wrong");
   assert.equal(wrong.state.progressIndex, 0);
   assert.equal(wrong.state.mistakes, 1);
-  assert.equal(wrong.state.letters.length, 0);
+  assert.equal(wrong.state.letters.length, 5);
+  assert.deepEqual(
+    wrong.state.letters.map(({ lane, value }) => ({ lane, value })),
+    originalOrder,
+  );
 
-  const refreshed = spawnLaneWave(wrong.state, { random: () => 0 });
+  const disabled = wrong.state.letters.filter((letter) => letter.disabled === true);
+  assert.equal(disabled.length, 2);
+  assert.ok(disabled.some((letter) => letter.id === wrongLetter.id));
+  assert.ok(disabled.some((letter) => letter.id !== wrongLetter.id && letter.role === "distractor"));
+  assert.equal(correctLetter.disabled, undefined);
+  assert.equal(wrong.state.letters.find((letter) => letter.id === correctLetter.id).disabled, undefined);
+  assert.equal(wrong.state.letters.filter((letter) => letter.disabled !== true).length, 3);
+
+  const blocked = collectCurrentLaneLetter(wrong.state);
+  assert.equal(blocked.result, "disabled");
+  assert.equal(blocked.event, null);
+  assert.equal(blocked.state, wrong.state);
+
+  const correctTry = collectCurrentLaneLetter(
+    { ...wrong.state, playerLane: correctLetter.lane },
+  );
+  assert.equal(correctTry.result, "correct");
+  assert.equal(correctTry.state.progressIndex, 1);
+  assert.equal(correctTry.state.letters.length, 0);
+  const refreshed = spawnLaneWave(correctTry.state, { random: () => 0 });
   assert.equal(refreshed.letters.length, 5);
-  assert.equal(refreshed.letters.filter((letter) => letter.role === "needed")[0].value, "A");
-  assert.ok(refreshed.letters.every((letter) => letter.id >= state.nextLetterId));
+  assert.equal(refreshed.letters.find((letter) => letter.role === "needed").value, "P");
 });
 
 test("選択中レーンに文字がない場合は何も消費しない", () => {

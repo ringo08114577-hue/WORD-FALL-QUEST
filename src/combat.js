@@ -206,8 +206,7 @@ export function createCombatController(store) {
         store.dispatch({
           type: GAME_ACTION.LOG_EVENT,
           category: "combat",
-          message: "文字選択ミス：" + (event.letter || "?") +
-            (event.expected ? "（正解は " + event.expected + "）" : ""),
+          message: "文字選択ミス：" + (event.letter || "?"),
         });
       } else if (event.type === COMBAT_EVENT.WORD_COMPLETE) {
         const skill = SKILL_DEFINITIONS[event.skillId ?? "quick-strike"];

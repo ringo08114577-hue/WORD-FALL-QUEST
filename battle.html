@@ -146,6 +146,17 @@
       box-shadow:0 0 0 3px rgba(250,204,21,.25),0 5px 18px rgba(0,0,0,.35);
       transform:scale(1.08);
     }
+    .lane-letter-disabled {
+      border-color:#64748b; border-bottom-color:#334155;
+      background:linear-gradient(145deg,#273449,#1e293b);
+      color:#94a3b8; opacity:.38; filter:grayscale(1);
+      box-shadow:none; text-decoration:line-through; transform:scale(.94);
+    }
+    .lane-letter-disabled::after {
+      content:"×"; position:absolute; inset:0; display:grid; place-items:center;
+      color:#fca5a5; font-size:2.7rem; font-weight:950; text-decoration:none;
+      text-shadow:0 1px 3px rgba(0,0,0,.75); opacity:.95;
+    }
     .player {
       position:absolute; z-index:3; bottom:5px; width:60px; height:66px;
       margin-left:-30px; display:block; object-fit:contain;
@@ -982,7 +993,10 @@
       for (const letter of wordState.letters) {
         const node = document.createElement("div");
         const isSelected = letter.lane === wordState.playerLane;
-        node.className = "lane-letter" + (isSelected ? " lane-letter-ready" : "");
+        const isDisabled = letter.disabled === true;
+        node.className = "lane-letter" +
+          (isSelected && !isDisabled ? " lane-letter-ready" : "") +
+          (isDisabled ? " lane-letter-disabled" : "");
         node.textContent = letter.value;
         node.style.left = (((letter.lane + 0.5) / wordState.laneCount) * 100) + "%";
         node.style.top = "50%";
@@ -1115,6 +1129,9 @@
         return;
       }
 
+      // Disabled letters cannot be selected by tapping or number keys.
+      const targetLetter = wordState.letters.find((letter) => letter.lane === lane);
+      if (!targetLetter || targetLetter.disabled === true) return;
       // One number-key press or one lane tap immediately confirms the lane.
       wordState = setPlayerLane(wordState, lane);
       confirmLaneLetter();
@@ -1126,7 +1143,7 @@
       const feedback = $("judgementFeedback");
       feedback.textContent = isCorrect
         ? (type === "word-complete" ? "正解！ 単語完成！" : "正解！")
-        : "不正解！" + (expected ? " 正解は " + expected : "");
+        : "不正解！選んだ文字と引っかけ1つを無効にしたよ。並びはそのまま！";
       feedback.className = "judgement-feedback " + (isCorrect ? "good" : "bad");
       feedback.hidden = false;
       feedback.classList.remove("show");
@@ -1137,7 +1154,7 @@
         feedback.hidden = true;
         feedback.classList.remove("show");
         judgementFeedbackTimer = null;
-      }, 760);
+      }, type === "wrong" ? 1400 : 760);
     }
 
     function playJudgementSe(type) {

@@ -73,7 +73,8 @@ export function isValidSavedWordBattleState(saved) {
       !Number.isInteger(letter.lane) || letter.lane < 0 || letter.lane >= saved.laneCount ||
       typeof letter.y !== "number" || !Number.isFinite(letter.y) ||
       typeof letter.speed !== "number" || !Number.isFinite(letter.speed) || letter.speed < 0 ||
-      (letter.role !== undefined && typeof letter.role !== "string")
+      (letter.role !== undefined && typeof letter.role !== "string") ||
+      (letter.disabled !== undefined && typeof letter.disabled !== "boolean")
     ) return false;
     ids.add(letter.id);
   }
@@ -362,24 +363,50 @@ export function advanceLaneWave(state, deltaMs) {
   return { state, expired: false };
 }
 
-/** True when the selected lane contains a letter to confirm. */
+/** True when the selected lane contains an enabled letter to confirm. */
 export function canCollectCurrentLaneLetter(state) {
   if (state.phase !== WORD_BATTLE_PHASE.ACTIVE) return false;
-  return state.letters.some((letter) => letter.lane === state.playerLane);
+  return state.letters.some((letter) =>
+    letter.lane === state.playerLane && letter.disabled !== true,
+  );
 }
 
 /**
- * Explicitly collect the letter in the player's lane after the player presses
- * the decision button. The whole row disappears after one decision.
+ * Confirm the letter in the player's lane. A wrong choice stays in its lane
+ * and disables itself plus one other random distractor. Correct choices clear
+ * the old row so the next spelling letter can be shown in a fresh row.
  */
-export function collectCurrentLaneLetter(state) {
-  if (!canCollectCurrentLaneLetter(state)) {
+export function collectCurrentLaneLetter(state, { random = Math.random } = {}) {
+  if (state.phase !== WORD_BATTLE_PHASE.ACTIVE) {
     return { state, result: "waiting", event: null, letter: null };
   }
 
   const letter = state.letters.find((item) => item.lane === state.playerLane);
+  if (!letter) return { state, result: "waiting", event: null, letter: null };
+  if (letter.disabled === true) {
+    return { state, result: "disabled", event: null, letter };
+  }
+
   const picked = collectLetter(state, letter.id);
-  const nextState = { ...picked.state, letters: [] };
+  let nextState;
+  if (picked.result === "wrong") {
+    const remainingDistractors = state.letters.filter((item) =>
+      item.id !== letter.id && item.role === "distractor" && item.disabled !== true,
+    );
+    const extraDisabled = remainingDistractors.length > 0
+      ? remainingDistractors[Math.floor(randomUnit(random) * remainingDistractors.length)]
+      : null;
+    const disabledIds = new Set([letter.id, extraDisabled?.id].filter((id) => id !== undefined));
+    nextState = {
+      ...picked.state,
+      letters: state.letters.map((item) =>
+        disabledIds.has(item.id) ? { ...item, disabled: true } : { ...item },
+      ),
+    };
+  } else {
+    nextState = { ...picked.state, letters: [] };
+  }
+
   const event = picked.result === "ignored" ? null : {
     eventId: "challenge-" + state.challengeIndex + "-letter-" + letter.id,
     type: picked.result,
