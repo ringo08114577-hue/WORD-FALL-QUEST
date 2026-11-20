@@ -291,7 +291,7 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
 test("初期所持品は回復薬2個と木の剣1本で、武器は未装備", () => {
   const state = createTestGameState();
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0, "forest-dragon-seal": 0, "ice-dragon-core": 0 },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0, "forest-dragon-seal": 0, "ice-dragon-core": 0, "slime-gel": 0, "orange-gel": 0, "slime-core": 0, "bat-wing": 0, "bat-silk": 0, "goblin-cloth": 0, "goblin-medal": 0, "orc-fang": 0, "orc-hide": 0, "moss-stone": 0, "moss-crystal": 0, "forest-dragon-scale": 0, "forest-dragon-heart": 0, "ice-wolf-fang": 0, "ice-wolf-fur": 0, "ice-crystal": 0, "frozen-ore": 0, "ice-dragon-scale": 0, "ice-dragon-heart": 0 },
     equipment: { weapon: null, shield: null, armor: null, accessory: null },
     gold: 0,
   });
@@ -383,7 +383,7 @@ test("アイテムはバトル中以外には使えず、敗北時のリセッ�
   assert.equal(state.player.maxHp, 4);
   assert.equal(state.player.attackPower, 2);
   assert.deepEqual(state.inventory, {
-    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0, "forest-dragon-seal": 0, "ice-dragon-core": 0 },
+    items: { "small-potion": 2, "large-potion": 0, "wooden-sword": 1, "wooden-shield": 0, "iron-sword": 0, "leather-armor": 0, "copper-charm": 0, "forest-dragon-seal": 0, "ice-dragon-core": 0, "slime-gel": 0, "orange-gel": 0, "slime-core": 0, "bat-wing": 0, "bat-silk": 0, "goblin-cloth": 0, "goblin-medal": 0, "orc-fang": 0, "orc-hide": 0, "moss-stone": 0, "moss-crystal": 0, "forest-dragon-scale": 0, "forest-dragon-heart": 0, "ice-wolf-fang": 0, "ice-wolf-fur": 0, "ice-crystal": 0, "frozen-ore": 0, "ice-dragon-scale": 0, "ice-dragon-heart": 0 },
     equipment: { weapon: null, shield: null, armor: null, accessory: null },
     gold: 0,
   });
