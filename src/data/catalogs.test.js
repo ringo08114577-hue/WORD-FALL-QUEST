@@ -114,7 +114,7 @@ test("コンテンツ定義は変更できない", () => {
 test("単語データはID・英単語の重複がなく、難易度1〜6を正しく保持する", () => {
   const ids = WORD_CHALLENGES.map((challenge) => challenge.id);
   const words = WORD_CHALLENGES.map((challenge) => challenge.word);
-  assert.equal(WORD_CHALLENGES.length, 102);
+  assert.equal(WORD_CHALLENGES.length, 162);
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(new Set(words).size, words.length);
   for (const challenge of WORD_CHALLENGES) {
@@ -127,6 +127,6 @@ test("単語データはID・英単語の重複がなく、難易度1〜6を正�
     Object.fromEntries([1, 2, 3, 4, 5, 6].map((difficulty) => [
       difficulty, WORD_CHALLENGES.filter((challenge) => challenge.difficulty === difficulty).length,
     ])),
-    { 1: 20, 2: 16, 3: 18, 4: 16, 5: 16, 6: 16 },
+    { 1: 30, 2: 26, 3: 28, 4: 26, 5: 26, 6: 26 },
   );
 });
