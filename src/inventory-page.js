@@ -1,0 +1,135 @@
+import { createAppSession } from "./app-session.js";
+import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./items.js";
+import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
+import { INVENTORY_CATEGORIES, getOwnedInventoryItems } from "./inventory.js";
+
+const $ = (id) => document.getElementById(id);
+const session = createAppSession();
+session.returnToTown();
+const { store, saves } = session;
+
+let activeCategory = "weapon";
+
+function node(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+function getItemEffects(item) {
+  const effects = [];
+  if (Number.isSafeInteger(item.attackBonus) && item.attackBonus !== 0) {
+    effects.push("攻撃力 +" + item.attackBonus);
+  }
+  if (Number.isSafeInteger(item.defenseBonus) && item.defenseBonus !== 0) {
+    effects.push("防御力 +" + item.defenseBonus);
+  }
+  if (Number.isSafeInteger(item.maxHpBonus) && item.maxHpBonus !== 0) {
+    effects.push("最大HP +" + item.maxHpBonus);
+  }
+  if (Number.isSafeInteger(item.healAmount) && item.healAmount > 0) {
+    effects.push("HPを " + item.healAmount + " 回復");
+  }
+  return effects.join(" · ");
+}
+
+function getItemTypeLabel(item) {
+  if (item.slot) return EQUIPMENT_SLOT_LABELS[item.slot] ?? "装備";
+  if (item.type === "consumable") return "消費アイテム";
+  if (item.type === "material") return "素材";
+  return "その他";
+}
+
+function getItemSources(itemId, item) {
+  const sources = [];
+  for (const dungeon of Object.values(DUNGEON_DEFINITIONS)) {
+    const reward = dungeon.reward;
+    if (reward?.oddFloorItemId === itemId || reward?.evenFloorItemId === itemId) {
+      sources.push(dungeon.name + "の宝箱");
+    }
+    if (dungeon.clearReward?.itemId === itemId) {
+      sources.push(dungeon.name + "の初回制覇報酬");
+    }
+  }
+  if (item.shopPrice) sources.push(item.slot ? "武器・防具屋" : "道具屋");
+  if (item.startingQuantity) sources.push("冒険開始時の所持品");
+  return [...new Set(sources)].join("・") || "冒険で入手";
+}
+
+function createItemCard(item) {
+  const card = node("article", "item-card");
+  const head = node("div", "item-card-head");
+  head.append(node("strong", "item-name", item.name));
+  head.append(node("span", "item-quantity", "× " + item.quantity));
+  card.append(head);
+
+  const tags = node("div", "item-tags");
+  tags.append(node("span", "item-tag", getItemTypeLabel(item)));
+  if (item.equipped) tags.append(node("span", "item-tag equipped", "装備中"));
+  card.append(tags);
+
+  if (item.description) card.append(node("p", "item-description", item.description));
+  const effects = getItemEffects(item);
+  if (effects) card.append(node("p", "item-effect", effects));
+  card.append(node("p", "item-source", "入手先：" + getItemSources(item.itemId, ITEM_DEFINITIONS[item.itemId])));
+  return card;
+}
+
+function updateCategoryCounts(inventory) {
+  let totalKinds = 0;
+  for (const category of INVENTORY_CATEGORIES) {
+    const items = getOwnedInventoryItems(inventory, category.id);
+    const count = items.length;
+    totalKinds += count;
+    $(category.id + "Count").textContent = count + "種類";
+  }
+  $("ownedSummary").textContent = totalKinds + "種類";
+}
+
+function render(state = store.getState()) {
+  $("levelValue").textContent = "LV." + state.player.level;
+  $("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
+  $("goldValue").textContent = state.inventory.gold + " G";
+  updateCategoryCounts(state.inventory);
+
+  for (const category of INVENTORY_CATEGORIES) {
+    const button = document.querySelector('button[data-category="' + category.id + '"]');
+    button.setAttribute("aria-pressed", String(activeCategory === category.id));
+  }
+
+  const noteByCategory = {
+    weapon: "武器タブには、武器・盾・鎧・アクセサリーなどの装備品をまとめて表示するよ。",
+    tool: "回復薬など、使うことができる道具を表示するよ。",
+    other: "ダンジョンの宝箱や初回制覇報酬で手に入る素材などを表示するよ。",
+  };
+  $("categoryNote").textContent = noteByCategory[activeCategory];
+
+  const owned = getOwnedInventoryItems(state.inventory, activeCategory);
+  const grid = $("inventoryGrid");
+  grid.replaceChildren();
+  for (const item of owned) grid.append(createItemCard(item));
+
+  const empty = $("emptyState");
+  empty.hidden = owned.length > 0;
+  if (owned.length === 0) {
+    empty.textContent = {
+      weapon: "まだ装備品を持っていないよ。武器・防具屋で装備を手に入れよう。",
+      tool: "まだ道具を持っていないよ。道具屋やダンジョンの宝箱を探してみよう。",
+      other: "まだ素材などを持っていないよ。ダンジョンを探索して集めよう。",
+    }[activeCategory];
+  }
+}
+
+document.querySelector(".category-tabs").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-category]");
+  if (!button || !INVENTORY_CATEGORIES.some(({ id }) => id === button.dataset.category)) return;
+  activeCategory = button.dataset.category;
+  render();
+});
+
+store.subscribe(render);
+render();
+if (session.initialLoad.loaded) $("feedback").textContent = "冒険データから所持アイテムを読み込んだよ。";
+else if (session.initialLoad.reason === "invalid-save") $("feedback").textContent = "保存データを読み込めなかったよ。";
+window.addEventListener("pagehide", () => saves.save());

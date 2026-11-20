@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>WORD FALL QUEST | アイテム欄</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,"Noto Sans JP",system-ui,sans-serif;background:#0b1220;color:#eef4ff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:14px 10px 28px;background:radial-gradient(circle at 50% 0%,rgba(56,117,201,.23),transparent 38rem),#0b1220}
+main{width:min(100%,900px);margin:0 auto}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.eyebrow{font-size:.68rem;letter-spacing:.14em;font-weight:850;color:#7dd3fc}
+.back{color:#bfdbfe;text-decoration:none;font-size:.78rem;font-weight:800}
+h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}
+.subtitle{margin:0 0 14px;color:#9eacc2;font-size:.84rem;line-height:1.5}
+.panel{padding:14px;margin:10px 0;border:1px solid #29384f;border-radius:16px;background:rgba(18,29,47,.94)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+.panel-head h2{font-size:1rem;margin:0}
+.muted{color:#91a4be;font-size:.74rem;line-height:1.5}
+.wallet{display:flex;gap:8px;flex-wrap:wrap}
+.stat{padding:8px 11px;border-radius:10px;background:#111d30;color:#a9bad0;font-size:.76rem}
+.stat strong{color:#eef4ff}
+.category-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.category-tab{min-height:48px;padding:8px 10px;border:1px solid #314662;border-radius:11px;background:#111d30;color:#cbd5e1;font:inherit;font-size:.82rem;font-weight:850;cursor:pointer}
+.category-tab span{display:block;margin-top:2px;color:#91a4be;font-size:.65rem;font-weight:700}
+.category-tab[aria-pressed="true"]{border-color:#60a5fa;background:linear-gradient(145deg,#1e4168,#14243b);color:#fff;box-shadow:0 0 0 2px rgba(96,165,250,.16)}
+.inventory-note{margin:0 0 12px;color:#9eacc2;font-size:.72rem;line-height:1.5}
+.inventory-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.item-card{display:flex;flex-direction:column;gap:7px;min-width:0;padding:12px;border:1px solid #2d415d;border-radius:13px;background:linear-gradient(145deg,#17263b,#111d30)}
+.item-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.item-name{font-size:.92rem;font-weight:900;overflow-wrap:anywhere}
+.item-quantity{flex:none;padding:4px 7px;border-radius:8px;background:#263b58;color:#bfdbfe;font-size:.72rem;font-weight:900}
+.item-tags{display:flex;flex-wrap:wrap;gap:5px}
+.item-tag{padding:3px 7px;border-radius:99px;background:#26364e;color:#cbd5e1;font-size:.64rem;font-weight:800}
+.item-tag.equipped{background:#174d3c;color:#86efac}
+.item-description{margin:0;color:#b4c2d5;font-size:.73rem;line-height:1.5}
+.item-effect{margin:0;color:#fcd34d;font-size:.7rem;font-weight:850;line-height:1.4}
+.item-source{margin:0;color:#8295af;font-size:.65rem;line-height:1.4}
+.empty-state{padding:24px 14px;border:1px dashed #40536e;border-radius:12px;color:#9eacc2;text-align:center;font-size:.8rem;line-height:1.6}
+.action-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.action-link{display:flex;align-items:center;justify-content:center;min-height:43px;padding:8px;border:1px solid #3b506e;border-radius:10px;background:#1a2b43;color:#dbeafe;text-decoration:none;font-size:.76rem;font-weight:850}
+.feedback{min-height:1.2em;color:#86efac;font-size:.75rem}
+.footer{margin-top:20px;text-align:center;color:#64748b;font-size:.68rem}
+@media(max-width:520px){body{padding:10px 8px 20px}.panel{padding:11px;margin:7px 0}.inventory-grid{gap:7px}.item-card{padding:10px}.category-tabs{gap:5px}.category-tab{padding:7px 4px;font-size:.76rem}}
+@media(max-width:360px){.inventory-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
+</style>
+</head>
+<body>
+<main>
+  <div class="topline"><div class="eyebrow">WORD FALL QUEST · ADVENTURER INVENTORY</div><a class="back" href="./index.html">← ホームへ戻る</a></div>
+  <h1>アイテム欄</h1>
+  <p class="subtitle">冒険で手に入れた装備・道具・素材を確認しよう。</p>
+  <section class="panel">
+    <div class="panel-head">
+      <div class="wallet"><div class="stat" id="levelValue">LV.1</div><div class="stat" id="hpValue">HP 100 / 100</div></div>
+      <strong id="goldValue">0 G</strong>
+    </div>
+    <div class="panel-head"><h2>所持アイテム</h2><span class="muted" id="ownedSummary">0種類</span></div>
+    <div class="category-tabs" role="group" aria-label="アイテムの分類">
+      <button class="category-tab" type="button" data-category="weapon" aria-pressed="true">武器<span id="weaponCount">0種類</span></button>
+      <button class="category-tab" type="button" data-category="tool" aria-pressed="false">道具<span id="toolCount">0種類</span></button>
+      <button class="category-tab" type="button" data-category="other" aria-pressed="false">その他<span id="otherCount">0種類</span></button>
+    </div>
+    <p class="inventory-note" id="categoryNote">武器タブには、武器・盾・鎧・アクセサリーなどの装備品をまとめて表示するよ。</p>
+    <div class="inventory-grid" id="inventoryGrid" aria-live="polite"></div>
+    <div class="empty-state" id="emptyState" hidden></div>
+    <div class="action-links">
+      <a class="action-link" href="./items.html">🧪 道具屋へ</a>
+      <a class="action-link" href="./equipment.html">⚔️ 武器・防具屋へ</a>
+    </div>
+  </section>
+  <p class="feedback" id="feedback" aria-live="polite"></p>
+  <p class="footer">WORD FALL QUEST · ADVENTURER INVENTORY</p>
+</main>
+<script type="module" src="./src/inventory-page.js"></script>
+</body>
+</html>

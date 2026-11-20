@@ -7,7 +7,7 @@ const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
   const html = read("index.html");
-  for (const link of ["status.html", "items.html", "equipment.html", "skills.html", "dungeons.html", "settings.html"]) {
+  for (const link of ["status.html", "inventory.html", "items.html", "equipment.html", "skills.html", "dungeons.html", "settings.html"]) {
     assert.ok(html.includes('href="./' + link + '"'), link);
   }
   assert.match(html, /createAppSession/);
