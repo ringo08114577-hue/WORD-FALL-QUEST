@@ -31,6 +31,7 @@
     @media(max-width:360px){.facility-grid,.offer-grid,.equipment-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
 
 .hero{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.hero-copy{display:flex;gap:12px;align-items:center}.avatar{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#1e4168,#14243b);border:1px solid #416080;font-size:2rem}
+.avatar img{display:block;width:100%;height:100%;padding:2px;object-fit:contain}
 .hero-name{font-weight:900;font-size:1.05rem}.hero-note{color:#9eacc2;font-size:.74rem;margin-top:4px;line-height:1.4}.record-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.record{padding:10px;border-radius:11px;background:#111d30}.record span{display:block;color:#91a4be;font-size:.66rem}.record strong{display:block;margin-top:4px;font-size:1.12rem}
 @media(max-width:520px){.hero{grid-template-columns:1fr}.record-grid{gap:6px}.record{padding:8px 6px}.record strong{font-size:.98rem}}
 </style>
@@ -42,7 +43,7 @@
   <section class="panel">
     <div class="panel-head"><h2>冒険者ステータス</h2><span class="muted" id="townStatus">ホーム</span></div>
     <div class="hero">
-      <div class="hero-copy"><div class="avatar" aria-hidden="true">🧙</div><div><div class="hero-name">冒険者 <span id="levelValue">LV.1</span></div><div class="hero-note" id="heroMessage">次の冒険に向けて準備しよう。</div></div></div>
+      <div class="hero-copy"><div class="avatar"><img id="heroAvatar" alt="主人公" hidden></div><div><div class="hero-name">冒険者 <span id="levelValue">LV.1</span></div><div class="hero-note" id="heroMessage">次の冒険に向けて準備しよう。</div></div></div>
       <div class="wallet"><div class="stat" id="hpValue">HP 100 / 100</div><div class="stat"><strong id="goldValue">0 G</strong></div></div>
     </div>
     <div class="record-grid">
@@ -68,6 +69,8 @@
 </main>
 <script type="module">
 import { createAppSession } from "./src/app-session.js";
+import { setCharacterImage } from "./src/character-images.js";
+setCharacterImage(document.getElementById("heroAvatar"), "hero", { alt: "主人公", baseUrl: document.baseURI });
 const session = createAppSession();
 const { store } = session;
 const result = session.returnToTown();

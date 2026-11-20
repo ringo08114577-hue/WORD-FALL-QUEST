@@ -1,4 +1,5 @@
 import { createAppSession } from "./app-session.js";
+import { setCharacterImage } from "./character-images.js";
 import { GAME_ACTION } from "./game-state.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillWordDifficultyRange,
@@ -6,6 +7,7 @@ import {
 } from "./skills.js";
 
 const $ = (id) => document.getElementById(id);
+setCharacterImage($("heroAvatar"), "hero", { alt: "主人公", baseUrl: document.baseURI });
 const session = createAppSession();
 session.returnToTown();
 const { store, saves } = session;

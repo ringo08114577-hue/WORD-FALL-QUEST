@@ -275,3 +275,10 @@ test("バトル画面は専用設定ページのレーン発光設定を読み�
   assert.match(html, /\.lane-focus\[data-flash-intensity="normal"\]\.pulse/);
   assert.match(html, /\.lane-focus\[data-flash-intensity="strong"\]\.pulse/);
 });
+
+test("英語バトル画面の主人公画像は全画面サイズで一回り大きい", () => {
+  assert.match(html, /\.player\s*\{[\s\S]*?width:72px; height:79px;[\s\S]*?margin-left:-36px/);
+  assert.match(html, /\.player\s*\{ width: 62px; height: 62px; margin-left: -31px/);
+  assert.match(html, /\.player\s*\{ width:48px; height:48px; margin-left:-24px/);
+  assert.match(html, /object-fit:contain/);
+});

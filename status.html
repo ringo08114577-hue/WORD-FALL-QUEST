@@ -12,6 +12,7 @@ h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}.subtitle{margin:0 0 14px
 .panel{padding:14px;margin:10px 0;border:1px solid #29384f;border-radius:16px;background:rgba(18,29,47,.94)}
 .panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:11px}.panel h2{font-size:1rem;margin:0}
 .muted{color:#91a4be;font-size:.74rem;line-height:1.5}.hero{display:flex;align-items:center;gap:12px}.avatar{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#1e4168,#14243b);border:1px solid #416080;font-size:2rem}
+.avatar img{display:block;width:100%;height:100%;padding:2px;object-fit:contain}
 .hero-name{font-size:1.05rem;font-weight:900}.hero-note{margin-top:4px;color:#9eacc2;font-size:.75rem}
 .record-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}.record{padding:10px;border-radius:11px;background:#111d30;min-width:0}.record span{display:block;color:#91a4be;font-size:.66rem}.record strong{display:block;margin-top:4px;font-size:1.08rem;overflow-wrap:anywhere}
 .exp-track{height:9px;border-radius:99px;background:#25364c;overflow:hidden;margin-top:7px}.exp-fill{height:100%;width:0;background:linear-gradient(90deg,#38bdf8,#60a5fa);border-radius:99px}
@@ -28,7 +29,7 @@ button{font:inherit;color:#eef4ff;cursor:pointer}.change-button{width:100%;min-h
   <div class="topline"><div class="eyebrow">WORD FALL QUEST · ADVENTURER STATUS</div><a class="back" href="./index.html">← ホームへ戻る</a></div>
   <h1>冒険者ステータス</h1><p class="subtitle">冒険者の能力を確認して、バトルで使うスキルを4枠まで装備しよう。</p>
   <section class="panel">
-    <div class="hero"><div class="avatar" aria-hidden="true">🧙</div><div><div class="hero-name">冒険者 <span id="levelValue">LV.1</span></div><div class="hero-note" id="hpValue">HP 100 / 100</div></div></div>
+    <div class="hero"><div class="avatar"><img id="heroAvatar" alt="主人公" hidden></div><div><div class="hero-name">冒険者 <span id="levelValue">LV.1</span></div><div class="hero-note" id="hpValue">HP 100 / 100</div></div></div>
     <div class="panel-head" style="margin-top:14px;margin-bottom:4px"><strong>次のレベルまで</strong><span class="muted" id="expValue">EXP 0 / 100</span></div>
     <div class="exp-track" role="progressbar" aria-label="次のレベルまでの経験値" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="expBar"><div class="exp-fill" id="expFill"></div></div>
     <div class="record-grid">

@@ -91,3 +91,19 @@ test("ゲーム設定ページは演出設定を保存し、ホームへ戻れ�
   assert.match(html, /href="\.\/index\.html"/);
   assert.doesNotMatch(html, /href="\.\/battle\.html"/);
 });
+
+test("ホームとステータスはバトルと同じ主人公画像を共通ローダーで表示する", () => {
+  const home = read("index.html");
+  const status = read("status.html");
+  const statusScript = read("src/status-page.js");
+  const imageLoader = read("src/character-images.js");
+  for (const html of [home, status]) {
+    assert.match(html, /<img id="heroAvatar" alt="主人公" hidden>/);
+    assert.match(html, /\.avatar img\{display:block;width:100%;height:100%/);
+  }
+  assert.match(home, /import \{ setCharacterImage \} from "\.\/src\/character-images\.js"/);
+  assert.match(home, /setCharacterImage\(document\.getElementById\("heroAvatar"\), "hero"/);
+  assert.match(statusScript, /import \{ setCharacterImage \} from "\.\/character-images\.js"/);
+  assert.match(statusScript, /setCharacterImage\(\$\("heroAvatar"\), "hero"/);
+  assert.match(imageLoader, /hero: Object\.freeze\(\{ image: "assets\/characters\/hero\.webp" \}\)/);
+});
