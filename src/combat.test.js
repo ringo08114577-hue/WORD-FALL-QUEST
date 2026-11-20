@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createCombatController, resolveCombatEvent } from "./combat.js";
 import { createEnemy } from "./enemies.js";
+import { ITEM_DEFINITIONS } from "./items.js";
 
 function createTestStore(options = {}) {
   return createGameStore({ playerMaxHp: 3, playerAttackPower: 1, ...options });
@@ -482,4 +483,42 @@ test("進化した攻撃スキルは実際のバトルダメージが上昇す�
   });
   assert.equal(result.damage, 2);
   assert.match(result.message, /疾風の斬撃/);
+});
+
+
+test("敵を倒すと素材が一度だけ所持品に追加され、戦闘メッセージにも表示される", () => {
+  const enemy = { ...createEnemy("slime"), maxHp: 3, experienceReward: 10 };
+  const store = startBattle({ playerAttackPower: 3, enemy });
+  const combat = createCombatController(store, { random: () => 0 });
+  const result = combat.handle({
+    eventId: "slime-drop-once",
+    type: "word-complete",
+  });
+
+  assert.deepEqual(result.drops, [{ itemId: "slime-gel", quantity: 1 }]);
+  assert.equal(store.getState().inventory.items["slime-gel"], 1);
+  assert.match(result.message, /スライムゼリー ×1/);
+  assert.ok(store.getState().actionLog.some((entry) =>
+    entry.message.includes("グリーンスライムのドロップ") &&
+    entry.message.includes(ITEM_DEFINITIONS["slime-gel"].name)));
+
+  const nextEvent = combat.handle({
+    eventId: "slime-drop-after-victory",
+    type: "word-complete",
+  });
+  assert.equal(nextEvent.ignored, true);
+  assert.equal(store.getState().inventory.items["slime-gel"], 1);
+});
+
+test("ドロップ抽選に外れた敵は素材を追加しない", () => {
+  const enemy = { ...createEnemy("slime"), maxHp: 3, experienceReward: 10 };
+  const store = startBattle({ playerAttackPower: 3, enemy });
+  const result = createCombatController(store, { random: () => 0.99 }).handle({
+    eventId: "slime-drop-miss",
+    type: "word-complete",
+  });
+
+  assert.deepEqual(result.drops, []);
+  assert.equal(store.getState().inventory.items["slime-gel"], 0);
+  assert.doesNotMatch(result.message, /素材ドロップ/);
 });

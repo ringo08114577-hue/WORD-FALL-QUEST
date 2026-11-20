@@ -1,6 +1,8 @@
 import { createAppSession } from "./app-session.js";
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./items.js";
 import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
+import { ENEMY_DEFINITIONS } from "./data/enemies.js";
+import { ENEMY_DROP_TABLES } from "./data/enemy-drops.js";
 import { INVENTORY_CATEGORIES, getOwnedInventoryItems } from "./inventory.js";
 
 const $ = (id) => document.getElementById(id);
@@ -52,6 +54,12 @@ function getItemSources(itemId, item) {
       sources.push(dungeon.name + "の初回制覇報酬");
     }
   }
+  for (const [enemyId, drops] of Object.entries(ENEMY_DROP_TABLES)) {
+    if (drops.some((drop) => drop.itemId === itemId)) {
+      const enemyName = ENEMY_DEFINITIONS[enemyId]?.name;
+      if (enemyName) sources.push(enemyName + "のドロップ");
+    }
+  }
   if (item.shopPrice) sources.push(item.slot ? "武器・防具屋" : "道具屋");
   if (item.startingQuantity) sources.push("冒険開始時の所持品");
   return [...new Set(sources)].join("・") || "冒険で入手";
@@ -101,7 +109,7 @@ function render(state = store.getState()) {
   const noteByCategory = {
     weapon: "武器タブには、武器・盾・鎧・アクセサリーなどの装備品をまとめて表示するよ。",
     tool: "回復薬など、使うことができる道具を表示するよ。",
-    other: "ダンジョンの宝箱や初回制覇報酬で手に入る素材などを表示するよ。",
+    other: "敵のドロップ素材や、ダンジョンの宝箱・初回制覇報酬で手に入るアイテムを表示するよ。",
   };
   $("categoryNote").textContent = noteByCategory[activeCategory];
 
@@ -116,7 +124,7 @@ function render(state = store.getState()) {
     empty.textContent = {
       weapon: "まだ装備品を持っていないよ。武器・防具屋で装備を手に入れよう。",
       tool: "まだ道具を持っていないよ。道具屋やダンジョンの宝箱を探してみよう。",
-      other: "まだ素材などを持っていないよ。ダンジョンを探索して集めよう。",
+      other: "まだ素材などを持っていないよ。敵を倒したり、ダンジョンを探索したりして集めよう。",
     }[activeCategory];
   }
 }

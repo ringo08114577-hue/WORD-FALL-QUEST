@@ -8,6 +8,8 @@ import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ENEMY_ABILITY_DEFINITIONS, getEnemyAbilityEffects } from "./enemies.js";
 import { SKILL_DEFINITIONS, getSkillEffectForLevel, getSkillDisplayName } from "./skills.js";
 import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
+import { ITEM_DEFINITIONS } from "./items.js";
+import { resolveEnemyDrops } from "./enemy-drops.js";
 
 export const COMBAT_EVENT = Object.freeze({
   CORRECT: "correct",
@@ -172,13 +174,17 @@ export function resolveCombatEvent(gameState, event) {
  * Stateful adapter that applies each word event at most once.
  * Events must carry a stable eventId supplied by the word-battle engine.
  */
-export function createCombatController(store) {
+export function createCombatController(store, { random = Math.random } = {}) {
   if (
     !store ||
     typeof store.getState !== "function" ||
     typeof store.dispatch !== "function"
   ) {
     throw new TypeError("combat controllerにはgame storeが必要です。");
+  }
+
+  if (typeof random !== "function") {
+    throw new TypeError("combat controllerには乱数関数が必要です。");
   }
 
   const processedEventIds = new Set();
@@ -201,7 +207,7 @@ export function createCombatController(store) {
         store.dispatch(resolution.action);
       }
 
-      const state = store.getState();
+      let state = store.getState();
       if (event.type === COMBAT_EVENT.WRONG) {
         store.dispatch({
           type: GAME_ACTION.LOG_EVENT,
@@ -227,16 +233,34 @@ export function createCombatController(store) {
       let tone = resolution.tone;
       let experienceGained = 0;
       let levelUps = 0;
+      let drops = [];
       if (
         previousState.phase === GAME_PHASE.BATTLE &&
         state.phase === GAME_PHASE.VICTORY
       ) {
-        experienceGained = state.enemy?.experienceReward ?? 0;
+        const defeatedEnemy = state.enemy;
+        experienceGained = defeatedEnemy?.experienceReward ?? 0;
         levelUps = state.player.level - previousState.player.level;
+        drops = resolveEnemyDrops(defeatedEnemy?.id, random);
+        for (const drop of drops) {
+          store.dispatch({
+            type: GAME_ACTION.ADD_ITEM,
+            itemId: drop.itemId,
+            quantity: drop.quantity,
+            sourceLabel: defeatedEnemy.name + "のドロップ",
+          });
+        }
+        state = store.getState();
         message =
-          state.enemy.name + "を倒した！ EXP +" + experienceGained + "！";
+          defeatedEnemy.name + "を倒した！ EXP +" + experienceGained + "！";
         if (levelUps > 0) {
           message += " レベルアップ！ LV." + state.player.level + "になった！";
+        }
+        if (drops.length > 0) {
+          const dropSummary = drops.map(({ itemId, quantity }) =>
+            (ITEM_DEFINITIONS[itemId]?.name ?? itemId) + " ×" + quantity
+          ).join("、");
+          message += " 素材ドロップ！ " + dropSummary + "を手に入れた！";
         }
         tone = "good";
       } else if (state.phase === GAME_PHASE.DEFEAT) {
@@ -248,6 +272,7 @@ export function createCombatController(store) {
         ...resolution,
         experienceGained,
         levelUps,
+        drops,
         message,
         tone,
         state,

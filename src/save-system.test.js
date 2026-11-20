@@ -203,7 +203,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 11,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 12,
   );
 });
 
@@ -820,7 +820,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 11);
+  assert.equal(SAVE_VERSION, 12);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {
@@ -836,4 +836,32 @@ test("進化済みスキルと素材消費後の状態をセーブ・ロード�
   assert.deepEqual(second.store.getState().evolvedSkillIds, ["quick-strike"]);
   assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 0);
   assert.equal(second.store.getState().skillLevels["quick-strike"], 5);
+});
+
+
+test("バージョン11のセーブを新しいドロップ素材に対応させて引き継ぐ", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
+  assert.equal(first.controller.save().saved, true);
+
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 11;
+  for (const itemId of [
+    "slime-gel", "orange-gel", "slime-core", "bat-wing", "bat-silk",
+    "goblin-cloth", "goblin-medal", "orc-fang", "orc-hide",
+    "moss-stone", "moss-crystal", "forest-dragon-scale", "forest-dragon-heart",
+    "ice-wolf-fang", "ice-wolf-fur", "ice-crystal", "frozen-ore",
+    "ice-dragon-scale", "ice-dragon-heart",
+  ]) {
+    delete legacy.gameState.inventory.items[itemId];
+  }
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.store.getState().inventory.items["slime-gel"], 0);
+  assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 12);
 });
