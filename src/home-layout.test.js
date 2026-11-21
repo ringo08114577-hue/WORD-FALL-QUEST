@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
@@ -113,13 +113,15 @@ test("その他メニューは設定とアカウントだけを表示し、ホ�
 test("共通レイアウトはページごとにNPCの立ち絵とセリフを切り替える", () => {
   const script = read("src/shared-layout.js");
   for (const [page, portrait] of [
-    ["index.html", "guild-receptionist.svg"],
-    ["dungeons.html", "guild-receptionist.svg"],
+    ["index.html", "guild-receptionist.webp"],
+    ["dungeons.html", "guild-receptionist.webp"],
     ["shop.html", "merchant.svg"],
     ["crafting.html", "blacksmith.svg"],
     ["inventory.html", "quartermaster.svg"],
     ["status.html", "trainer.svg"],
     ["skills.html", "arcanist.svg"],
+    ["settings.html", "guild-receptionist.webp"],
+    ["account.html", "guild-receptionist.webp"],
   ]) {
     assert.match(script, new RegExp('"' + page + '".*?' + portrait));
   }
@@ -128,8 +130,11 @@ test("共通レイアウトはページごとにNPCの立ち絵とセリフを�
   const css = read("src/shared-layout.css");
   assert.match(css, /\.wfq-npc-portrait/);
   assert.match(css, /\.wfq-npc-dialogue/);
+  assert.match(css, /\.wfq-npc-next/);
+  assert.match(css, /@keyframes wfq-npc-line-in/);
+  assert.match(script, /lineIndex = \(lineIndex \+ 1\) % lines\.length/);
+  assert.ok(existsSync(new URL("assets/npcs/guild-receptionist.webp", root)), "受付嬢のWebP画像が存在する");
   for (const file of [
-    "assets/npcs/guild-receptionist.svg",
     "assets/npcs/merchant.svg",
     "assets/npcs/blacksmith.svg",
     "assets/npcs/quartermaster.svg",

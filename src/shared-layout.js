@@ -6,15 +6,51 @@ const NAV_ITEMS = Object.freeze([
 ]);
 
 const NPC_PAGES = Object.freeze({
-  "index.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "おかえりなさい！今日はどんな冒険に出かけますか？" },
-  "dungeons.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "新しい依頼が届いていますよ。準備ができたら出発しましょう！" },
-  "shop.html": { name: "ロウ", role: "道具屋の店主", portrait: "./assets/npcs/merchant.svg", line: "武器も道具も揃ってるよ。必要なものを選んでいってくれ！" },
-  "crafting.html": { name: "ガルド", role: "熟練の鍛冶職人", portrait: "./assets/npcs/blacksmith.svg", line: "素材を持ってきたな。よし、腕によりをかけて仕上げてやる！" },
-  "inventory.html": { name: "セシル", role: "ギルド倉庫係", portrait: "./assets/npcs/quartermaster.svg", line: "持ち物を整理しましょう。装備の付け替えもここでできますよ。" },
-  "status.html": { name: "エルナ", role: "冒険者ギルド教官", portrait: "./assets/npcs/trainer.svg", line: "自分の能力を知ることも、強くなるための大切な一歩よ。" },
-  "skills.html": { name: "ノア", role: "魔法研究家", portrait: "./assets/npcs/arcanist.svg", line: "スキルを磨けば、強敵との戦いも有利に進められるぞ。" },
-  "settings.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "操作や演出は、遊びやすいように調整できますよ。" },
-  "account.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "冒険の記録は大切に保管しましょう。セーブの設定はこちらです。" }
+  "index.html": {
+    name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.webp",
+    line: "おかえりなさい！今日はどんな冒険に出かけますか？",
+    lines: ["おかえりなさい！今日はどんな冒険に出かけますか？", "森の奥では、見慣れない魔物が目撃されています。準備は念入りに！", "装備やスキルの確認も忘れずに。今日の冒険も応援しています！"]
+  },
+  "dungeons.html": {
+    name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.webp",
+    line: "新しい依頼が届いていますよ。準備ができたら出発しましょう！",
+    lines: ["新しい依頼が届いていますよ。準備ができたら出発しましょう！", "ダンジョンごとに現れる魔物も手に入る素材も違います。", "無理は禁物です。帰ってきたら報酬を確認しましょうね！"]
+  },
+  "shop.html": {
+    name: "ロウ", role: "道具屋の店主", portrait: "./assets/npcs/merchant.svg",
+    line: "武器も道具も揃ってるよ。必要なものを選んでいってくれ！",
+    lines: ["武器も道具も揃ってるよ。必要なものを選んでいってくれ！", "回復アイテムは冒険の前に用意しておくと安心だ。", "素材を売ってゴールドにするのも忘れずにな！"]
+  },
+  "crafting.html": {
+    name: "ガルド", role: "熟練の鍛冶職人", portrait: "./assets/npcs/blacksmith.svg",
+    line: "素材を持ってきたな。よし、腕によりをかけて仕上げてやる！",
+    lines: ["素材を持ってきたな。よし、腕によりをかけて仕上げてやる！", "強い装備を作るには、ダンジョンで珍しい素材を集めるんだ。", "作成した装備はアイテム欄から確認できるぞ！"]
+  },
+  "inventory.html": {
+    name: "セシル", role: "ギルド倉庫係", portrait: "./assets/npcs/quartermaster.svg",
+    line: "持ち物を整理しましょう。装備の付け替えもここでできますよ。",
+    lines: ["持ち物を整理しましょう。装備の付け替えもここでできますよ。", "新しい装備を手に入れたら、今の装備と能力を比べてみましょう。", "素材はショップで売却できます。持ち物をすっきりさせましょう！"]
+  },
+  "status.html": {
+    name: "エルナ", role: "冒険者ギルド教官", portrait: "./assets/npcs/trainer.svg",
+    line: "自分の能力を知ることも、強くなるための大切な一歩よ。",
+    lines: ["自分の能力を知ることも、強くなるための大切な一歩よ。", "装備やスキルの組み合わせで、戦い方も変わってくるわ。", "次の冒険に向けて、自分の成長を確かめていきましょう！"]
+  },
+  "skills.html": {
+    name: "ノア", role: "魔法研究家", portrait: "./assets/npcs/arcanist.svg",
+    line: "スキルを磨けば、強敵との戦いも有利に進められるぞ。",
+    lines: ["スキルを磨けば、強敵との戦いも有利に進められるぞ。", "攻撃スキルは威力だけでなく、使いやすさも考えて選ぶんだ。", "育てたスキルを装備して、次の冒険で試してみよう！"]
+  },
+  "settings.html": {
+    name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.webp",
+    line: "操作や演出は、遊びやすいように調整できますよ。",
+    lines: ["操作や演出は、遊びやすいように調整できますよ。", "画面の光り方などは、ゲーム設定から変えられます。", "自分に合った設定で、ゆっくり冒険を楽しんでくださいね！"]
+  },
+  "account.html": {
+    name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.webp",
+    line: "冒険の記録は大切に保管しましょう。セーブの設定はこちらです。",
+    lines: ["冒険の記録は大切に保管しましょう。セーブの設定はこちらです。", "アカウントを連携すると、冒険の記録を引き継ぎやすくなります。", "困ったときは、ここでセーブの状態を確認してくださいね。"]
+  }
 });
 
 const MORE_ITEMS = Object.freeze([
@@ -42,8 +78,11 @@ function navLink(item, current, className) {
 
 function createNpcStage(current) {
   const npc = NPC_PAGES[current] ?? NPC_PAGES["index.html"];
+  const lines = Array.isArray(npc.lines) && npc.lines.length ? npc.lines : [npc.line];
   const stage = el("section", "wfq-npc-stage");
+  if (npc.portrait.endsWith("guild-receptionist.webp")) stage.classList.add("wfq-npc-stage--reception");
   stage.setAttribute("aria-label", npc.name + "の案内");
+
   const portraitFrame = el("div", "wfq-npc-portrait");
   const portrait = document.createElement("img");
   portrait.src = npc.portrait;
@@ -51,10 +90,24 @@ function createNpcStage(current) {
   portrait.loading = "eager";
   portrait.decoding = "async";
   portraitFrame.append(portrait);
+
   const dialogue = el("div", "wfq-npc-dialogue");
   const identity = el("div", "wfq-npc-identity");
   identity.append(el("strong", "wfq-npc-name", npc.name), el("span", "wfq-npc-role", npc.role));
-  dialogue.append(identity, el("p", "wfq-npc-line", "「" + npc.line + "」"));
+  const line = el("p", "wfq-npc-line", "「" + lines[0] + "」");
+  line.setAttribute("aria-live", "polite");
+  const nextButton = el("button", "wfq-npc-next", "つぎの話　›");
+  nextButton.type = "button";
+  nextButton.setAttribute("aria-label", npc.name + "の会話を進める");
+  let lineIndex = 0;
+  nextButton.addEventListener("click", () => {
+    lineIndex = (lineIndex + 1) % lines.length;
+    line.textContent = "「" + lines[lineIndex] + "」";
+    stage.classList.remove("is-talking");
+    void line.offsetWidth;
+    stage.classList.add("is-talking");
+  });
+  dialogue.append(identity, line, nextButton);
   stage.append(portraitFrame, dialogue);
   return stage;
 }
