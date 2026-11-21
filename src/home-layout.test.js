@@ -5,6 +5,16 @@ import { readFileSync } from "node:fs";
 const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
+
+test("アイテム欄には道具屋・武器防具屋への移動リンクを表示しない", () => {
+  const html = read("inventory.html");
+  assert.doesNotMatch(html, /道具屋へ/);
+  assert.doesNotMatch(html, /武器・防具屋へ/);
+  assert.doesNotMatch(html, /href="\.\/items\.html"/);
+  assert.doesNotMatch(html, /href="\.\/equipment\.html"/);
+  assert.match(html, /href="\.\/index\.html"/);
+});
+
 test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
   const html = read("index.html");
   for (const link of ["status.html", "inventory.html", "items.html", "equipment.html", "skills.html", "dungeons.html", "settings.html"]) {
