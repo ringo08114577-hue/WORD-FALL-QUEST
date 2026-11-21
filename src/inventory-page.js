@@ -63,7 +63,7 @@ function getItemSources(itemId, item) {
       if (enemyName) sources.push(enemyName + "のドロップ");
     }
   }
-  if (item.shopPrice) sources.push(item.slot ? "武器・防具屋" : "道具屋");
+  if (item.shopPrice) sources.push("ショップ");
   if (item.startingQuantity) sources.push("冒険開始時の所持品");
   return [...new Set(sources)].join("・") || "冒険で入手";
 }
@@ -163,8 +163,8 @@ function render(state = store.getState()) {
   empty.hidden = owned.length > 0;
   if (owned.length === 0) {
     empty.textContent = {
-      weapon: "まだ装備品を持っていないよ。武器・防具屋で装備を手に入れよう。",
-      tool: "まだ道具を持っていないよ。道具屋やダンジョンの宝箱を探してみよう。",
+      weapon: "まだ装備品を持っていないよ。ショップで装備を手に入れよう。",
+      tool: "まだ道具を持っていないよ。ショップやダンジョンの宝箱を探してみよう。",
       other: "まだ素材などを持っていないよ。敵を倒したり、ダンジョンを探索したりして鍛冶屋で使う素材を集めよう。",
     }[activeCategory];
   }

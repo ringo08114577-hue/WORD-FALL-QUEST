@@ -6,13 +6,21 @@ const root = new URL("../", import.meta.url);
 const read = (path) => readFileSync(new URL(path, root), "utf8");
 
 
-test("アイテム欄には道具屋・武器防具屋への移動リンクを表示しない", () => {
+test("旧店舗リンクはアイテム欄に表示しない", () => {
   const html = read("inventory.html");
   assert.doesNotMatch(html, /道具屋へ/);
   assert.doesNotMatch(html, /武器・防具屋へ/);
   assert.doesNotMatch(html, /href="\.\/items\.html"/);
   assert.doesNotMatch(html, /href="\.\/equipment\.html"/);
   assert.match(html, /href="\.\/index\.html"/);
+});
+
+test("アイテム欄の入手先と空表示は統合後のショップ名に統一する", () => {
+  const script = read("src/inventory-page.js");
+  assert.match(script, /sources\.push\("ショップ"\)/);
+  assert.match(script, /ショップで装備を手に入れよう/);
+  assert.match(script, /ショップやダンジョンの宝箱/);
+  assert.doesNotMatch(script, /道具屋|武器・防具屋/);
 });
 
 test("アイテム欄の素材カードには1個売却とまとめ売却の操作がある", () => {
@@ -82,12 +90,14 @@ test("装備変更はアイテム欄に集約し、装備中の装備と付け�
   assert.match(script, /saves\.save\(\)/);
 });
 
-test("道具屋と武器・防具屋の旧URLは統合ショップへ転送する", () => {
+test("旧店舗URLは旧店舗名を表示せず、統合ショップへ転送する", () => {
   for (const file of ["items.html", "equipment.html"]) {
     const html = read(file);
     assert.match(html, /http-equiv="refresh"/);
     assert.match(html, /window\.location\.replace\("\.\/shop\.html"\)/);
     assert.match(html, /href="\.\/shop\.html"/);
+    assert.match(html, /このページはショップに統合されました/);
+    assert.doesNotMatch(html, /道具屋|武器・防具屋/);
   }
 });
 
