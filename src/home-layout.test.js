@@ -78,6 +78,20 @@ test("ホームは冒険者ステータスと施設ページへの入口を表�
   assert.doesNotMatch(html, /宿屋|innRestButton/);
 });
 
+
+test("ホームの町マップは建物から既存の施設へ移動できる", () => {
+  const html = read("index.html");
+  assert.match(html, /id="townMapTitle">町のマップ/);
+  for (const route of ["dungeons.html", "shop.html", "crafting.html", "inventory.html"]) {
+    assert.ok(html.includes('class="town-map-spot" href="./' + route + '"'), route + " map link");
+  }
+  assert.match(html, /aria-label="冒険者の町/);
+  assert.match(html, /class="facility-grid"/);
+  assert.match(html, /shared-layout\.css/);
+  assert.match(html, /shared-layout\.js/);
+});
+
+
 test("統合ショップ・鍛冶屋・スキル工房はそれぞれ独立したHTMLページを持つ", () => {
   for (const [file, facility] of [
     ["shop.html", "shop"],

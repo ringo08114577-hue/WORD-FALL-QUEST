@@ -30,6 +30,19 @@
     @media(max-width:620px){body{padding:10px 8px 20px}.panel,.subpanel{padding:11px;margin:7px 0}.facility-grid{gap:7px}.facility-link{min-height:100px;padding:10px}.offer-grid{gap:7px}.offer-card{padding:10px}.floor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dungeon-grid{grid-template-columns:1fr}.inventory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:360px){.facility-grid,.offer-grid,.equipment-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
 
+    /* Town map: an extra clickable layer that leaves the existing home and nav intact. */
+    .town-map-panel .panel-head{margin-bottom:10px}
+    .town-map{overflow:hidden;border:1px solid #3a594e;border-radius:13px;background:#183329;box-shadow:inset 0 1px rgba(255,255,255,.04)}
+    .town-map svg{display:block;width:100%;height:auto;aspect-ratio:720/480}
+    .town-map-spot{cursor:pointer;outline:none}
+    .town-map-spot .map-roof{transition:filter .16s ease,stroke .16s ease}
+    .town-map-spot:hover .map-roof{filter:brightness(1.18)}
+    .town-map-spot:focus-visible .map-hit{stroke:#ffe2a0;stroke-width:4;stroke-dasharray:7 4}
+    .town-map-spot .map-label{fill:#f7f2e5;font-size:16px;font-weight:850;text-anchor:middle;paint-order:stroke;stroke:#17251f;stroke-width:3px;stroke-linejoin:round}
+    .town-map-spot .map-sub{fill:#e4c987;font-size:10px;font-weight:750;text-anchor:middle}
+    .town-map-hint{margin:9px 2px 0;color:#98b4a8;font-size:.72rem;line-height:1.5}
+    @media(max-width:420px){.town-map-spot .map-label{font-size:15px}.town-map-spot .map-sub{font-size:9px}}
+
 .hero{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}.hero-copy{display:flex;gap:12px;align-items:center}.avatar{display:grid;place-items:center;width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#1e4168,#14243b);border:1px solid #416080;font-size:2rem}
 .avatar img{display:block;width:100%;height:100%;padding:2px;object-fit:contain}
 .hero-name{font-weight:900;font-size:1.05rem}.hero-note{color:#9eacc2;font-size:.74rem;margin-top:4px;line-height:1.4}.record-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.record{padding:10px;border-radius:11px;background:#111d30}.record span{display:block;color:#91a4be;font-size:.66rem}.record strong{display:block;margin-top:4px;font-size:1.12rem}
@@ -52,6 +65,105 @@
       <div class="record"><span>防御力</span><strong id="defenseValue">0</strong></div>
       <div class="record"><span>撃破した敵</span><strong id="defeatedValue">0</strong></div>
     </div>
+  </section>
+  <section class="panel town-map-panel" aria-labelledby="townMapTitle">
+    <div class="panel-head"><h2 id="townMapTitle">町のマップ</h2><span class="muted">建物をタップして移動</span></div>
+    <div class="town-map">
+      <svg viewBox="0 0 720 480" role="group" aria-label="冒険者の町。ギルド、ショップ、鍛冶屋、倉庫を選べるマップ" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="townGrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#315b43"/><stop offset="1" stop-color="#1c3d31"/></linearGradient>
+          <linearGradient id="townRoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8aa79"/><stop offset="1" stop-color="#91734f"/></linearGradient>
+          <linearGradient id="guildRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#56859a"/><stop offset="1" stop-color="#29485e"/></linearGradient>
+          <linearGradient id="shopRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bd7652"/><stop offset="1" stop-color="#713f35"/></linearGradient>
+          <linearGradient id="forgeRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a7770"/><stop offset="1" stop-color="#48494a"/></linearGradient>
+          <linearGradient id="storeRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b69b5d"/><stop offset="1" stop-color="#78603b"/></linearGradient>
+          <pattern id="townStones" width="26" height="20" patternUnits="userSpaceOnUse"><path d="M1 1h10v7H1zM14 11h11v7H14z" fill="none" stroke="#e0c99e" stroke-opacity=".22" stroke-width="1"/></pattern>
+          <filter id="townShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#07150f" flood-opacity=".55"/></filter>
+        </defs>
+        <rect width="720" height="480" fill="url(#townGrass)"/>
+        <path d="M0 65Q110 22 205 66T420 52T720 77M0 430Q165 390 280 430T520 420T720 445" fill="none" stroke="#70905c" stroke-width="3" opacity=".35"/>
+        <g fill="#6e955d" opacity=".48">
+          <circle cx="35" cy="100" r="17"/><circle cx="65" cy="78" r="11"/><circle cx="685" cy="155" r="20"/><circle cx="665" cy="183" r="13"/>
+          <circle cx="30" cy="390" r="22"/><circle cx="78" cy="430" r="15"/><circle cx="655" cy="430" r="24"/><circle cx="696" cy="398" r="12"/>
+          <circle cx="150" cy="155" r="9"/><circle cx="570" cy="60" r="12"/><circle cx="590" cy="445" r="11"/>
+        </g>
+        <path d="M-20 340C110 330 150 370 250 335S420 320 500 350 650 340 750 300" fill="none" stroke="#715b40" stroke-width="112" stroke-linecap="round" opacity=".6"/>
+        <path d="M-20 340C110 330 150 370 250 335S420 320 500 350 650 340 750 300" fill="none" stroke="url(#townRoad)" stroke-width="98" stroke-linecap="round"/>
+        <path d="M350 340C330 285 360 245 375 205S370 160 370 145M165 340C155 310 158 295 170 280M548 340C550 305 560 286 565 270M555 200C555 165 555 142 560 125" fill="none" stroke="#8e724f" stroke-width="67" stroke-linecap="round"/>
+        <path d="M350 340C330 285 360 245 375 205S370 160 370 145M165 340C155 310 158 295 170 280M548 340C550 305 560 286 565 270M555 200C555 165 555 142 560 125" fill="none" stroke="#c6a779" stroke-width="57" stroke-linecap="round"/>
+        <path d="M0 0H720V480H0Z" fill="url(#townStones)" opacity=".23"/>
+        <g opacity=".75" fill="#8fa56c">
+          <path d="M24 125l15-23 16 23-7 1v17H31v-17z"/><path d="M633 70l17-27 18 27-7 1v20h-21V71z"/>
+          <path d="M45 440l15-24 17 24-7 1v16H52v-16z"/><path d="M665 390l16-25 17 25-7 1v17h-19v-17z"/>
+        </g>
+        <a class="town-map-spot" href="./dungeons.html" aria-label="冒険者ギルド。クエストを選ぶ">
+          <rect class="map-hit" x="238" y="48" width="262" height="220" rx="15" fill="transparent" stroke="transparent"/>
+          <g filter="url(#townShadow)">
+            <rect x="275" y="133" width="190" height="104" rx="5" fill="#b78c60" stroke="#583d2c" stroke-width="5"/>
+            <path d="M259 143L370 65 481 143Z" class="map-roof" fill="url(#guildRoof)" stroke="#1e3545" stroke-width="7"/>
+            <path d="M281 140L370 82 459 140" fill="none" stroke="#91b7bd" stroke-width="4" opacity=".55"/>
+            <rect x="340" y="165" width="60" height="72" rx="5" fill="#513b2d" stroke="#e0bb76" stroke-width="4"/>
+            <path d="M370 166v70" stroke="#d8b879" stroke-width="3"/>
+            <rect x="296" y="165" width="28" height="33" rx="3" fill="#9ac0bd" stroke="#614a36" stroke-width="4"/>
+            <rect x="416" y="165" width="28" height="33" rx="3" fill="#9ac0bd" stroke="#614a36" stroke-width="4"/>
+            <path d="M312 165v33m-16-16h28m118-17v33m-14-16h28" stroke="#73563a" stroke-width="3"/>
+            <path d="M353 116h34l-17-27z" fill="#dfbd72" stroke="#6b4d32" stroke-width="3"/>
+            <path d="M370 94v19" stroke="#6b4d32" stroke-width="3"/>
+            <rect x="325" y="238" width="90" height="18" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
+            <text x="370" y="251" class="map-label" font-size="12">冒険者ギルド</text>
+          </g>
+          <text x="370" y="277" class="map-sub">QUEST / クエスト</text>
+        </a>
+        <a class="town-map-spot" href="./shop.html" aria-label="ショップ。道具や装備を購入する">
+          <rect class="map-hit" x="50" y="205" width="205" height="185" rx="15" fill="transparent" stroke="transparent"/>
+          <g filter="url(#townShadow)">
+            <rect x="85" y="275" width="135" height="83" rx="4" fill="#b98a5a" stroke="#5a3e2d" stroke-width="5"/>
+            <path d="M70 284L152 220 235 284Z" class="map-roof" fill="url(#shopRoof)" stroke="#55332c" stroke-width="6"/>
+            <path d="M92 280L152 235 212 280" fill="none" stroke="#e4a477" stroke-width="4" opacity=".55"/>
+            <rect x="139" y="310" width="34" height="48" rx="3" fill="#553b2b" stroke="#e5c48d" stroke-width="3"/>
+            <rect x="100" y="298" width="25" height="24" fill="#9dc8c0" stroke="#654a34" stroke-width="3"/>
+            <path d="M112 298v24m-12-12h25" stroke="#765238" stroke-width="2"/>
+            <path d="M130 270h44v15h-44z" fill="#e4c37f" stroke="#654a34" stroke-width="2"/>
+            <text x="152" y="282" class="map-label" font-size="11">SHOP</text>
+            <rect x="104" y="357" width="96" height="19" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
+            <text x="152" y="371" class="map-label" font-size="12">ショップ</text>
+          </g>
+          <text x="152" y="394" class="map-sub">ITEMS &amp; EQUIPMENT</text>
+        </a>
+        <a class="town-map-spot" href="./crafting.html" aria-label="鍛冶屋。装備を作成する">
+          <rect class="map-hit" x="470" y="205" width="208" height="190" rx="15" fill="transparent" stroke="transparent"/>
+          <g filter="url(#townShadow)">
+            <rect x="505" y="278" width="135" height="82" rx="4" fill="#a67b58" stroke="#493c35" stroke-width="5"/>
+            <path d="M488 286L573 220 656 286Z" class="map-roof" fill="url(#forgeRoof)" stroke="#383b3c" stroke-width="6"/>
+            <path d="M508 282L573 235 638 282" fill="none" stroke="#c1aaa0" stroke-width="4" opacity=".5"/>
+            <rect x="556" y="315" width="32" height="45" rx="3" fill="#43352e" stroke="#d6b17a" stroke-width="3"/>
+            <rect x="610" y="299" width="22" height="26" fill="#f2a24f" stroke="#65483a" stroke-width="3"/>
+            <path d="M611 310q10-14 19 0" fill="none" stroke="#ffe1a0" stroke-width="3"/>
+            <path d="M530 271h38v15h-38z" fill="#343a3c" stroke="#d6b17a" stroke-width="2"/>
+            <path d="M548 264l12-16 12 16" fill="none" stroke="#e1a25e" stroke-width="4"/>
+            <rect x="525" y="359" width="96" height="19" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
+            <text x="573" y="373" class="map-label" font-size="12">鍛冶屋</text>
+          </g>
+          <text x="573" y="396" class="map-sub">BLACKSMITH</text>
+        </a>
+        <a class="town-map-spot" href="./inventory.html" aria-label="倉庫。アイテム欄を開く">
+          <rect class="map-hit" x="488" y="28" width="188" height="185" rx="15" fill="transparent" stroke="transparent"/>
+          <g filter="url(#townShadow)">
+            <rect x="518" y="92" width="126" height="76" rx="4" fill="#b58b5c" stroke="#5c452f" stroke-width="5"/>
+            <path d="M503 101L581 43 659 101Z" class="map-roof" fill="url(#storeRoof)" stroke="#59472e" stroke-width="6"/>
+            <rect x="545" y="119" width="32" height="31" rx="2" fill="#79563a" stroke="#e0bf82" stroke-width="3"/>
+            <rect x="585" y="119" width="32" height="31" rx="2" fill="#79563a" stroke="#e0bf82" stroke-width="3"/>
+            <path d="M550 126h22m-22 8h22m18-8h22m-22 8h22" stroke="#d6ae71" stroke-width="2"/>
+            <rect x="531" y="168" width="100" height="19" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
+            <text x="581" y="182" class="map-label" font-size="12">倉庫・アイテム</text>
+          </g>
+          <text x="581" y="205" class="map-sub">INVENTORY</text>
+        </a>
+        <g fill="#f0d18c" opacity=".8"><circle cx="260" cy="303" r="4"/><circle cx="435" cy="404" r="4"/><circle cx="309" cy="418" r="3"/><circle cx="458" cy="95" r="3"/></g>
+        <g fill="#e9c985" opacity=".72"><path d="M250 390l4-10 4 10-4 7z"/><path d="M450 300l4-10 4 10-4 7z"/></g>
+      </svg>
+    </div>
+    <p class="town-map-hint">ギルドでクエストを選び、ショップや鍛冶屋で冒険の準備をしよう。</p>
   </section>
   <section class="panel">
     <div class="panel-head"><h2>街の施設</h2><span class="muted">行きたい場所を選ぼう</span></div>
