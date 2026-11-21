@@ -77,7 +77,7 @@ test("装備変更はアイテム欄に集約し、装備中の装備と付け�
   const script = read("src/inventory-page.js");
   assert.match(html, /\.equip-button\{/);
   assert.match(script, /item\.equipped \? "装備中"/);
-  assert.match(script, /button\.dataset\.equipItem = item\.itemId/);
+  assert.match(script, /equipButton.dataset.equipItem = item.itemId/);
   assert.match(script, /GAME_ACTION\.PREPARE_EQUIPMENT/);
   assert.match(script, /saves\.save\(\)/);
 });
