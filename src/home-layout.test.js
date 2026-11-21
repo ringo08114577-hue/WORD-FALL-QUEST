@@ -233,15 +233,15 @@ test("通常ページは共通レイアウトと明るいファンタジーの�
   const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html"];
   for (const page of pages) {
     const html = read(page);
-    assert.match(html, /shared-layout\\.css/, page + " stylesheet");
-    assert.match(html, /shared-layout\\.js/, page + " navigation");
-    assert.match(html, /<main\\b/, page + " main content");
+    assert.ok(html.includes("shared-layout.css"), page + " stylesheet");
+    assert.ok(html.includes("shared-layout.js"), page + " navigation");
+    assert.ok(html.includes("<main"), page + " main content");
   }
   const css = read("src/shared-layout.css");
-  assert.match(css, /--wfq-page:\\s*#f6f2e7/);
-  assert.match(css, /--wfq-green:/);
-  assert.match(css, /\\.wfq-mobile-nav/);
-  assert.match(css, /grid-template-columns:\\s*224px minmax\\(0,1fr\\)/);
+  assert.ok(css.includes("--wfq-page: #f6f2e7"));
+  assert.ok(css.includes("--wfq-green:"));
+  assert.ok(css.includes(".wfq-mobile-nav"));
+  assert.ok(css.includes("grid-template-columns:224px minmax(0,1fr)"));
 });
 
 test("共通ナビゲーションは主要4項目と施設ドロワーを持つ", () => {
