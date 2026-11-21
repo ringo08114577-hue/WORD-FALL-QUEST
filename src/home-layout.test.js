@@ -27,18 +27,19 @@ test("アイテム欄の素材カードには1個売却とまとめ売却の操�
 
 test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
   const html = read("index.html");
-  for (const link of ["status.html", "inventory.html", "items.html", "equipment.html", "crafting.html", "skills.html", "dungeons.html", "settings.html"]) {
+  for (const link of ["status.html", "inventory.html", "shop.html", "crafting.html", "skills.html", "dungeons.html", "settings.html"]) {
     assert.ok(html.includes('href="./' + link + '"'), link);
   }
+  assert.doesNotMatch(html, /href="\.\/items\.html"|href="\.\/equipment\.html"/);
+  assert.match(html, /<strong>ショップ<\/strong>/);
   assert.match(html, /createAppSession/);
   assert.match(html, /session\.returnToTown\(\)/);
   assert.doesNotMatch(html, /宿屋|innRestButton/);
 });
 
-test("ショップ・スキル工房はそれぞれ独立したHTMLページを持つ", () => {
+test("統合ショップ・鍛冶屋・スキル工房はそれぞれ独立したHTMLページを持つ", () => {
   for (const [file, facility] of [
-    ["items.html", "items"],
-    ["equipment.html", "equipment"],
+    ["shop.html", "shop"],
     ["crafting.html", "crafting"],
     ["skills.html", "skills"],
   ]) {
@@ -46,6 +47,31 @@ test("ショップ・スキル工房はそれぞれ独立したHTMLページを�
     assert.match(html, new RegExp('data-facility="' + facility + '"'));
     assert.match(html, /facility-page\.js/);
     assert.match(html, /index\.html/);
+  }
+});
+
+test("ショップは商品を種類ごとに選択でき、購入と装備変更ができる", () => {
+  const html = read("shop.html");
+  const script = read("src/facility-page.js");
+  assert.match(html, /data-facility="shop"/);
+  assert.match(html, /ショップ/);
+  assert.match(script, /SHOP_CATEGORY_OPTIONS/);
+  assert.match(script, /何を買う？/);
+  assert.match(script, /data-shop-category/);
+  assert.match(script, /data-shop-back/);
+  assert.match(script, /item\.type === "consumable"/);
+  assert.match(script, /item\.slot === category/);
+  assert.match(script, /shop\.buy\(shopButton\.dataset\.shopItem\)/);
+  assert.match(script, /data-equip-item/);
+  assert.match(script, /saves\.save\(\)/);
+});
+
+test("道具屋と武器・防具屋の旧URLは統合ショップへ転送する", () => {
+  for (const file of ["items.html", "equipment.html"]) {
+    const html = read(file);
+    assert.match(html, /http-equiv="refresh"/);
+    assert.match(html, /window\.location\.replace\("\.\/shop\.html"\)/);
+    assert.match(html, /href="\.\/shop\.html"/);
   }
 });
 
@@ -99,7 +125,7 @@ test("ホームには開発用画面へのリンクを表示せず、開発用�
 });
 
 test("ホームと各施設の初期表示は新しい冒険者の能力値と一致する", () => {
-  for (const file of ["index.html", "status.html", "skills.html", "items.html", "equipment.html", "crafting.html"]) {
+  for (const file of ["index.html", "status.html", "skills.html", "shop.html", "crafting.html"]) {
     const html = read(file);
     assert.match(html, /HP 100 \/ 100/, file + " の初期HP表示");
     assert.doesNotMatch(html, /HP 3 \/ 3/, file + " に古いHP表示を残さない");

@@ -22,8 +22,17 @@ const CRAFTING_CATEGORY_LABELS = Object.freeze({
   armor: "鎧",
   accessory: "アクセサリー",
 });
+const SHOP_CATEGORY_OPTIONS = Object.freeze([
+  { id: "weapon", label: "武器", icon: "⚔️", description: "攻撃力を高める武器" },
+  { id: "shield", label: "盾", icon: "🛡️", description: "敵の攻撃を防ぐ盾" },
+  { id: "armor", label: "鎧", icon: "🥋", description: "防御力や最大HPを高める鎧" },
+  { id: "accessory", label: "アクセサリー", icon: "💎", description: "能力を補強する装飾品" },
+  { id: "consumable", label: "道具", icon: "🧪", description: "冒険で使う回復アイテム" },
+]);
 let selectedCraftSlot = null;
+let selectedShopCategory = null;
 const titleByPage = {
+  shop: ["ショップ", "武器・防具・アクセサリー・道具をまとめて購入できるよ。"],
   items: ["道具屋", "回復薬など、冒険に必要なアイテムを購入しよう。"],
   equipment: ["武器・防具屋", "装備を購入して、持っている装備を付け替えよう。"],
   crafting: ["鍛冶屋", "モンスターから集めた素材とゴールドで、自分だけの装備を作ろう。"],
@@ -227,6 +236,120 @@ function renderCrafting(state) {
   root.append(ownedPanel);
 }
 
+
+function renderShop(state) {
+  const root = $("facilityContent");
+  root.replaceChildren();
+
+  const getOffers = (category) => Object.entries(SHOP_CATALOG).filter(([itemId]) => {
+    const item = ITEM_DEFINITIONS[itemId];
+    return category === "consumable"
+      ? item.type === "consumable"
+      : item.slot === category;
+  });
+
+  if (selectedShopCategory === null) {
+    const categoryPanel = node("section", "subpanel");
+    categoryPanel.append(node("h2", "", "何を買う？"));
+    categoryPanel.append(node("p", "muted", "購入したい商品の種類を選んでね。選んだ種類の商品だけが表示されるよ。"));
+    const categoryGrid = node("div", "offer-grid");
+    for (const category of SHOP_CATEGORY_OPTIONS) {
+      const offers = getOffers(category.id);
+      const button = node("button", "primary-button", category.label + "を見る");
+      button.type = "button";
+      button.dataset.shopCategory = category.id;
+      const card = node("article", "offer-card");
+      card.append(node("strong", "offer-name", category.icon + " " + category.label));
+      card.append(node("p", "offer-description", category.description));
+      card.append(node("p", "offer-meta", "商品 " + offers.length + "種類"));
+      card.append(button);
+      categoryGrid.append(card);
+    }
+    categoryPanel.append(categoryGrid);
+    root.append(categoryPanel);
+    return;
+  }
+
+  const category = SHOP_CATEGORY_OPTIONS.find((option) => option.id === selectedShopCategory);
+  if (!category) {
+    selectedShopCategory = null;
+    renderShop(state);
+    return;
+  }
+  const categoryPanel = node("section", "subpanel");
+  const backButton = node("button", "secondary-button", "← 種類選択に戻る");
+  backButton.type = "button";
+  backButton.dataset.shopBack = "true";
+  categoryPanel.append(backButton);
+  categoryPanel.append(node("h2", "", category.icon + " " + category.label + "を購入"));
+  categoryPanel.append(node("p", "muted", "商品を選んで購入しよう。購入した装備はこの画面から装備できるよ。"));
+  root.append(categoryPanel);
+
+  const offers = getOffers(category.id);
+  const offerPanel = node("section", "subpanel");
+  offerPanel.append(node("h2", "", category.label + "の商品"));
+  const offerGrid = node("div", "offer-grid");
+  for (const [itemId, offer] of offers) {
+    const item = ITEM_DEFINITIONS[itemId];
+    const count = state.inventory.items[itemId] ?? 0;
+    const button = node("button", "primary-button", item.name + "を購入");
+    button.type = "button";
+    button.dataset.shopItem = itemId;
+    button.disabled = state.phase !== GAME_PHASE.TITLE || state.inventory.gold < offer.cost;
+    const effect = item.slot ? " 効果：" + getEquipmentEffectText(item) : "";
+    addCard(offerGrid, item.name, (item.description ?? "冒険に役立つアイテム。") + effect,
+      "所持数 " + count + " · " + offer.cost + "G", button);
+  }
+  if (offers.length === 0) offerGrid.append(node("p", "muted", "この種類の商品は準備中だよ。"));
+  offerPanel.append(offerGrid);
+  root.append(offerPanel);
+
+  if (category.id !== "consumable") {
+    const slot = category.id;
+    const equippedId = state.inventory.equipment[slot];
+    const equippedItem = equippedId ? ITEM_DEFINITIONS[equippedId] : null;
+    const equippedPanel = node("section", "subpanel");
+    equippedPanel.append(node("h2", "", "現在の装備"));
+    const equippedCard = node("div", "equipment-card");
+    equippedCard.append(node("span", "muted", category.label));
+    equippedCard.append(node("strong", "", equippedItem?.name ?? "未装備"));
+    if (equippedItem) equippedCard.append(node("span", "muted", getEquipmentEffectText(equippedItem)));
+    equippedPanel.append(equippedCard);
+    root.append(equippedPanel);
+
+    const ownedPanel = node("section", "subpanel");
+    ownedPanel.append(node("h2", "", "所持している" + category.label));
+    const ownedGrid = node("div", "offer-grid");
+    const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
+      item.slot === slot && (state.inventory.items[item.id] ?? 0) > 0 && item.id !== equippedId
+    );
+    if (owned.length === 0) ownedGrid.append(node("p", "muted", "付け替えできる装備はまだないよ。"));
+    for (const item of owned) {
+      const button = node("button", "secondary-button", item.name + "を装備");
+      button.type = "button";
+      button.dataset.equipItem = item.id;
+      addCard(ownedGrid, item.name, item.description ?? "装備アイテム",
+        "所持数 " + state.inventory.items[item.id] + " · " + getEquipmentEffectText(item), button);
+    }
+    ownedPanel.append(ownedGrid);
+    root.append(ownedPanel);
+  } else {
+    const ownedPanel = node("section", "subpanel");
+    ownedPanel.append(node("h2", "", "持っている道具"));
+    const ownedGrid = node("div", "inventory-grid");
+    const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
+      item.type === "consumable" && (state.inventory.items[item.id] ?? 0) > 0
+    );
+    if (owned.length === 0) ownedGrid.append(node("p", "muted", "道具を購入するとここに表示されるよ。"));
+    for (const item of owned) {
+      ownedGrid.append(node("div", "inventory-item",
+        item.name + " × " + state.inventory.items[item.id]));
+    }
+    ownedPanel.append(ownedGrid);
+    root.append(ownedPanel);
+  }
+}
+
 function renderSkills(state) {
   const root = $("facilityContent");
   root.replaceChildren();
@@ -289,10 +412,28 @@ function render() {
   $("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
   if (page === "skills") renderSkills(state);
   else if (page === "crafting") renderCrafting(state);
+  else if (page === "shop") renderShop(state);
   else renderItems(state);
 }
 
 $("facilityContent").addEventListener("click", (event) => {
+  const shopCategoryButton = event.target.closest("button[data-shop-category]");
+  if (shopCategoryButton && page === "shop" &&
+      SHOP_CATEGORY_OPTIONS.some((category) => category.id === shopCategoryButton.dataset.shopCategory)) {
+    selectedShopCategory = shopCategoryButton.dataset.shopCategory;
+    $("feedback").textContent = "";
+    render();
+    return;
+  }
+
+  const shopBackButton = event.target.closest("button[data-shop-back]");
+  if (shopBackButton && page === "shop") {
+    selectedShopCategory = null;
+    $("feedback").textContent = "";
+    render();
+    return;
+  }
+
   const categoryButton = event.target.closest("button[data-craft-category]");
   if (categoryButton && page === "crafting" &&
       EQUIPMENT_SLOTS.includes(categoryButton.dataset.craftCategory)) {
