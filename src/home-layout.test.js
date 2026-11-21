@@ -66,13 +66,16 @@ test("アイテム欄の素材カードには1個売却とまとめ売却の操�
   assert.match(script, /saves\.save\(\)/);
 });
 
-test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
+test("ホームは町マップを中心にし、施設一覧を重複表示しない", () => {
   const html = read("index.html");
-  for (const link of ["status.html", "inventory.html", "shop.html", "crafting.html", "skills.html", "dungeons.html", "settings.html"]) {
-    assert.ok(html.includes('href="./' + link + '"'), link);
-  }
-  assert.doesNotMatch(html, /href="\.\/items\.html"|href="\.\/equipment\.html"/);
-  assert.match(html, /<strong>ショップ<\/strong>/);
+  assert.match(html, /<main id="homePage">/);
+  assert.match(html, /冒険者ギルド/);
+  assert.match(html, /id="hpValue"/);
+  assert.match(html, /id="goldValue"/);
+  assert.match(html, /id="heroAvatar"/);
+  assert.doesNotMatch(html, /class="facility-grid"/);
+  assert.doesNotMatch(html, /<h2>街の施設<\/h2>/);
+  assert.match(html, /town-map-panel/);
   assert.match(html, /createAppSession/);
   assert.match(html, /session\.returnToTown\(\)/);
   assert.doesNotMatch(html, /宿屋|innRestButton/);
@@ -86,7 +89,7 @@ test("ホームの町マップは建物から既存の施設へ移動できる",
     assert.ok(html.includes('class="town-map-spot" href="./' + route + '"'), route + " map link");
   }
   assert.match(html, /aria-label="冒険者の町/);
-  assert.match(html, /class="facility-grid"/);
+  assert.doesNotMatch(html, /class="facility-grid"/);
   assert.match(html, /shared-layout\.css/);
   assert.match(html, /shared-layout\.js/);
 });
@@ -204,9 +207,7 @@ test("ホームと各施設の初期表示は新しい冒険者の能力値と�
     assert.doesNotMatch(html, /HP 3 \/ 3/, file + " に古いHP表示を残さない");
   }
 
-  for (const file of ["index.html", "status.html"]) {
-    assert.match(read(file), /id="attackValue">20/, file + " の初期攻撃力表示");
-  }
+  assert.match(read("status.html"), /id="attackValue">20/, "ステータス画面の初期攻撃力表示");
 
   const status = read("status.html");
   assert.match(status, /EXP 0 \/ 100/);
