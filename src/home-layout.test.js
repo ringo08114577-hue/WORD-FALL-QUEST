@@ -75,7 +75,7 @@ test("ショップは商品を種類ごとに選択して購入だけできる",
 test("装備変更はアイテム欄に集約し、装備中の装備と付け替えボタンを表示する", () => {
   const html = read("inventory.html");
   const script = read("src/inventory-page.js");
-  assert.match(html, /class="equip-button"/);
+  assert.match(html, /\.equip-button\{/);
   assert.match(script, /item\.equipped \? "装備中"/);
   assert.match(script, /button\.dataset\.equipItem = item\.itemId/);
   assert.match(script, /GAME_ACTION\.PREPARE_EQUIPMENT/);
