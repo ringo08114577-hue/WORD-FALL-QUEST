@@ -18,9 +18,6 @@ const NPC_PAGES = Object.freeze({
 });
 
 const MORE_ITEMS = Object.freeze([
-  { href: "./shop.html", file: "shop.html", icon: "🛍️", label: "ショップ", note: "装備や道具を購入" },
-  { href: "./crafting.html", file: "crafting.html", icon: "⚒️", label: "鍛冶屋", note: "素材から装備を作成" },
-  { href: "./skills.html", file: "skills.html", icon: "✨", label: "スキル工房", note: "スキルを強化" },
   { href: "./settings.html", file: "settings.html", icon: "⚙️", label: "ゲーム設定", note: "操作や演出を調整" },
   { href: "./account.html", file: "account.html", icon: "🔐", label: "アカウント", note: "セーブとログインを管理" },
 ]);

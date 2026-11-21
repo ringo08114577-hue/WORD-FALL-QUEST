@@ -82,14 +82,15 @@ test("ホームは町マップを中心にし、施設一覧を重複表示し�
 });
 
 
-test("ホーム中央に冒険・装備・ショップ・鍛冶屋の選択肢を表示する", () => {
+test("ホーム中央に冒険・装備・ショップ・鍛冶屋・スキル工房の選択肢を表示する", () => {
   const html = read("index.html");
   assert.match(html, /id="homePage"/);
-  for (const route of ["dungeons.html", "inventory.html", "shop.html", "crafting.html"]) {
+  for (const route of ["dungeons.html", "inventory.html", "shop.html", "crafting.html", "skills.html"]) {
     assert.ok(html.includes('href="./' + route + '"'), route + " home destination");
   }
   assert.match(html, /冒険に出る/);
   assert.match(html, /装備を整える/);
+  assert.match(html, /スキル工房/);
   assert.match(html, /id="heroAvatar"/);
   assert.match(html, /id="hpValue"/);
   assert.match(html, /id="goldValue"/);
@@ -97,6 +98,14 @@ test("ホーム中央に冒険・装備・ショップ・鍛冶屋の選択肢�
   assert.doesNotMatch(homeMarkup, /town-map|facility-grid/);
   assert.match(html, /createAppSession/);
   assert.match(html, /session\.returnToTown\(\)/);
+});
+
+test("その他メニューは設定とアカウントだけを表示し、ホームの施設を重複させない", () => {
+  const script = read("src/shared-layout.js");
+  assert.match(script, /const MORE_ITEMS = Object\.freeze\(\[([\s\S]*?)settings\.html[\s\S]*?account\.html[\s\S]*?\]\)/);
+  for (const file of ["shop.html", "crafting.html", "skills.html"]) {
+    assert.doesNotMatch(script.match(/const MORE_ITEMS = Object\.freeze\(\[([\s\S]*?)\]\);/)[1], new RegExp(file.replace(".", "\\.")));
+  }
 });
 
 
