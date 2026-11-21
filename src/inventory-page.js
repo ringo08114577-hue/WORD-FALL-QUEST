@@ -1,6 +1,6 @@
 import { createAppSession } from "./app-session.js";
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
-import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./items.js";
+import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS } from "./items.js";
 import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 import { ENEMY_DEFINITIONS } from "./data/enemies.js";
 import { ENEMY_DROP_TABLES } from "./data/enemy-drops.js";
@@ -125,6 +125,34 @@ function createItemCard(item) {
   return card;
 }
 
+function renderEquipmentOverview(inventory) {
+  const grid = $("equipmentOverview");
+  grid.replaceChildren();
+
+  for (const slot of EQUIPMENT_SLOTS) {
+    const itemId = inventory.equipment?.[slot];
+    const item = itemId ? ITEM_DEFINITIONS[itemId] : null;
+    const card = node(
+      "div",
+      "equipment-slot-card " + (item ? "is-equipped" : "is-empty"),
+    );
+    card.append(node("span", "equipment-slot-label", EQUIPMENT_SLOT_LABELS[slot] ?? "装備"));
+    card.append(node(
+      "strong",
+      "equipment-slot-name",
+      item?.name ?? (itemId ? "装備データなし" : "未装備"),
+    ));
+
+    const effects = item ? getItemEffects(item) : "";
+    if (effects) {
+      card.append(node("p", "equipment-slot-effect", effects));
+    } else if (!item) {
+      card.append(node("p", "equipment-slot-empty", "装備品を選んでね"));
+    }
+    grid.append(card);
+  }
+}
+
 function updateCategoryCounts(inventory) {
   let totalKinds = 0;
   for (const category of INVENTORY_CATEGORIES) {
@@ -141,6 +169,7 @@ function render(state = store.getState()) {
   $("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
   $("goldValue").textContent = state.inventory.gold + " G";
   updateCategoryCounts(state.inventory);
+  renderEquipmentOverview(state.inventory);
 
   for (const category of INVENTORY_CATEGORIES) {
     const button = document.querySelector('button[data-category="' + category.id + '"]');

@@ -22,6 +22,16 @@ h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}
 .wallet{display:flex;gap:8px;flex-wrap:wrap}
 .stat{padding:8px 11px;border-radius:10px;background:#111d30;color:#a9bad0;font-size:.76rem}
 .stat strong{color:#eef4ff}
+.equipment-overview{margin:0 0 14px;padding:11px;border:1px solid #314762;border-radius:13px;background:rgba(12,23,40,.72)}
+.equipment-overview-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.equipment-overview-head h2{margin:0;font-size:.86rem}
+.equipment-overview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.equipment-slot-card{min-width:0;padding:9px;border:1px solid #344963;border-radius:10px;background:#142238}
+.equipment-slot-card.is-equipped{border-color:#267457;background:linear-gradient(145deg,#153b32,#122a2b)}
+.equipment-slot-label{display:block;color:#91a4be;font-size:.65rem;font-weight:800}
+.equipment-slot-name{display:block;margin-top:3px;color:#eef4ff;font-size:.78rem;font-weight:900;overflow-wrap:anywhere}
+.equipment-slot-effect{margin:4px 0 0;color:#86efac;font-size:.65rem;font-weight:800;line-height:1.4}
+.equipment-slot-empty{margin:4px 0 0;color:#7388a3;font-size:.64rem;line-height:1.4}
 .category-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
 .category-tab{min-height:48px;padding:8px 10px;border:1px solid #314662;border-radius:11px;background:#111d30;color:#cbd5e1;font:inherit;font-size:.82rem;font-weight:850;cursor:pointer}
 .category-tab span{display:block;margin-top:2px;color:#91a4be;font-size:.65rem;font-weight:700}
@@ -66,6 +76,13 @@ h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}
       <div class="wallet"><div class="stat" id="levelValue">LV.1</div><div class="stat" id="hpValue">HP 100 / 100</div></div>
       <strong id="goldValue">0 G</strong>
     </div>
+    <section class="equipment-overview" aria-labelledby="equipmentOverviewTitle">
+      <div class="equipment-overview-head">
+        <h2 id="equipmentOverviewTitle">現在の装備</h2>
+        <span class="muted">4つの装備枠</span>
+      </div>
+      <div class="equipment-overview-grid" id="equipmentOverview"></div>
+    </section>
     <div class="panel-head"><h2>所持アイテム</h2><span class="muted" id="ownedSummary">0種類</span></div>
     <div class="category-tabs" role="group" aria-label="アイテムの分類">
       <button class="category-tab" type="button" data-category="weapon" aria-pressed="true">装備<span id="weaponCount">0種類</span></button>

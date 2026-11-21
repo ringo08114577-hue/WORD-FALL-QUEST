@@ -26,6 +26,19 @@ test("アイテム欄の入手先と空表示は統合後のショップ名に�
   assert.doesNotMatch(script, /道具屋|武器・防具屋/);
 });
 
+test("アイテム欄の上部に4枠の現在の装備と能力補正を表示する", () => {
+  const html = read("inventory.html");
+  const script = read("src/inventory-page.js");
+  assert.match(html, /class="equipment-overview"/);
+  assert.match(html, /id="equipmentOverview"/);
+  assert.match(script, /import \{ ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS \}/);
+  assert.match(script, /function renderEquipmentOverview\(inventory\)/);
+  assert.match(script, /for \(const slot of EQUIPMENT_SLOTS\)/);
+  assert.match(script, /EQUIPMENT_SLOT_LABELS\[slot\]/);
+  assert.match(script, /getItemEffects\(item\)/);
+  assert.match(script, /renderEquipmentOverview\(state\.inventory\)/);
+});
+
 test("アイテム欄の素材カードには1個売却とまとめ売却の操作がある", () => {
   const html = read("inventory.html");
   const script = read("src/inventory-page.js");
