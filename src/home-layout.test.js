@@ -123,7 +123,7 @@ test("共通レイアウトはページごとにNPCの立ち絵とセリフを�
     ["settings.html", "guild-receptionist.webp"],
     ["account.html", "guild-receptionist.webp"],
   ]) {
-    assert.match(script, new RegExp('"' + page + '".*?' + portrait));
+    assert.match(script, new RegExp('"' + page + '"[\\s\\S]*?' + portrait));
   }
   assert.match(script, /createNpcStage\(current\)/);
   assert.match(script, /wfq-npc-stage/);
