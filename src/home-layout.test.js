@@ -35,8 +35,8 @@ test("装備4枠は装備タブ内だけに表示し、装備変更もそこで�
   assert.ok(tabsIndex >= 0 && managementIndex > tabsIndex && itemsIndex > managementIndex);
   assert.match(html, /id="equipmentManagement"[^>]*hidden/);
   assert.match(html, /id="equipmentOverview"/);
-  assert.match(script, /equipmentManagement\\.hidden = activeCategory !== "weapon"/);
-  assert.match(script, /if \\(activeCategory === "weapon"\\) renderEquipmentOverview/);
+  assert.match(script, /equipmentManagement\.hidden = activeCategory !== "weapon"/);
+  assert.match(script, /if \(activeCategory === "weapon"\) renderEquipmentOverview/);
   assert.match(script, /equipButton\\.dataset\\.equipItem = item\\.itemId/);
   assert.match(script, /GAME_ACTION\\.PREPARE_EQUIPMENT/);
 });
