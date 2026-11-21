@@ -9,6 +9,7 @@ import { DUNGEON_DEFINITIONS, DEFAULT_DUNGEON_ID } from "./dungeons.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_CHALLENGES } from "./words.js";
 import { getSkillWordDifficultyRange } from "../skills.js";
+import { CRAFTING_RECIPES } from "./crafting-recipes.js";
 
 test("アイテム定義を増やすと初期所持品とショップ価格へ自動で反映される", () => {
   for (const [id, item] of Object.entries(ITEM_DEFINITIONS)) {
@@ -21,6 +22,22 @@ test("アイテム定義を増やすと初期所持品とショップ価格へ�
     }
   }
   assert.equal(Object.isFrozen(ITEM_DEFINITIONS), true);
+});
+
+test("鍛冶屋の全レシピは有効な装備と素材・ゴールドを参照する", () => {
+  assert.equal(Object.isFrozen(CRAFTING_RECIPES), true);
+  for (const [itemId, recipe] of Object.entries(CRAFTING_RECIPES)) {
+    const item = ITEM_DEFINITIONS[itemId];
+    assert.ok(item && item.slot, itemId + " output equipment");
+    assert.equal(recipe.itemId, itemId);
+    assert.ok(Number.isSafeInteger(recipe.gold) && recipe.gold > 0, itemId + " gold");
+    assert.ok(Object.isFrozen(recipe.materials), itemId + " frozen materials");
+    assert.ok(Object.keys(recipe.materials).length > 0, itemId + " materials");
+    for (const [materialId, quantity] of Object.entries(recipe.materials)) {
+      assert.equal(ITEM_DEFINITIONS[materialId]?.type, "material", itemId + " -> " + materialId);
+      assert.ok(Number.isSafeInteger(quantity) && quantity > 0, itemId + " -> " + materialId);
+    }
+  }
 });
 
 test("敵が参照する能力IDと能力の効果値が有効", () => {

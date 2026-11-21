@@ -138,7 +138,7 @@ function render(state = store.getState()) {
   const noteByCategory = {
     weapon: "武器タブには、武器・盾・鎧・アクセサリーなどの装備品をまとめて表示するよ。",
     tool: "回復薬など、使うことができる道具を表示するよ。",
-    other: "敵のドロップ素材やダンジョンの報酬を確認できるよ。売値のある素材はここから売却できるよ。",
+    other: "敵のドロップ素材やダンジョンの報酬を確認できるよ。素材は鍛冶屋で装備作成にも使えるよ。売値のある素材はここから売却できるよ。",
   };
   $("categoryNote").textContent = noteByCategory[activeCategory];
 
@@ -153,7 +153,7 @@ function render(state = store.getState()) {
     empty.textContent = {
       weapon: "まだ装備品を持っていないよ。武器・防具屋で装備を手に入れよう。",
       tool: "まだ道具を持っていないよ。道具屋やダンジョンの宝箱を探してみよう。",
-      other: "まだ素材などを持っていないよ。敵を倒したり、ダンジョンを探索したりして集めよう。",
+      other: "まだ素材などを持っていないよ。敵を倒したり、ダンジョンを探索したりして鍛冶屋で使う素材を集めよう。",
     }[activeCategory];
   }
 }

@@ -42,7 +42,7 @@ export const ITEM_DEFINITIONS = Object.freeze({
     id: "ice-dragon-core", name: "氷竜の結晶", type: "material",
     description: "氷結の洞窟を初めて制覇した証。今後の素材システムで使用予定。",
   }),
-  // Materials dropped by monsters. sellPrice will be used by the future selling feature.
+  // Materials dropped by monsters. sellPrice is used by trading; recipes live in crafting-recipes.js.
   "slime-gel": Object.freeze({
     id: "slime-gel", name: "スライムゼリー", type: "material", sellPrice: 4,
     description: "スライムから手に入る、ぷるぷるした素材。防具作りに使える。",
@@ -118,5 +118,38 @@ export const ITEM_DEFINITIONS = Object.freeze({
   "ice-dragon-heart": Object.freeze({
     id: "ice-dragon-heart", name: "氷竜の心核", type: "material", sellPrice: 100,
     description: "氷結のドラゴンからまれに手に入る、極めて希少な素材。",
+  }),
+  "slime-buckler": Object.freeze({
+    id: "slime-buckler", name: "スライムバックラー", type: "shield", slot: "shield",
+    defenseBonus: 16, description: "スライムゼリーを固めて作った軽い盾。防御力が16上がる。",
+  }),
+  "bat-cloak": Object.freeze({
+    id: "bat-cloak", name: "コウモリマント", type: "armor", slot: "armor",
+    defenseBonus: 20, maxHpBonus: 100, description: "コウモリの素材で作った軽いマント。防御力が20、最大HPが100上がる。",
+  }),
+  "orc-fang-blade": Object.freeze({
+    id: "orc-fang-blade", name: "オークファング", type: "weapon", slot: "weapon",
+    attackBonus: 35, description: "オークの牙を加工した大剣。攻撃力が35上がる。",
+  }),
+  "moss-guardian-armor": Object.freeze({
+    id: "moss-guardian-armor", name: "苔守りの鎧", type: "armor", slot: "armor",
+    defenseBonus: 35, maxHpBonus: 180, description: "苔の結晶で補強した重い鎧。防御力が35、最大HPが180上がる。",
+  }),
+  "wolf-fang-sword": Object.freeze({
+    id: "wolf-fang-sword", name: "氷狼の牙剣", type: "weapon", slot: "weapon",
+    attackBonus: 50, description: "氷狼の牙と氷結鉱石を使った剣。攻撃力が50上がる。",
+  }),
+  "ice-crystal-charm": Object.freeze({
+    id: "ice-crystal-charm", name: "氷晶のお守り", type: "accessory", slot: "accessory",
+    attackBonus: 25, defenseBonus: 25, maxHpBonus: 120,
+    description: "氷の結晶を磨いて作ったお守り。攻撃力・防御力が25、最大HPが120上がる。",
+  }),
+  "forest-dragon-sword": Object.freeze({
+    id: "forest-dragon-sword", name: "森竜の大剣", type: "weapon", slot: "weapon",
+    attackBonus: 75, description: "森竜の心核を宿した大剣。攻撃力が75上がる。",
+  }),
+  "ice-dragon-armor": Object.freeze({
+    id: "ice-dragon-armor", name: "氷竜の鎧", type: "armor", slot: "armor",
+    defenseBonus: 65, maxHpBonus: 300, description: "氷竜の素材で鍛えた最上級の鎧。防御力が65、最大HPが300上がる。",
   }),
 });

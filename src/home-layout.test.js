@@ -27,7 +27,7 @@ test("アイテム欄の素材カードには1個売却とまとめ売却の操�
 
 test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
   const html = read("index.html");
-  for (const link of ["status.html", "inventory.html", "items.html", "equipment.html", "skills.html", "dungeons.html", "settings.html"]) {
+  for (const link of ["status.html", "inventory.html", "items.html", "equipment.html", "crafting.html", "skills.html", "dungeons.html", "settings.html"]) {
     assert.ok(html.includes('href="./' + link + '"'), link);
   }
   assert.match(html, /createAppSession/);
@@ -39,6 +39,7 @@ test("ショップ・スキル工房はそれぞれ独立したHTMLページを�
   for (const [file, facility] of [
     ["items.html", "items"],
     ["equipment.html", "equipment"],
+    ["crafting.html", "crafting"],
     ["skills.html", "skills"],
   ]) {
     const html = read(file);
@@ -46,6 +47,16 @@ test("ショップ・スキル工房はそれぞれ独立したHTMLページを�
     assert.match(html, /facility-page\.js/);
     assert.match(html, /index\.html/);
   }
+});
+
+test("鍛冶屋は素材とゴールドを使って装備を作成し、所持装備を付け替えられる", () => {
+  const html = read("crafting.html");
+  const script = read("src/facility-page.js");
+  assert.match(html, /data-facility="crafting"/);
+  assert.match(script, /renderCrafting/);
+  assert.match(script, /crafting.craft(craftButton.dataset.craftItem)/);
+  assert.match(script, /data-equip-item/);
+  assert.match(script, /saves.save()/);
 });
 
 test("ダンジョン選択ページはダンジョンと階層の両方を選べる", () => {
@@ -83,7 +94,7 @@ test("ホームには開発用画面へのリンクを表示せず、開発用�
 });
 
 test("ホームと各施設の初期表示は新しい冒険者の能力値と一致する", () => {
-  for (const file of ["index.html", "status.html", "skills.html", "items.html", "equipment.html"]) {
+  for (const file of ["index.html", "status.html", "skills.html", "items.html", "equipment.html", "crafting.html"]) {
     const html = read(file);
     assert.match(html, /HP 100 \/ 100/, file + " の初期HP表示");
     assert.doesNotMatch(html, /HP 3 \/ 3/, file + " に古いHP表示を残さない");

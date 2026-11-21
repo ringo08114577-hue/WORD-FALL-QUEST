@@ -2,6 +2,7 @@ import { createAppSession } from "./app-session.js";
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS } from "./items.js";
 import { createShopController, SHOP_CATALOG } from "./shop.js";
+import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel,
@@ -13,10 +14,12 @@ const session = createAppSession();
 session.returnToTown();
 const { store, dungeon, saves } = session;
 const shop = createShopController(store, dungeon);
+const crafting = createCraftingController(store);
 const page = document.body.dataset.facility;
 const titleByPage = {
   items: ["道具屋", "回復薬など、冒険に必要なアイテムを購入しよう。"],
   equipment: ["武器・防具屋", "装備を購入して、持っている装備を付け替えよう。"],
+  crafting: ["鍛冶屋", "モンスターから集めた素材とゴールドで、自分だけの装備を作ろう。"],
   skills: ["スキル工房", "ゴールドを使って攻撃・回復・防御・補助スキルを強化しよう。"],
 };
 const [title, subtitle] = titleByPage[page] ?? titleByPage.items;
@@ -112,6 +115,84 @@ function renderItems(state) {
   }
 }
 
+
+function getEquipmentEffectText(item) {
+  const effects = [];
+  if (item.attackBonus) effects.push("攻撃力 +" + item.attackBonus);
+  if (item.defenseBonus) effects.push("防御力 +" + item.defenseBonus);
+  if (item.maxHpBonus) effects.push("最大HP +" + item.maxHpBonus);
+  return effects.join(" · ");
+}
+
+function renderCrafting(state) {
+  const root = $("facilityContent");
+  root.replaceChildren();
+
+  const equippedPanel = node("section", "subpanel");
+  equippedPanel.append(node("h2", "", "現在の装備"));
+  const equippedGrid = node("div", "equipment-grid");
+  for (const slot of EQUIPMENT_SLOTS) {
+    const itemId = state.inventory.equipment[slot];
+    const item = itemId ? ITEM_DEFINITIONS[itemId] : null;
+    const card = node("div", "equipment-card");
+    card.append(node("span", "muted", EQUIPMENT_SLOT_LABELS[slot]));
+    card.append(node("strong", "", item?.name ?? "未装備"));
+    equippedGrid.append(card);
+  }
+  equippedPanel.append(equippedGrid);
+  root.append(equippedPanel);
+
+  const recipePanel = node("section", "subpanel");
+  recipePanel.append(node("h2", "", "装備レシピ"));
+  recipePanel.append(node("p", "muted", "必要な素材とゴールドがそろえば何度でも作成できるよ。作った装備は所持品に入り、下から装備できるよ。"));
+  const recipeGrid = node("div", "offer-grid");
+  for (const [itemId, recipe] of Object.entries(CRAFTING_RECIPES)) {
+    const item = ITEM_DEFINITIONS[itemId];
+    const materialLines = Object.entries(recipe.materials).map(([materialId, required]) => {
+      const material = ITEM_DEFINITIONS[materialId];
+      const owned = state.inventory.items[materialId] ?? 0;
+      return material.name + " ×" + required + "（所持 " + owned + "）";
+    });
+    const hasMaterials = Object.entries(recipe.materials).every(([materialId, required]) =>
+      (state.inventory.items[materialId] ?? 0) >= required
+    );
+    const hasGold = state.inventory.gold >= recipe.gold;
+    const canCraft = state.phase === GAME_PHASE.TITLE && hasMaterials && hasGold;
+    const button = node("button", canCraft ? "primary-button" : "secondary-button",
+      state.phase !== GAME_PHASE.TITLE ? "街に戻ると作成できるよ" :
+        !hasMaterials ? "素材が足りない" : !hasGold ? "ゴールドが足りない" : "この装備を作る");
+    button.type = "button";
+    button.dataset.craftItem = itemId;
+    button.disabled = !canCraft;
+    const description = item.description + " 効果：" + getEquipmentEffectText(item);
+    const footer = "必要素材：" + materialLines.join("・") +
+      " · " + recipe.gold + "G · 所持 " + (state.inventory.items[itemId] ?? 0);
+    addCard(recipeGrid, item.name + " · " + EQUIPMENT_SLOT_LABELS[item.slot], description, footer, button);
+  }
+  recipePanel.append(recipeGrid);
+  root.append(recipePanel);
+
+  const ownedPanel = node("section", "subpanel");
+  ownedPanel.append(node("h2", "", "作成・所持した装備"));
+  const ownedGrid = node("div", "offer-grid");
+  const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
+    item.slot && (state.inventory.items[item.id] ?? 0) > 0 &&
+    state.inventory.equipment[item.slot] !== item.id
+  );
+  if (owned.length === 0) {
+    ownedGrid.append(node("p", "muted", "まだ装備できる持ち物はないよ。素材を集めて装備を作ってみよう。"));
+  }
+  for (const item of owned) {
+    const button = node("button", "secondary-button", item.name + "を装備");
+    button.type = "button";
+    button.dataset.equipItem = item.id;
+    addCard(ownedGrid, item.name, item.description ?? "装備アイテム",
+      "所持数 " + state.inventory.items[item.id] + " · " + getEquipmentEffectText(item), button);
+  }
+  ownedPanel.append(ownedGrid);
+  root.append(ownedPanel);
+}
+
 function renderSkills(state) {
   const root = $("facilityContent");
   root.replaceChildren();
@@ -173,10 +254,29 @@ function render() {
   $("levelValue").textContent = "LV." + state.player.level;
   $("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
   if (page === "skills") renderSkills(state);
+  else if (page === "crafting") renderCrafting(state);
   else renderItems(state);
 }
 
 $("facilityContent").addEventListener("click", (event) => {
+  const craftButton = event.target.closest("button[data-craft-item]");
+  if (craftButton && !craftButton.disabled) {
+    const result = crafting.craft(craftButton.dataset.craftItem);
+    if (!result.crafted) {
+      $("feedback").textContent = {
+        "not-enough-materials": "必要な素材が足りないよ。",
+        "not-enough-gold": "ゴールドが足りないよ。",
+        "not-at-smithy": "街に戻ってから鍛冶屋を利用してね。",
+      }[result.reason] ?? "装備を作成できなかったよ。";
+      return;
+    }
+    const saved = saves.save();
+    $("feedback").textContent = result.item.name + "を作成したよ！所持品から装備できるよ。" +
+      (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
+    render();
+    return;
+  }
+
   const shopButton = event.target.closest("button[data-shop-item]");
   if (shopButton && !shopButton.disabled) {
     const result = shop.buy(shopButton.dataset.shopItem);

@@ -853,6 +853,8 @@ test("バージョン11のセーブを新しいドロップ素材に対応させ
     "moss-stone", "moss-crystal", "forest-dragon-scale", "forest-dragon-heart",
     "ice-wolf-fang", "ice-wolf-fur", "ice-crystal", "frozen-ore",
     "ice-dragon-scale", "ice-dragon-heart",
+    "slime-buckler", "bat-cloak", "orc-fang-blade", "moss-guardian-armor",
+    "wolf-fang-sword", "ice-crystal-charm", "forest-dragon-sword", "ice-dragon-armor",
   ]) {
     delete legacy.gameState.inventory.items[itemId];
   }

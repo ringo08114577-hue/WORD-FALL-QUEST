@@ -1,4 +1,5 @@
 import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS, getEquipmentBonuses, createInitialInventory } from "./items.js";
+import { CRAFTING_RECIPES } from "./data/crafting-recipes.js";
 import { ENEMY_ABILITY_DEFINITIONS } from "./enemies.js";
 import { GAME_CONFIG } from "./game-config.js";
 import {
@@ -38,6 +39,7 @@ export const GAME_ACTION = Object.freeze({
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
   SELL_ITEM: "SELL_ITEM",
+  CRAFT_ITEM: "CRAFT_ITEM",
   UPGRADE_SKILL: "UPGRADE_SKILL",
   EVOLVE_SKILL: "EVOLVE_SKILL",
   EQUIP_SKILL: "EQUIP_SKILL",
@@ -532,6 +534,42 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.CRAFT_ITEM: {
+      if (state.phase !== GAME_PHASE.TITLE) return state;
+      const recipe = Object.hasOwn(CRAFTING_RECIPES, action.itemId)
+        ? CRAFTING_RECIPES[action.itemId]
+        : null;
+      const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
+        ? ITEM_DEFINITIONS[action.itemId]
+        : null;
+      if (!recipe || !item || !EQUIPMENT_SLOTS.includes(item.slot) ||
+          recipe.itemId !== action.itemId ||
+          !isPositiveInteger(recipe.gold) || state.inventory.gold < recipe.gold) return state;
+
+      for (const [materialId, required] of Object.entries(recipe.materials)) {
+        const material = Object.hasOwn(ITEM_DEFINITIONS, materialId)
+          ? ITEM_DEFINITIONS[materialId]
+          : null;
+        if (!material || material.type !== "material" || !isPositiveInteger(required) ||
+            (state.inventory.items[materialId] ?? 0) < required) return state;
+      }
+
+      const nextQuantity = (state.inventory.items[action.itemId] ?? 0) + 1;
+      if (!isNonNegativeInteger(nextQuantity)) return state;
+      const nextItems = { ...state.inventory.items, [action.itemId]: nextQuantity };
+      for (const [materialId, required] of Object.entries(recipe.materials)) {
+        nextItems[materialId] = (nextItems[materialId] ?? 0) - required;
+      }
+      return {
+        ...state,
+        inventory: {
+          ...state.inventory,
+          gold: state.inventory.gold - recipe.gold,
+          items: nextItems,
+        },
+      };
+    }
+
     case GAME_ACTION.BUY_ITEM: {
       if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) return state;
       const itemExists = Object.hasOwn(ITEM_DEFINITIONS, action.itemId);
@@ -807,6 +845,12 @@ function describeActionLog(action, before, after) {
         message: item.name + " ×" + quantity + "を売却（+" + earned + "G）",
       } : null;
     }
+    case GAME_ACTION.CRAFT_ITEM:
+      return item ? {
+        category: ACTION_LOG_CATEGORY.EQUIPMENT,
+        message: item.name + "を鍛冶屋で作成（-" +
+          (before.inventory.gold - after.inventory.gold) + "G）",
+      } : null;
     case GAME_ACTION.UPGRADE_SKILL: {
       const skill = SKILL_DEFINITIONS[action.skillId];
       return skill ? {
