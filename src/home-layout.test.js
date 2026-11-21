@@ -229,7 +229,7 @@ test("ホームとステータスはバトルと同じ主人公画像を共通�
   assert.match(imageLoader, /hero: Object\.freeze\(\{ image: "assets\/characters\/hero\.webp" \}\)/);
 });
 
-test("通常ページは共通レイアウトと明るいファンタジーのデザインを読み込む", () => {
+test("通常ページは共通レイアウトとダークファンタジーのデザインを読み込む", () => {
   const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html"];
   for (const page of pages) {
     const html = read(page);
@@ -238,8 +238,10 @@ test("通常ページは共通レイアウトと明るいファンタジーの�
     assert.ok(html.includes("<main"), page + " main content");
   }
   const css = read("src/shared-layout.css");
-  assert.ok(css.includes("--wfq-page: #f6f2e7"));
+  assert.ok(css.includes("--wfq-page: #09121b"));
   assert.ok(css.includes("--wfq-green:"));
+  assert.ok(css.includes("--wfq-gold: #e0b45b"));
+  assert.ok(css.includes("color-scheme: dark"));
   assert.ok(css.includes(".wfq-mobile-nav"));
   assert.ok(css.includes("grid-template-columns:224px minmax(0,1fr)"));
 });

@@ -1,102 +1,233 @@
 :root {
-  color-scheme: light !important;
-  --wfq-page: #f6f2e7;
-  --wfq-surface: #fffdf7;
-  --wfq-soft: #f1f4e9;
-  --wfq-border: #e5dfcf;
-  --wfq-ink: #334735;
-  --wfq-muted: #71816b;
-  --wfq-green: #4b8050;
-  --wfq-green-deep: #35683e;
-  --wfq-green-soft: #e6f0df;
-  --wfq-gold-soft: #fbf0d7;
-  --wfq-shadow: 0 8px 24px rgba(77,87,57,.08);
+  color-scheme: dark !important;
+  --wfq-page: #09121b;
+  --wfq-surface: #121f2b;
+  --wfq-surface-raised: #192a38;
+  --wfq-surface-soft: #0e1a25;
+  --wfq-border: #304657;
+  --wfq-ink: #edf4f1;
+  --wfq-muted: #9aadb3;
+  --wfq-green: #239b72;
+  --wfq-green-deep: #147653;
+  --wfq-green-soft: #153b35;
+  --wfq-gold: #e0b45b;
+  --wfq-gold-soft: #3a3020;
+  --wfq-blue: #63b7d4;
+  --wfq-shadow: 0 12px 30px rgba(0,0,0,.28);
   font-family: Inter,"Noto Sans JP",system-ui,sans-serif !important;
   background: var(--wfq-page) !important;
   color: var(--wfq-ink) !important;
 }
 * { box-sizing: border-box; }
 html, body { min-height: 100%; background: var(--wfq-page) !important; }
-body { margin: 0 !important; padding: 0 !important; color: var(--wfq-ink) !important; }
-.wfq-app-shell { display:grid; grid-template-columns:224px minmax(0,1fr); min-height:100vh; width:100%; }
-.wfq-sidebar { position:sticky; top:0; display:flex; flex-direction:column; width:224px; height:100vh; padding:22px 14px 16px; border-right:1px solid var(--wfq-border); background:rgba(255,253,247,.97); }
-.wfq-brand { display:flex; align-items:center; gap:10px; padding:4px 7px 16px; color:var(--wfq-ink); text-decoration:none; }
-.wfq-brand-mark { display:grid; place-items:center; flex:0 0 42px; width:42px; height:42px; border:1px solid #d8e2cb; border-radius:13px; background:var(--wfq-green-soft); font-size:1.35rem; }
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  color: var(--wfq-ink) !important;
+  background:
+    radial-gradient(ellipse at 82% 0%, rgba(29,112,103,.18), transparent 34rem),
+    radial-gradient(ellipse at 12% 42%, rgba(42,91,128,.11), transparent 32rem),
+    #09121b !important;
+}
+.wfq-app-shell { display:grid; grid-template-columns:232px minmax(0,1fr); min-height:100vh; width:100%; }
+.wfq-sidebar {
+  position:sticky; top:0; display:flex; flex-direction:column;
+  width:232px; height:100vh; padding:22px 14px 16px;
+  border-right:1px solid #263a49;
+  background:linear-gradient(180deg,rgba(14,26,37,.98),rgba(9,18,27,.99));
+  box-shadow:8px 0 28px rgba(0,0,0,.12);
+}
+.wfq-brand { display:flex; align-items:center; gap:10px; padding:4px 7px 17px; color:var(--wfq-ink); text-decoration:none; }
+.wfq-brand-mark {
+  display:grid; place-items:center; flex:0 0 43px; width:43px; height:43px;
+  border:1px solid #55775f; border-radius:12px;
+  background:linear-gradient(145deg,#21483e,#142b2d);
+  color:#e5bd69; font-size:1.38rem;
+  box-shadow:inset 0 1px rgba(255,255,255,.08),0 5px 16px rgba(0,0,0,.22);
+}
 .wfq-brand-copy { display:grid; gap:3px; min-width:0; }
-.wfq-brand-copy strong { font-size:.82rem; line-height:1.2; }
-.wfq-brand-copy small { color:var(--wfq-muted); font-size:.58rem; font-weight:850; letter-spacing:.11em; }
-.wfq-current-label { margin:0 7px 17px; padding:10px 11px; border:1px solid #e6e0d0; border-radius:11px; background:#faf7ed; color:#7d805f; font-size:.73rem; font-weight:850; }
-.wfq-nav-caption { padding:0 10px 8px; color:#9a9b7c; font-size:.62rem; font-weight:900; letter-spacing:.08em; }
+.wfq-brand-copy strong { color:#f4f5eb; font-size:.82rem; line-height:1.2; letter-spacing:.035em; }
+.wfq-brand-copy small { color:#8da69c; font-size:.58rem; font-weight:850; letter-spacing:.13em; }
+.wfq-current-label {
+  margin:0 7px 18px; padding:10px 11px;
+  border:1px solid #334b55; border-left:3px solid var(--wfq-gold);
+  border-radius:7px; background:linear-gradient(100deg,#192d36,#14222d);
+  color:#e6c47e; font-size:.73rem; font-weight:850;
+}
+.wfq-nav-caption { padding:0 10px 8px; color:#6f898d; font-size:.61rem; font-weight:900; letter-spacing:.15em; }
 .wfq-side-nav { display:grid; gap:5px; }
-.wfq-nav-link { display:flex; align-items:center; gap:11px; min-height:43px; padding:8px 11px; border:1px solid transparent; border-radius:11px; color:#596c55; font-size:.81rem; font-weight:800; text-decoration:none; }
-.wfq-nav-link:hover { background:#f2f5eb; }
-.wfq-nav-link[aria-current="page"] { border-color:#d8e6d0; background:var(--wfq-green-soft); color:var(--wfq-green-deep); }
-.wfq-nav-icon { display:grid; place-items:center; width:23px; font-size:1.05rem; }
-.wfq-more-trigger { width:100%; min-height:43px; padding:8px 11px; border:1px solid transparent; border-radius:11px; background:transparent; color:#596c55; font:inherit; font-size:.81rem; font-weight:850; text-align:left; cursor:pointer; }
-.wfq-more-trigger:hover,.wfq-more-trigger.is-active { border-color:#eadfbe; background:var(--wfq-gold-soft); color:#8a6427; }
+.wfq-nav-link {
+  display:flex; align-items:center; gap:11px; min-height:44px; padding:8px 11px;
+  border:1px solid transparent; border-radius:8px;
+  color:#a7b8b9; font-size:.81rem; font-weight:800; text-decoration:none;
+  transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease;
+}
+.wfq-nav-link:hover { transform:translateX(2px); border-color:#2e4a51; background:#172c35; color:#f0f6f2; }
+.wfq-nav-link[aria-current="page"] {
+  border-color:#426c61; border-left:3px solid #65d5ab;
+  background:linear-gradient(100deg,rgba(29,112,82,.42),rgba(22,48,52,.72));
+  color:#c9f5df; box-shadow:inset 0 0 18px rgba(43,173,125,.08);
+}
+.wfq-nav-icon { display:grid; place-items:center; width:23px; font-size:1.05rem; filter:saturate(.82); }
+.wfq-more-trigger {
+  width:100%; min-height:43px; padding:8px 11px;
+  border:1px solid transparent; border-radius:8px;
+  background:transparent; color:#a7b8b9; font:inherit;
+  font-size:.81rem; font-weight:850; text-align:left; cursor:pointer;
+}
+.wfq-more-trigger:hover,.wfq-more-trigger.is-active {
+  border-color:#705a32; background:linear-gradient(100deg,#3b3020,#252b2b); color:#f0cf87;
+}
 .wfq-sidebar-spacer { flex:1; min-height:24px; }
-.wfq-sidebar-footer { padding:12px 10px 4px; border-top:1px solid var(--wfq-border); color:#9a9a7c; font-size:.65rem; }
-.wfq-content { min-width:0; padding:18px clamp(14px,2.4vw,34px) 34px; }
+.wfq-sidebar-footer { padding:12px 10px 4px; border-top:1px solid #263a49; color:#6f888d; font-size:.65rem; }
+.wfq-content { min-width:0; padding:20px clamp(14px,2.4vw,36px) 36px; }
 .wfq-content > main { margin-right:auto !important; margin-left:auto !important; }
-.wfq-content h1 { color:var(--wfq-ink) !important; }
-.wfq-content .eyebrow { color:#6f8c59 !important; }
-.wfq-content .subtitle,.wfq-content .muted,.wfq-content .inventory-note,.wfq-content .setting-help,.wfq-content .panel-description,.wfq-content .offer-description,.wfq-content .dungeon-description,.wfq-content .item-description,.wfq-content .item-source,.wfq-content .footer { color:var(--wfq-muted) !important; }
-.wfq-content .panel,.wfq-content .subpanel { border:1px solid var(--wfq-border) !important; border-radius:16px !important; background:var(--wfq-surface) !important; box-shadow:var(--wfq-shadow); color:var(--wfq-ink) !important; }
-.wfq-content .panel h2,.wfq-content .subpanel h2,.wfq-content .equipment-overview h2 { color:#405d40 !important; }
-.wfq-content .stat,.wfq-content .record,.wfq-content .vital,.wfq-content .skill-card,.wfq-content .slot-card { border:1px solid #eae4d3; border-radius:11px; background:#f8f7ef !important; color:var(--wfq-ink) !important; }
-.wfq-content .stat strong,.wfq-content .record strong,.wfq-content .hero-name,.wfq-content .item-name,.wfq-content .offer-name,.wfq-content .equipment-card strong,.wfq-content .skill-card strong,.wfq-content .slot-title { color:var(--wfq-ink) !important; }
-.wfq-content .record span,.wfq-content .hero-note,.wfq-content .skill-card p { color:var(--wfq-muted) !important; }
-.wfq-content .facility-link,.wfq-content .offer-card,.wfq-content .equipment-card,.wfq-content .inventory-item,.wfq-content .item-card,.wfq-content .equipment-slot-card,.wfq-content .dungeon-card,.wfq-content .floor-card,.wfq-content .slot-card,.wfq-content .skill-card { border:1px solid var(--wfq-border) !important; border-radius:13px !important; background:var(--wfq-surface) !important; color:var(--wfq-ink) !important; box-shadow:0 3px 12px rgba(77,87,57,.045); }
-.wfq-content .facility-link { min-height:104px; }
-.wfq-content .facility-link small { color:var(--wfq-muted) !important; }
-.wfq-content .facility-link:hover,.wfq-content .dungeon-card:hover,.wfq-content .floor-card:hover { border-color:#a9c99e !important; background:#f7faef !important; }
-.wfq-content .dungeon-card.selected,.wfq-content .floor-card.selected { border-color:#8dbb7d !important; background:#edf5e6 !important; box-shadow:0 0 0 2px rgba(101,150,83,.12); }
-.wfq-content .dungeon-meta,.wfq-content .floor-status { color:#668c57 !important; }
-.wfq-content .dungeon-progress { color:#4d8050 !important; }
-.wfq-content .category-tab { border-color:#e2ddcc !important; background:#f7f5ec !important; color:#61735a !important; }
-.wfq-content .category-tab[aria-pressed="true"] { border-color:#91b77f !important; background:var(--wfq-green-soft) !important; color:var(--wfq-green-deep) !important; box-shadow:0 0 0 2px rgba(92,144,75,.10) !important; }
-.wfq-content .category-tab span { color:#829177 !important; }
-.wfq-content .item-quantity { background:#edf2e5 !important; color:#466d43 !important; }
-.wfq-content .item-tag { background:#f0f0e7 !important; color:#65745b !important; }
-.wfq-content .item-tag.equipped { background:#e0f1df !important; color:#3d7546 !important; }
-.wfq-content .equipment-slot-card.is-equipped { border-color:#a8c99b !important; background:#edf6e8 !important; }
-.wfq-content .equipment-slot-label { color:#71856a !important; }
-.wfq-content .equipment-slot-name { color:#37543a !important; }
-.wfq-content .equipment-slot-effect { color:#4d8050 !important; }
+.wfq-content h1 { color:#f1f6f1 !important; letter-spacing:.015em; text-shadow:0 2px 18px rgba(68,176,145,.10); }
+.wfq-content h2,.wfq-content h3 { color:#dcebe4; }
+.wfq-content .eyebrow { color:#73c6a2 !important; }
+.wfq-content .subtitle,.wfq-content .muted,.wfq-content .inventory-note,.wfq-content .setting-help,.wfq-content .panel-description,.wfq-content .offer-description,.wfq-content .dungeon-description,.wfq-content .item-description,.wfq-content .item-source,.wfq-content .footer,.wfq-content .equipment-slot-empty {
+  color:var(--wfq-muted) !important;
+}
+.wfq-content .panel,.wfq-content .subpanel {
+  border:1px solid var(--wfq-border) !important;
+  border-radius:13px !important;
+  background:linear-gradient(145deg,rgba(23,39,52,.98),rgba(15,27,38,.98)) !important;
+  box-shadow:var(--wfq-shadow),inset 0 1px rgba(255,255,255,.025);
+  color:var(--wfq-ink) !important;
+}
+.wfq-content .panel h2,.wfq-content .subpanel h2,.wfq-content .equipment-overview h2 { color:#d7e8df !important; }
+.wfq-content .stat,.wfq-content .record,.wfq-content .vital,.wfq-content .skill-card,.wfq-content .slot-card {
+  border:1px solid #304653 !important; border-radius:9px !important;
+  background:linear-gradient(145deg,#192b39,#12212c) !important;
+  color:#b9c9c8 !important;
+}
+.wfq-content .stat strong,.wfq-content .record strong,.wfq-content .hero-name,.wfq-content .item-name,.wfq-content .offer-name,.wfq-content .equipment-card strong,.wfq-content .skill-card strong,.wfq-content .slot-title {
+  color:#f0f5ef !important;
+}
+.wfq-content .record span,.wfq-content .hero-note,.wfq-content .skill-card p { color:#9aadb3 !important; }
+.wfq-content .facility-link,.wfq-content .offer-card,.wfq-content .equipment-card,.wfq-content .inventory-item,.wfq-content .item-card,.wfq-content .equipment-slot-card,.wfq-content .dungeon-card,.wfq-content .floor-card,.wfq-content .slot-card,.wfq-content .skill-card {
+  border:1px solid #304655 !important;
+  border-radius:11px !important;
+  background:linear-gradient(145deg,#1a2c3a,#142330) !important;
+  color:var(--wfq-ink) !important;
+  box-shadow:0 5px 16px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.025);
+}
+.wfq-content .facility-link { min-height:104px; position:relative; overflow:hidden; }
+.wfq-content .facility-link::after {
+  content:""; position:absolute; right:-24px; bottom:-36px; width:90px; height:90px;
+  border:1px solid rgba(103,187,157,.13); border-radius:50%; pointer-events:none;
+}
+.wfq-content .facility-link strong { color:#f1f5ef !important; }
+.wfq-content .facility-link small { color:#9cafb1 !important; }
+.wfq-content .facility-link:hover,.wfq-content .dungeon-card:hover,.wfq-content .floor-card:hover {
+  transform:translateY(-2px); border-color:#4d8c7e !important;
+  background:linear-gradient(145deg,#203a42,#172d39) !important;
+  box-shadow:0 9px 22px rgba(0,0,0,.24),0 0 0 1px rgba(73,167,135,.08);
+}
+.wfq-content .dungeon-card.selected,.wfq-content .floor-card.selected {
+  border-color:#59a990 !important;
+  background:linear-gradient(145deg,#214b43,#172f39) !important;
+  box-shadow:0 0 0 1px rgba(91,194,153,.26),0 8px 20px rgba(0,0,0,.20);
+}
+.wfq-content .dungeon-meta,.wfq-content .floor-status { color:#86d4b2 !important; }
+.wfq-content .dungeon-progress { color:#e5bd69 !important; }
+.wfq-content .category-tab {
+  border:1px solid #344b59 !important; border-radius:8px !important;
+  background:linear-gradient(145deg,#192a37,#12212b) !important; color:#acbfbd !important;
+}
+.wfq-content .category-tab[aria-pressed="true"] {
+  border-color:#58a78b !important;
+  background:linear-gradient(145deg,#1d5546,#173a3b) !important;
+  color:#d7f7e6 !important;
+  box-shadow:inset 0 0 16px rgba(76,192,145,.10),0 0 0 1px rgba(82,171,139,.12) !important;
+}
+.wfq-content .category-tab span { color:#8eaaa0 !important; }
+.wfq-content .item-quantity { background:#1c3d3a !important; color:#a9e9ca !important; }
+.wfq-content .item-tag { background:#263744 !important; color:#b5c8c6 !important; }
+.wfq-content .item-tag.equipped { background:#17483a !important; color:#a8edc6 !important; }
+.wfq-content .equipment-overview { border-color:#385365 !important; background:rgba(12,24,34,.72) !important; }
+.wfq-content .equipment-slot-card.is-equipped { border-color:#4b9b78 !important; background:linear-gradient(145deg,#1a493a,#172d32) !important; }
+.wfq-content .equipment-slot-label { color:#9aada8 !important; }
+.wfq-content .equipment-slot-name { color:#eff7ef !important; }
+.wfq-content .equipment-slot-effect { color:#90e0b4 !important; }
+.wfq-content .item-comparison { border-color:#304b58 !important; background:rgba(8,18,27,.72) !important; }
+.wfq-content .item-comparison-title { color:#9eafb2 !important; }
+.wfq-content .comparison-stat.is-better { background:#174b39 !important; color:#9ce8bd !important; }
+.wfq-content .comparison-stat.is-worse { background:#512d34 !important; color:#ffb0b0 !important; }
+.wfq-content .comparison-stat.is-same { background:#2a3944 !important; color:#b4c4c7 !important; }
+.wfq-content .item-effect,.wfq-content .offer-meta,.wfq-content .item-sell-price { color:#e5bd69 !important; }
+.wfq-content .empty-state { border-color:#3b5361 !important; background:#111f2b !important; color:#9eafb2 !important; }
 .wfq-content button,.wfq-content select,.wfq-content input,.wfq-content textarea { font-family:inherit; }
-.wfq-content .primary-button,.wfq-content .primary-link,.wfq-content .equip-button,.wfq-content .preview-button { border:1px solid #477c4d !important; border-radius:10px !important; background:var(--wfq-green) !important; color:#fff !important; box-shadow:0 3px 8px rgba(52,102,58,.13); }
-.wfq-content .secondary-button,.wfq-content .sell-button,.wfq-content .reset-button { border:1px solid #e3d4b4 !important; border-radius:10px !important; background:var(--wfq-gold-soft) !important; color:#805d27 !important; }
-.wfq-content .equip-button:hover,.wfq-content .primary-button:hover,.wfq-content .primary-link:hover,.wfq-content .preview-button:hover { background:var(--wfq-green-deep) !important; }
-.wfq-content .feedback,.wfq-content .save-status { color:#49804d !important; }
-.wfq-content input,.wfq-content select,.wfq-content textarea { border-color:#dcd7c7 !important; border-radius:10px !important; background:#fffef9 !important; color:var(--wfq-ink) !important; }
-.wfq-content .empty-state { border-color:#d9decf !important; background:#fafaf3 !important; color:#7b8873 !important; }
+.wfq-content .primary-button,.wfq-content .primary-link,.wfq-content .equip-button,.wfq-content .preview-button {
+  border:1px solid #52b28c !important; border-radius:8px !important;
+  background:linear-gradient(180deg,#268b68,#17694f) !important; color:#f3fff8 !important;
+  box-shadow:0 4px 12px rgba(10,71,52,.30),inset 0 1px rgba(255,255,255,.13);
+}
+.wfq-content .primary-button:hover,.wfq-content .primary-link:hover,.wfq-content .equip-button:hover,.wfq-content .preview-button:hover {
+  background:linear-gradient(180deg,#31a77d,#1c795a) !important;
+}
+.wfq-content .secondary-button,.wfq-content .sell-button,.wfq-content .reset-button {
+  border:1px solid #80683c !important; border-radius:8px !important;
+  background:linear-gradient(180deg,#4a3c27,#312b22) !important; color:#f0d28f !important;
+}
+.wfq-content .feedback,.wfq-content .save-status { color:#8ee0ad !important; }
+.wfq-content input,.wfq-content select,.wfq-content textarea {
+  border:1px solid #3a5360 !important; border-radius:8px !important;
+  background:#101f2b !important; color:#e8f1ed !important;
+}
+.wfq-content input::placeholder,.wfq-content textarea::placeholder { color:#71868c !important; }
+.wfq-content .equip-button:disabled,.wfq-content button:disabled { opacity:.5; filter:saturate(.55); }
 .wfq-content .topline .back[hidden],.wfq-content .topline .back-link[hidden],.wfq-content main > .back[hidden] { display:none !important; }
 .wfq-mobile-nav { display:none; }
 .wfq-drawer-layer[hidden] { display:none !important; }
 .wfq-drawer-layer { position:fixed; z-index:1300; inset:0; }
-.wfq-drawer-backdrop { position:absolute; inset:0; width:100%; height:100%; border:0; background:rgba(43,54,39,.24); cursor:pointer; }
-.wfq-drawer { position:absolute; left:242px; bottom:22px; width:min(360px,calc(100vw - 260px)); max-height:min(72vh,580px); overflow:auto; padding:17px; border:1px solid var(--wfq-border); border-radius:18px; background:var(--wfq-surface); box-shadow:0 18px 55px rgba(48,60,39,.20); }
+.wfq-drawer-backdrop { position:absolute; inset:0; width:100%; height:100%; border:0; background:rgba(0,0,0,.68); cursor:pointer; backdrop-filter:blur(3px); }
+.wfq-drawer {
+  position:absolute; left:250px; bottom:22px; width:min(380px,calc(100vw - 270px)); max-height:min(72vh,580px);
+  overflow:auto; padding:17px; border:1px solid #3b5961; border-radius:13px;
+  background:linear-gradient(145deg,#1b303d,#101d29); box-shadow:0 20px 60px rgba(0,0,0,.48);
+}
 .wfq-drawer-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.wfq-drawer-title { margin:0; color:var(--wfq-ink); font-size:1rem; font-weight:900; }
-.wfq-drawer-close { width:34px; height:34px; border:1px solid var(--wfq-border); border-radius:9px; background:#f5f3e9; color:#66765e; font-size:1.2rem; }
-.wfq-drawer-description { margin:7px 0 12px; color:var(--wfq-muted); font-size:.73rem; }
+.wfq-drawer-title { margin:0; color:#eef6f0; font-size:1rem; font-weight:900; }
+.wfq-drawer-close { width:34px; height:34px; border:1px solid #405761; border-radius:8px; background:#1d303b; color:#d2e1d9; font-size:1.2rem; }
+.wfq-drawer-description { margin:7px 0 12px; color:#9aadb3; font-size:.73rem; }
 .wfq-drawer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-.wfq-drawer-link { display:flex; align-items:center; gap:9px; min-width:0; padding:11px; border:1px solid #e8e2d4; border-radius:12px; background:#fffefa; color:var(--wfq-ink); text-decoration:none; }
-.wfq-drawer-link:hover,.wfq-drawer-link[aria-current="page"] { border-color:#a8c89a; background:#edf5e7; }
+.wfq-drawer-link { display:flex; align-items:center; gap:9px; min-width:0; padding:11px; border:1px solid #344c58; border-radius:9px; background:#172936; color:#eaf2ed; text-decoration:none; }
+.wfq-drawer-link:hover,.wfq-drawer-link[aria-current="page"] { border-color:#579982; background:#1b423c; }
 .wfq-drawer-icon { font-size:1.25rem; }
 .wfq-drawer-copy { display:grid; gap:3px; min-width:0; }
 .wfq-drawer-copy strong { font-size:.76rem; }
-.wfq-drawer-copy small { color:var(--wfq-muted); font-size:.63rem; line-height:1.35; }
-:focus-visible { outline:3px solid rgba(95,144,75,.48); outline-offset:2px; }
+.wfq-drawer-copy small { color:#9aadb3; font-size:.63rem; line-height:1.35; }
+:focus-visible { outline:2px solid #6dd7b2; outline-offset:3px; }
 @media(max-width:820px) {
   .wfq-app-shell { display:block; min-height:100vh; }
   .wfq-sidebar { display:none; }
   .wfq-content { padding:10px 9px calc(94px + env(safe-area-inset-bottom)); }
-  .wfq-mobile-nav { position:fixed; z-index:1200; right:0; bottom:0; left:0; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:3px; padding:7px 7px calc(7px + env(safe-area-inset-bottom)); border-top:1px solid #e3dece; background:rgba(255,253,247,.96); box-shadow:0 -6px 22px rgba(76,84,55,.08); backdrop-filter:blur(14px); }
-  .wfq-mobile-link,.wfq-mobile-more { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:0; min-height:51px; padding:5px 2px; border:1px solid transparent; border-radius:10px; background:transparent; color:#64745d; font:inherit; font-size:.62rem; font-weight:850; text-decoration:none; }
-  .wfq-mobile-link[aria-current="page"],.wfq-mobile-more.is-active { border-color:#dbe8d3; background:var(--wfq-green-soft); color:var(--wfq-green-deep); }
+  .wfq-mobile-nav {
+    position:fixed; z-index:1200; right:0; bottom:0; left:0;
+    display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:3px;
+    padding:7px 7px calc(7px + env(safe-area-inset-bottom));
+    border-top:1px solid #304754;
+    background:rgba(10,20,29,.97);
+    box-shadow:0 -8px 28px rgba(0,0,0,.36);
+    backdrop-filter:blur(16px);
+  }
+  .wfq-mobile-link,.wfq-mobile-more {
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    min-width:0; min-height:51px; padding:5px 2px; border:1px solid transparent; border-radius:8px;
+    background:transparent; color:#9fb1b2; font:inherit; font-size:.62rem; font-weight:850; text-decoration:none;
+  }
+  .wfq-mobile-link[aria-current="page"],.wfq-mobile-more.is-active {
+    border-color:#3d7163; background:linear-gradient(145deg,#1c5143,#17343a); color:#d5f4e4;
+  }
   .wfq-mobile-more { cursor:pointer; }
   .wfq-mobile-icon { font-size:1.05rem; }
   .wfq-mobile-label { font-size:.62rem; }
-  .wfq-drawer { right:10px; bottom:calc(78px + env(safe-area-inset-bottom)); left:10px; width:auto; max-height:min(65vh,520px); padding:15px; }
+  .wfq-drawer {
+    right:10px; bottom:calc(78px + env(safe-area-inset-bottom)); left:10px;
+    width:auto; max-height:min(65vh,520px); padding:15px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .wfq-nav-link,.wfq-content .facility-link,.wfq-content .dungeon-card,.wfq-content .floor-card { transition:none; }
 }
