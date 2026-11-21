@@ -6,7 +6,7 @@
 import { EQUIPMENT_SLOTS, ITEM_DEFINITIONS } from "./data/items.js";
 
 export const INVENTORY_CATEGORIES = Object.freeze([
-  Object.freeze({ id: "weapon", label: "武器" }),
+  Object.freeze({ id: "weapon", label: "装備" }),
   Object.freeze({ id: "tool", label: "道具" }),
   Object.freeze({ id: "other", label: "その他" }),
 ]);

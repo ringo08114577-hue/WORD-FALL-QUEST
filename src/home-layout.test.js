@@ -19,6 +19,9 @@ test("アイテム欄の入手先と空表示は統合後のショップ名に�
   const script = read("src/inventory-page.js");
   assert.match(script, /sources\.push\("ショップ"\)/);
   assert.match(script, /ショップで装備を手に入れよう/);
+  assert.match(read("inventory.html"), /data-category="weapon"[^>]*>装備<span id="weaponCount">/);
+  assert.match(script, /装備タブには、武器・盾・鎧・アクセサリー/);
+  assert.doesNotMatch(script, /武器タブ/);
   assert.match(script, /ショップやダンジョンの宝箱/);
   assert.doesNotMatch(script, /道具屋|武器・防具屋/);
 });

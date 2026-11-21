@@ -8,10 +8,10 @@ import {
 } from "./inventory.js";
 import { ITEM_DEFINITIONS } from "./data/items.js";
 
-test("アイテム欄は武器・道具・その他の3分類を持つ", () => {
+test("アイテム欄は装備・道具・その他の3分類を持つ", () => {
   assert.deepEqual(
     INVENTORY_CATEGORIES.map(({ id, label }) => [id, label]),
-    [["weapon", "武器"], ["tool", "道具"], ["other", "その他"]],
+    [["weapon", "装備"], ["tool", "道具"], ["other", "その他"]],
   );
 });
 
