@@ -243,7 +243,7 @@ test("通常ページは共通レイアウトとダークファンタジーの�
   assert.ok(css.includes("--wfq-gold: #e0b45b"));
   assert.ok(css.includes("color-scheme: dark"));
   assert.ok(css.includes(".wfq-mobile-nav"));
-  assert.ok(css.includes("grid-template-columns:224px minmax(0,1fr)"));
+  assert.ok(css.includes("grid-template-columns:232px minmax(0,1fr)"));
 });
 
 test("共通ナビゲーションは主要4項目と施設ドロワーを持つ", () => {
