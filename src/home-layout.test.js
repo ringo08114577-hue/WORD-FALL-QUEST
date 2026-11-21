@@ -82,18 +82,51 @@ test("ホームは町マップを中心にし、施設一覧を重複表示し�
 });
 
 
-test("ホームの町マップは建物から既存の施設へ移動できる", () => {
+test("ホーム中央に冒険・装備・ショップ・鍛冶屋の選択肢を表示する", () => {
   const html = read("index.html");
-  assert.match(html, /id="townMapTitle">町のマップ/);
-  for (const route of ["dungeons.html", "shop.html", "crafting.html", "inventory.html"]) {
-    assert.ok(html.includes('class="town-map-spot" href="./' + route + '"'), route + " map link");
+  assert.match(html, /id="homePage"/);
+  for (const route of ["dungeons.html", "inventory.html", "shop.html", "crafting.html"]) {
+    assert.ok(html.includes('href="./' + route + '"'), route + " home destination");
   }
-  assert.match(html, /aria-label="冒険者の町/);
-  assert.doesNotMatch(html, /class="facility-grid"/);
-  assert.match(html, /shared-layout\.css/);
-  assert.match(html, /shared-layout\.js/);
+  assert.match(html, /冒険に出る/);
+  assert.match(html, /装備を整える/);
+  assert.match(html, /id="heroAvatar"/);
+  assert.match(html, /id="hpValue"/);
+  assert.match(html, /id="goldValue"/);
+  assert.doesNotMatch(html, /town-map|facility-grid/);
+  assert.match(html, /createAppSession/);
+  assert.match(html, /session\.returnToTown\(\)/);
 });
 
+
+
+test("共通レイアウトはページごとにNPCの立ち絵とセリフを切り替える", () => {
+  const script = read("src/shared-layout.js");
+  for (const [page, portrait] of [
+    ["index.html", "guild-receptionist.svg"],
+    ["dungeons.html", "guild-receptionist.svg"],
+    ["shop.html", "merchant.svg"],
+    ["crafting.html", "blacksmith.svg"],
+    ["inventory.html", "quartermaster.svg"],
+    ["status.html", "trainer.svg"],
+    ["skills.html", "arcanist.svg"],
+  ]) {
+    assert.match(script, new RegExp('"' + page + '".*?' + portrait));
+  }
+  assert.match(script, /createNpcStage\(current\)/);
+  assert.match(script, /wfq-npc-stage/);
+  const css = read("src/shared-layout.css");
+  assert.match(css, /\.wfq-npc-portrait/);
+  assert.match(css, /\.wfq-npc-dialogue/);
+  for (const file of [
+    "assets/npcs/guild-receptionist.svg",
+    "assets/npcs/merchant.svg",
+    "assets/npcs/blacksmith.svg",
+    "assets/npcs/quartermaster.svg",
+    "assets/npcs/trainer.svg",
+    "assets/npcs/arcanist.svg",
+  ]) assert.ok(read(file).includes("<svg"), file);
+});
 
 test("統合ショップ・鍛冶屋・スキル工房はそれぞれ独立したHTMLページを持つ", () => {
   for (const [file, facility] of [

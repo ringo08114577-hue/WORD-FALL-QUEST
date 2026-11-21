@@ -99,121 +99,81 @@
 
 </style>
   <link rel="stylesheet" href="./src/shared-layout.css">
+  <style>
+    body[data-wfq-page="index.html"] .wfq-content{padding-top:10px;padding-bottom:18px}
+    body[data-wfq-page="index.html"] #homePage{width:min(100%,760px);margin:0 auto;display:flex;flex-direction:column;gap:11px}
+    #homePage .home-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    #homePage .home-heading h1{margin:2px 0 0;font-size:clamp(1.25rem,4vw,1.8rem);line-height:1.15}
+    #homePage .home-heading .eyebrow{font-size:.59rem;letter-spacing:.14em}
+    #homePage .home-town-label{padding:6px 9px;border:1px solid #415b50;border-radius:7px;background:#152a27;color:#c9b37e;font-size:.66rem;font-weight:850;white-space:nowrap}
+    #homePage .home-player-panel{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:8px 10px;border:1px solid #304653;border-radius:11px;background:linear-gradient(145deg,#172c39,#11212c)}
+    #homePage .home-player{display:flex;align-items:center;gap:9px;min-width:0}
+    #homePage .avatar{width:40px;height:40px;flex:0 0 40px;border-radius:9px;font-size:1.2rem}
+    #homePage .avatar img{padding:0}
+    #homePage .home-player-copy{display:grid;gap:2px;min-width:0}
+    #homePage .home-player-copy strong{font-size:.8rem;color:#edf4f1}
+    #homePage .home-player-copy small{font-size:.62rem;color:#9aadb3;white-space:nowrap}
+    #homePage .wallet{display:flex;flex-wrap:nowrap;gap:5px;justify-content:flex-end}
+    #homePage .stat{padding:6px 8px;border:1px solid #304653;border-radius:8px;background:#101f2a;color:#c8d5d0;font-size:.65rem;white-space:nowrap}
+    #homePage .stat strong{color:#f0d18c}
+    #homePage .home-destinations{padding:0;margin:0}
+    #homePage .home-section-heading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 8px}
+    #homePage .home-section-heading h2{margin:0;color:#e9f1eb;font-size:.93rem}
+    #homePage .home-section-heading span{color:#77958b;font-size:.55rem;font-weight:900;letter-spacing:.13em}
+    #homePage .home-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    #homePage .home-choice-card{position:relative;display:flex;align-items:center;gap:9px;min-width:0;min-height:78px;padding:10px;border:1px solid #34505b;border-radius:11px;background:linear-gradient(145deg,#1b3040,#142532);color:#f0f5ef;text-decoration:none;box-shadow:0 5px 15px rgba(0,0,0,.16);transition:transform .16s ease,border-color .16s ease,filter .16s ease}
+    #homePage .home-choice-card:hover{transform:translateY(-2px);border-color:#62a98a;filter:brightness(1.08)}
+    #homePage .home-choice-icon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:10px;background:#243c42;color:#e5c37c;font-size:1.35rem}
+    #homePage .home-choice-copy{display:grid;gap:3px;min-width:0}
+    #homePage .home-choice-copy strong{font-size:.79rem;line-height:1.2}
+    #homePage .home-choice-copy small{color:#9aadb3;font-size:.61rem;line-height:1.35}
+    #homePage .home-choice-arrow{margin-left:auto;color:#d7bd83;font-size:1.3rem}
+    #homePage .home-choice-adventure{border-color:#477a6b;background:linear-gradient(145deg,#1e4a40,#172f38)}
+    #homePage .home-choice-adventure .home-choice-icon{background:#245b4a}
+    #homePage .home-choice-shop .home-choice-icon{background:#4a3c2b}
+    #homePage .home-choice-forge .home-choice-icon{background:#463633}
+    @media(max-width:820px){body[data-wfq-page="index.html"] .wfq-content{padding:8px 9px calc(88px + env(safe-area-inset-bottom))}body[data-wfq-page="index.html"] #homePage{gap:9px}}
+    @media(max-width:380px){#homePage .home-choice-card{min-height:70px;padding:8px;gap:7px}#homePage .home-choice-icon{flex-basis:32px;width:32px;height:32px;font-size:1.15rem}#homePage .home-choice-copy strong{font-size:.72rem}#homePage .home-choice-copy small{font-size:.57rem}#homePage .home-player-copy small{display:none}#homePage .stat{padding:5px 6px;font-size:.59rem}}
+    @media(prefers-reduced-motion:reduce){#homePage .home-choice-card{transition:none}}
+  </style>
 </head>
 <body>
 <main id="homePage">
-  <div class="topline"><div class="eyebrow">WORD FALL QUEST · ADVENTURER HOME</div></div>
-  <h1>冒険者ギルド</h1>
-  <section class="panel home-overview" aria-label="冒険者情報">
-    <div class="hero">
-      <div class="hero-copy">
-        <div class="avatar"><img id="heroAvatar" alt="主人公" hidden></div>
-        <div><div class="hero-name">冒険者 <span id="levelValue">LV.1</span></div><div class="hero-note" id="heroMessage">冒険に出発しよう。</div></div>
+  <div class="home-heading">
+    <div><div class="eyebrow">WELCOME TO THE TOWN</div><h1>冒険者ギルド</h1></div>
+    <span class="home-town-label">はじまりの町</span>
+  </div>
+  <section class="home-player-panel" aria-label="冒険者の情報">
+    <div class="home-player">
+      <div class="avatar"><img id="heroAvatar" alt="主人公" hidden></div>
+      <div class="home-player-copy">
+        <strong>冒険者 <span id="levelValue">LV.1</span></strong>
+        <small id="heroMessage">次の冒険に向けて準備しよう。</small>
       </div>
-      <div class="wallet">
-        <div class="stat" id="hpValue">HP 100 / 100</div>
-        <div class="stat"><strong id="goldValue">0 G</strong></div>
-      </div>
+    </div>
+    <div class="wallet">
+      <div class="stat" id="hpValue">HP 100 / 100</div>
+      <div class="stat"><strong id="goldValue">0 G</strong></div>
     </div>
   </section>
-  <section class="panel town-map-panel" aria-labelledby="townMapTitle">
-    <div class="panel-head"><h2 id="townMapTitle">町のマップ</h2><span class="muted">建物をタップして移動</span></div>
-    <div class="town-map">
-      <svg viewBox="0 0 720 480" role="group" aria-label="冒険者の町。ギルド、ショップ、鍛冶屋、倉庫を選べるマップ" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="townGrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#315b43"/><stop offset="1" stop-color="#1c3d31"/></linearGradient>
-          <linearGradient id="townRoad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8aa79"/><stop offset="1" stop-color="#91734f"/></linearGradient>
-          <linearGradient id="guildRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#56859a"/><stop offset="1" stop-color="#29485e"/></linearGradient>
-          <linearGradient id="shopRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bd7652"/><stop offset="1" stop-color="#713f35"/></linearGradient>
-          <linearGradient id="forgeRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a7770"/><stop offset="1" stop-color="#48494a"/></linearGradient>
-          <linearGradient id="storeRoof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b69b5d"/><stop offset="1" stop-color="#78603b"/></linearGradient>
-          <pattern id="townStones" width="26" height="20" patternUnits="userSpaceOnUse"><path d="M1 1h10v7H1zM14 11h11v7H14z" fill="none" stroke="#e0c99e" stroke-opacity=".22" stroke-width="1"/></pattern>
-          <filter id="townShadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#07150f" flood-opacity=".55"/></filter>
-        </defs>
-        <rect width="720" height="480" fill="url(#townGrass)"/>
-        <path d="M0 65Q110 22 205 66T420 52T720 77M0 430Q165 390 280 430T520 420T720 445" fill="none" stroke="#70905c" stroke-width="3" opacity=".35"/>
-        <g fill="#6e955d" opacity=".48">
-          <circle cx="35" cy="100" r="17"/><circle cx="65" cy="78" r="11"/><circle cx="685" cy="155" r="20"/><circle cx="665" cy="183" r="13"/>
-          <circle cx="30" cy="390" r="22"/><circle cx="78" cy="430" r="15"/><circle cx="655" cy="430" r="24"/><circle cx="696" cy="398" r="12"/>
-          <circle cx="150" cy="155" r="9"/><circle cx="570" cy="60" r="12"/><circle cx="590" cy="445" r="11"/>
-        </g>
-        <path d="M-20 340C110 330 150 370 250 335S420 320 500 350 650 340 750 300" fill="none" stroke="#715b40" stroke-width="112" stroke-linecap="round" opacity=".6"/>
-        <path d="M-20 340C110 330 150 370 250 335S420 320 500 350 650 340 750 300" fill="none" stroke="url(#townRoad)" stroke-width="98" stroke-linecap="round"/>
-        <path d="M350 340C330 285 360 245 375 205S370 160 370 145M165 340C155 310 158 295 170 280M548 340C550 305 560 286 565 270M555 200C555 165 555 142 560 125" fill="none" stroke="#8e724f" stroke-width="67" stroke-linecap="round"/>
-        <path d="M350 340C330 285 360 245 375 205S370 160 370 145M165 340C155 310 158 295 170 280M548 340C550 305 560 286 565 270M555 200C555 165 555 142 560 125" fill="none" stroke="#c6a779" stroke-width="57" stroke-linecap="round"/>
-        <path d="M0 0H720V480H0Z" fill="url(#townStones)" opacity=".23"/>
-        <g opacity=".75" fill="#8fa56c">
-          <path d="M24 125l15-23 16 23-7 1v17H31v-17z"/><path d="M633 70l17-27 18 27-7 1v20h-21V71z"/>
-          <path d="M45 440l15-24 17 24-7 1v16H52v-16z"/><path d="M665 390l16-25 17 25-7 1v17h-19v-17z"/>
-        </g>
-        <a class="town-map-spot" href="./dungeons.html" aria-label="冒険者ギルド。クエストを選ぶ">
-          <rect class="map-hit" x="238" y="48" width="262" height="220" rx="15" fill="transparent" stroke="transparent"/>
-          <g filter="url(#townShadow)">
-            <rect x="275" y="133" width="190" height="104" rx="5" fill="#b78c60" stroke="#583d2c" stroke-width="5"/>
-            <path d="M259 143L370 65 481 143Z" class="map-roof" fill="url(#guildRoof)" stroke="#1e3545" stroke-width="7"/>
-            <path d="M281 140L370 82 459 140" fill="none" stroke="#91b7bd" stroke-width="4" opacity=".55"/>
-            <rect x="340" y="165" width="60" height="72" rx="5" fill="#513b2d" stroke="#e0bb76" stroke-width="4"/>
-            <path d="M370 166v70" stroke="#d8b879" stroke-width="3"/>
-            <rect x="296" y="165" width="28" height="33" rx="3" fill="#9ac0bd" stroke="#614a36" stroke-width="4"/>
-            <rect x="416" y="165" width="28" height="33" rx="3" fill="#9ac0bd" stroke="#614a36" stroke-width="4"/>
-            <path d="M312 165v33m-16-16h28m118-17v33m-14-16h28" stroke="#73563a" stroke-width="3"/>
-            <path d="M353 116h34l-17-27z" fill="#dfbd72" stroke="#6b4d32" stroke-width="3"/>
-            <path d="M370 94v19" stroke="#6b4d32" stroke-width="3"/>
-            <rect x="325" y="238" width="90" height="18" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
-            <text x="370" y="251" class="map-label" font-size="12">冒険者ギルド</text>
-          </g>
-          <text x="370" y="277" class="map-sub">QUEST / クエスト</text>
-        </a>
-        <a class="town-map-spot" href="./shop.html" aria-label="ショップ。道具や装備を購入する">
-          <rect class="map-hit" x="50" y="205" width="205" height="185" rx="15" fill="transparent" stroke="transparent"/>
-          <g filter="url(#townShadow)">
-            <rect x="85" y="275" width="135" height="83" rx="4" fill="#b98a5a" stroke="#5a3e2d" stroke-width="5"/>
-            <path d="M70 284L152 220 235 284Z" class="map-roof" fill="url(#shopRoof)" stroke="#55332c" stroke-width="6"/>
-            <path d="M92 280L152 235 212 280" fill="none" stroke="#e4a477" stroke-width="4" opacity=".55"/>
-            <rect x="139" y="310" width="34" height="48" rx="3" fill="#553b2b" stroke="#e5c48d" stroke-width="3"/>
-            <rect x="100" y="298" width="25" height="24" fill="#9dc8c0" stroke="#654a34" stroke-width="3"/>
-            <path d="M112 298v24m-12-12h25" stroke="#765238" stroke-width="2"/>
-            <path d="M130 270h44v15h-44z" fill="#e4c37f" stroke="#654a34" stroke-width="2"/>
-            <text x="152" y="282" class="map-label" font-size="11">SHOP</text>
-            <rect x="104" y="357" width="96" height="19" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
-            <text x="152" y="371" class="map-label" font-size="12">ショップ</text>
-          </g>
-          <text x="152" y="394" class="map-sub">ITEMS &amp; EQUIPMENT</text>
-        </a>
-        <a class="town-map-spot" href="./crafting.html" aria-label="鍛冶屋。装備を作成する">
-          <rect class="map-hit" x="470" y="205" width="208" height="190" rx="15" fill="transparent" stroke="transparent"/>
-          <g filter="url(#townShadow)">
-            <rect x="505" y="278" width="135" height="82" rx="4" fill="#a67b58" stroke="#493c35" stroke-width="5"/>
-            <path d="M488 286L573 220 656 286Z" class="map-roof" fill="url(#forgeRoof)" stroke="#383b3c" stroke-width="6"/>
-            <path d="M508 282L573 235 638 282" fill="none" stroke="#c1aaa0" stroke-width="4" opacity=".5"/>
-            <rect x="556" y="315" width="32" height="45" rx="3" fill="#43352e" stroke="#d6b17a" stroke-width="3"/>
-            <rect x="610" y="299" width="22" height="26" fill="#f2a24f" stroke="#65483a" stroke-width="3"/>
-            <path d="M611 310q10-14 19 0" fill="none" stroke="#ffe1a0" stroke-width="3"/>
-            <path d="M530 271h38v15h-38z" fill="#343a3c" stroke="#d6b17a" stroke-width="2"/>
-            <path d="M548 264l12-16 12 16" fill="none" stroke="#e1a25e" stroke-width="4"/>
-            <rect x="525" y="359" width="96" height="19" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
-            <text x="573" y="373" class="map-label" font-size="12">鍛冶屋</text>
-          </g>
-          <text x="573" y="396" class="map-sub">BLACKSMITH</text>
-        </a>
-        <a class="town-map-spot" href="./inventory.html" aria-label="倉庫。アイテム欄を開く">
-          <rect class="map-hit" x="488" y="28" width="188" height="185" rx="15" fill="transparent" stroke="transparent"/>
-          <g filter="url(#townShadow)">
-            <rect x="518" y="92" width="126" height="76" rx="4" fill="#b58b5c" stroke="#5c452f" stroke-width="5"/>
-            <path d="M503 101L581 43 659 101Z" class="map-roof" fill="url(#storeRoof)" stroke="#59472e" stroke-width="6"/>
-            <rect x="545" y="119" width="32" height="31" rx="2" fill="#79563a" stroke="#e0bf82" stroke-width="3"/>
-            <rect x="585" y="119" width="32" height="31" rx="2" fill="#79563a" stroke="#e0bf82" stroke-width="3"/>
-            <path d="M550 126h22m-22 8h22m18-8h22m-22 8h22" stroke="#d6ae71" stroke-width="2"/>
-            <rect x="531" y="168" width="100" height="19" rx="8" fill="#243f3b" stroke="#d7bd83" stroke-width="2"/>
-            <text x="581" y="182" class="map-label" font-size="12">倉庫・アイテム</text>
-          </g>
-          <text x="581" y="205" class="map-sub">INVENTORY</text>
-        </a>
-        <g fill="#f0d18c" opacity=".8"><circle cx="260" cy="303" r="4"/><circle cx="435" cy="404" r="4"/><circle cx="309" cy="418" r="3"/><circle cx="458" cy="95" r="3"/></g>
-        <g fill="#e9c985" opacity=".72"><path d="M250 390l4-10 4 10-4 7z"/><path d="M450 300l4-10 4 10-4 7z"/></g>
-      </svg>
+  <section class="home-destinations" aria-labelledby="homeDestinationsTitle">
+    <div class="home-section-heading"><h2 id="homeDestinationsTitle">どこへ行く？</h2><span>SELECT DESTINATION</span></div>
+    <div class="home-choice-grid">
+      <a class="home-choice-card home-choice-adventure" href="./dungeons.html">
+        <span class="home-choice-icon">⚔️</span><span class="home-choice-copy"><strong>冒険に出る</strong><small>ダンジョンを選択</small></span><span class="home-choice-arrow">›</span>
+      </a>
+      <a class="home-choice-card home-choice-equipment" href="./inventory.html">
+        <span class="home-choice-icon">🛡️</span><span class="home-choice-copy"><strong>装備を整える</strong><small>装備・アイテムを確認</small></span><span class="home-choice-arrow">›</span>
+      </a>
+      <a class="home-choice-card home-choice-shop" href="./shop.html">
+        <span class="home-choice-icon">🛒</span><span class="home-choice-copy"><strong>ショップ</strong><small>武器や道具を購入</small></span><span class="home-choice-arrow">›</span>
+      </a>
+      <a class="home-choice-card home-choice-forge" href="./crafting.html">
+        <span class="home-choice-icon">⚒️</span><span class="home-choice-copy"><strong>鍛冶屋</strong><small>素材から装備を作成</small></span><span class="home-choice-arrow">›</span>
+      </a>
     </div>
-</section></main>
+  </section>
+</main>
 <script type="module">
 import { createAppSession } from "./src/app-session.js";
 import { setCharacterImage } from "./src/character-images.js";

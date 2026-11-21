@@ -4,6 +4,19 @@ const NAV_ITEMS = Object.freeze([
   { href: "./inventory.html", file: "inventory.html", icon: "🎒", label: "アイテム" },
   { href: "./status.html", file: "status.html", icon: "🧑‍🌾", label: "能力" },
 ]);
+
+const NPC_PAGES = Object.freeze({
+  "index.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "おかえりなさい！今日はどんな冒険に出かけますか？" },
+  "dungeons.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "新しい依頼が届いていますよ。準備ができたら出発しましょう！" },
+  "shop.html": { name: "ロウ", role: "道具屋の店主", portrait: "./assets/npcs/merchant.svg", line: "武器も道具も揃ってるよ。必要なものを選んでいってくれ！" },
+  "crafting.html": { name: "ガルド", role: "熟練の鍛冶職人", portrait: "./assets/npcs/blacksmith.svg", line: "素材を持ってきたな。よし、腕によりをかけて仕上げてやる！" },
+  "inventory.html": { name: "セシル", role: "ギルド倉庫係", portrait: "./assets/npcs/quartermaster.svg", line: "持ち物を整理しましょう。装備の付け替えもここでできますよ。" },
+  "status.html": { name: "エルナ", role: "冒険者ギルド教官", portrait: "./assets/npcs/trainer.svg", line: "自分の能力を知ることも、強くなるための大切な一歩よ。" },
+  "skills.html": { name: "ノア", role: "魔法研究家", portrait: "./assets/npcs/arcanist.svg", line: "スキルを磨けば、強敵との戦いも有利に進められるぞ。" },
+  "settings.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "操作や演出は、遊びやすいように調整できますよ。" },
+  "account.html": { name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.svg", line: "冒険の記録は大切に保管しましょう。セーブの設定はこちらです。" }
+});
+
 const MORE_ITEMS = Object.freeze([
   { href: "./shop.html", file: "shop.html", icon: "🛍️", label: "ショップ", note: "装備や道具を購入" },
   { href: "./crafting.html", file: "crafting.html", icon: "⚒️", label: "鍛冶屋", note: "素材から装備を作成" },
@@ -27,6 +40,26 @@ function navLink(item, current, className) {
   if (item.file === current) link.setAttribute("aria-current", "page");
   link.append(el("span", "wfq-nav-icon", item.icon), el("span", "wfq-nav-label", item.label));
   return link;
+}
+
+
+function createNpcStage(current) {
+  const npc = NPC_PAGES[current] ?? NPC_PAGES["index.html"];
+  const stage = el("section", "wfq-npc-stage");
+  stage.setAttribute("aria-label", npc.name + "の案内");
+  const portraitFrame = el("div", "wfq-npc-portrait");
+  const portrait = document.createElement("img");
+  portrait.src = npc.portrait;
+  portrait.alt = npc.name;
+  portrait.loading = "eager";
+  portrait.decoding = "async";
+  portraitFrame.append(portrait);
+  const dialogue = el("div", "wfq-npc-dialogue");
+  const identity = el("div", "wfq-npc-identity");
+  identity.append(el("strong", "wfq-npc-name", npc.name), el("span", "wfq-npc-role", npc.role));
+  dialogue.append(identity, el("p", "wfq-npc-line", "「" + npc.line + "」"));
+  stage.append(portraitFrame, dialogue);
+  return stage;
 }
 
 function setupSharedLayout() {
@@ -62,7 +95,7 @@ function setupSharedLayout() {
   sidebar.append(moreSide, el("div", "wfq-sidebar-spacer"), el("div", "wfq-sidebar-footer", "冒険の準備を整えよう！"));
 
   const content = el("div", "wfq-content");
-  content.append(main);
+  content.append(createNpcStage(current), main);
   shell.append(sidebar, content);
   document.body.insertBefore(shell, document.body.firstChild);
 
