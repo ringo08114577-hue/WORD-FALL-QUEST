@@ -26,17 +26,19 @@ test("アイテム欄の入手先と空表示は統合後のショップ名に�
   assert.doesNotMatch(script, /道具屋|武器・防具屋/);
 });
 
-test("アイテム欄の上部に4枠の現在の装備と能力補正を表示する", () => {
+test("装備4枠は装備タブ内だけに表示し、装備変更もそこで扱う", () => {
   const html = read("inventory.html");
   const script = read("src/inventory-page.js");
-  assert.match(html, /class="equipment-overview"/);
+  const tabsIndex = html.indexOf('class="category-tabs"');
+  const managementIndex = html.indexOf('id="equipmentManagement"');
+  const itemsIndex = html.indexOf('id="inventoryGrid"');
+  assert.ok(tabsIndex >= 0 && managementIndex > tabsIndex && itemsIndex > managementIndex);
+  assert.match(html, /id="equipmentManagement"[^>]*hidden/);
   assert.match(html, /id="equipmentOverview"/);
-  assert.match(script, /import \{ ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS \}/);
-  assert.match(script, /function renderEquipmentOverview\(inventory\)/);
-  assert.match(script, /for \(const slot of EQUIPMENT_SLOTS\)/);
-  assert.match(script, /EQUIPMENT_SLOT_LABELS\[slot\]/);
-  assert.match(script, /getItemEffects\(item\)/);
-  assert.match(script, /renderEquipmentOverview\(state\.inventory\)/);
+  assert.match(script, /equipmentManagement\\.hidden = activeCategory !== "weapon"/);
+  assert.match(script, /if \\(activeCategory === "weapon"\\) renderEquipmentOverview/);
+  assert.match(script, /equipButton\\.dataset\\.equipItem = item\\.itemId/);
+  assert.match(script, /GAME_ACTION\\.PREPARE_EQUIPMENT/);
 });
 
 test("アイテム欄の未装備カードには現在の装備との能力比較を表示する", () => {

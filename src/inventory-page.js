@@ -205,7 +205,9 @@ function render(state = store.getState()) {
   $("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
   $("goldValue").textContent = state.inventory.gold + " G";
   updateCategoryCounts(state.inventory);
-  renderEquipmentOverview(state.inventory);
+  const equipmentManagement = $("equipmentManagement");
+  equipmentManagement.hidden = activeCategory !== "weapon";
+  if (activeCategory === "weapon") renderEquipmentOverview(state.inventory);
 
   for (const category of INVENTORY_CATEGORIES) {
     const button = document.querySelector('button[data-category="' + category.id + '"]');

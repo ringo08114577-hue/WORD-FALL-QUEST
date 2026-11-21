@@ -83,19 +83,19 @@ h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}
       <div class="wallet"><div class="stat" id="levelValue">LV.1</div><div class="stat" id="hpValue">HP 100 / 100</div></div>
       <strong id="goldValue">0 G</strong>
     </div>
-    <section class="equipment-overview" aria-labelledby="equipmentOverviewTitle">
-      <div class="equipment-overview-head">
-        <h2 id="equipmentOverviewTitle">現在の装備</h2>
-        <span class="muted">4つの装備枠</span>
-      </div>
-      <div class="equipment-overview-grid" id="equipmentOverview"></div>
-    </section>
     <div class="panel-head"><h2>所持アイテム</h2><span class="muted" id="ownedSummary">0種類</span></div>
     <div class="category-tabs" role="group" aria-label="アイテムの分類">
       <button class="category-tab" type="button" data-category="weapon" aria-pressed="true">装備<span id="weaponCount">0種類</span></button>
       <button class="category-tab" type="button" data-category="tool" aria-pressed="false">道具<span id="toolCount">0種類</span></button>
       <button class="category-tab" type="button" data-category="other" aria-pressed="false">その他<span id="otherCount">0種類</span></button>
     </div>
+    <section class="equipment-overview" id="equipmentManagement" aria-labelledby="equipmentOverviewTitle" hidden>
+      <div class="equipment-overview-head">
+        <h2 id="equipmentOverviewTitle">装備中のアイテム</h2>
+        <span class="muted">4つの装備枠</span>
+      </div>
+      <div class="equipment-overview-grid" id="equipmentOverview"></div>
+    </section>
     <p class="inventory-note" id="categoryNote">装備タブでは武器・盾・鎧・アクセサリーを確認して、ここから装備を変更できるよ。</p>
     <div class="inventory-grid" id="inventoryGrid" aria-live="polite"></div>
     <div class="empty-state" id="emptyState" hidden></div>
