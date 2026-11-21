@@ -16,6 +16,13 @@ const { store, dungeon, saves } = session;
 const shop = createShopController(store, dungeon);
 const crafting = createCraftingController(store);
 const page = document.body.dataset.facility;
+const CRAFTING_CATEGORY_LABELS = Object.freeze({
+  weapon: "剣",
+  shield: "盾",
+  armor: "鎧",
+  accessory: "アクセサリー",
+});
+let selectedCraftSlot = null;
 const titleByPage = {
   items: ["道具屋", "回復薬など、冒険に必要なアイテムを購入しよう。"],
   equipment: ["武器・防具屋", "装備を購入して、持っている装備を付け替えよう。"],
@@ -128,25 +135,51 @@ function renderCrafting(state) {
   const root = $("facilityContent");
   root.replaceChildren();
 
-  const equippedPanel = node("section", "subpanel");
-  equippedPanel.append(node("h2", "", "現在の装備"));
-  const equippedGrid = node("div", "equipment-grid");
-  for (const slot of EQUIPMENT_SLOTS) {
-    const itemId = state.inventory.equipment[slot];
-    const item = itemId ? ITEM_DEFINITIONS[itemId] : null;
-    const card = node("div", "equipment-card");
-    card.append(node("span", "muted", EQUIPMENT_SLOT_LABELS[slot]));
-    card.append(node("strong", "", item?.name ?? "未装備"));
-    equippedGrid.append(card);
+  // Step 1: ask the player which equipment category they want to make.
+  if (selectedCraftSlot === null) {
+    const categoryPanel = node("section", "subpanel");
+    categoryPanel.append(node("h2", "", "何を作る？"));
+    categoryPanel.append(node("p", "muted", "最初に作りたい装備の種類を選んでね。次の画面で具体的な装備を選べるよ。"));
+    const categoryGrid = node("div", "offer-grid");
+    for (const slot of EQUIPMENT_SLOTS) {
+      const recipes = Object.entries(CRAFTING_RECIPES)
+        .filter(([itemId]) => ITEM_DEFINITIONS[itemId].slot === slot);
+      const button = node("button", "primary-button", CRAFTING_CATEGORY_LABELS[slot] + "を選ぶ");
+      button.type = "button";
+      button.dataset.craftCategory = slot;
+      const card = node("article", "offer-card");
+      card.append(node("strong", "offer-name", CRAFTING_CATEGORY_LABELS[slot]));
+      card.append(node("p", "offer-description",
+        slot === "weapon" ? "攻撃力を高める剣を作る。" :
+          slot === "shield" ? "敵の攻撃から身を守る盾を作る。" :
+            slot === "armor" ? "防御力や最大HPを高める鎧を作る。" :
+              "攻撃力・防御力などを補うアクセサリーを作る。"));
+      card.append(node("p", "offer-meta", "作れる装備 " + recipes.length + "種類"));
+      card.append(button);
+      categoryGrid.append(card);
+    }
+    categoryPanel.append(categoryGrid);
+    root.append(categoryPanel);
+    return;
   }
-  equippedPanel.append(equippedGrid);
-  root.append(equippedPanel);
+
+  const slot = selectedCraftSlot;
+  const categoryPanel = node("section", "subpanel");
+  const backButton = node("button", "secondary-button", "← 種類選択に戻る");
+  backButton.type = "button";
+  backButton.dataset.craftBack = "true";
+  categoryPanel.append(backButton);
+  categoryPanel.append(node("h2", "", CRAFTING_CATEGORY_LABELS[slot] + "を作る"));
+  categoryPanel.append(node("p", "muted",
+    "作りたい" + CRAFTING_CATEGORY_LABELS[slot] + "を選んでね。必要素材とゴールド、装備の効果を確認できるよ。"));
+  root.append(categoryPanel);
 
   const recipePanel = node("section", "subpanel");
-  recipePanel.append(node("h2", "", "装備レシピ"));
-  recipePanel.append(node("p", "muted", "必要な素材とゴールドがそろえば何度でも作成できるよ。作った装備は所持品に入り、下から装備できるよ。"));
+  recipePanel.append(node("h2", "", CRAFTING_CATEGORY_LABELS[slot] + "のレシピ"));
   const recipeGrid = node("div", "offer-grid");
-  for (const [itemId, recipe] of Object.entries(CRAFTING_RECIPES)) {
+  const recipes = Object.entries(CRAFTING_RECIPES)
+    .filter(([itemId]) => ITEM_DEFINITIONS[itemId].slot === slot);
+  for (const [itemId, recipe] of recipes) {
     const item = ITEM_DEFINITIONS[itemId];
     const materialLines = Object.entries(recipe.materials).map(([materialId, required]) => {
       const material = ITEM_DEFINITIONS[materialId];
@@ -167,20 +200,21 @@ function renderCrafting(state) {
     const description = item.description + " 効果：" + getEquipmentEffectText(item);
     const footer = "必要素材：" + materialLines.join("・") +
       " · " + recipe.gold + "G · 所持 " + (state.inventory.items[itemId] ?? 0);
-    addCard(recipeGrid, item.name + " · " + EQUIPMENT_SLOT_LABELS[item.slot], description, footer, button);
+    addCard(recipeGrid, item.name, description, footer, button);
   }
+  if (recipes.length === 0) recipeGrid.append(node("p", "muted", "この種類のレシピはまだないよ。"));
   recipePanel.append(recipeGrid);
   root.append(recipePanel);
 
   const ownedPanel = node("section", "subpanel");
-  ownedPanel.append(node("h2", "", "作成・所持した装備"));
+  ownedPanel.append(node("h2", "", "持っている" + CRAFTING_CATEGORY_LABELS[slot]));
   const ownedGrid = node("div", "offer-grid");
   const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
-    item.slot && (state.inventory.items[item.id] ?? 0) > 0 &&
+    item.slot === slot && (state.inventory.items[item.id] ?? 0) > 0 &&
     state.inventory.equipment[item.slot] !== item.id
   );
   if (owned.length === 0) {
-    ownedGrid.append(node("p", "muted", "まだ装備できる持ち物はないよ。素材を集めて装備を作ってみよう。"));
+    ownedGrid.append(node("p", "muted", "まだ装備できる" + CRAFTING_CATEGORY_LABELS[slot] + "はないよ。"));
   }
   for (const item of owned) {
     const button = node("button", "secondary-button", item.name + "を装備");
@@ -259,6 +293,23 @@ function render() {
 }
 
 $("facilityContent").addEventListener("click", (event) => {
+  const categoryButton = event.target.closest("button[data-craft-category]");
+  if (categoryButton && page === "crafting" &&
+      EQUIPMENT_SLOTS.includes(categoryButton.dataset.craftCategory)) {
+    selectedCraftSlot = categoryButton.dataset.craftCategory;
+    $("feedback").textContent = "";
+    render();
+    return;
+  }
+
+  const backButton = event.target.closest("button[data-craft-back]");
+  if (backButton && page === "crafting") {
+    selectedCraftSlot = null;
+    $("feedback").textContent = "";
+    render();
+    return;
+  }
+
   const craftButton = event.target.closest("button[data-craft-item]");
   if (craftButton && !craftButton.disabled) {
     const result = crafting.craft(craftButton.dataset.craftItem);
