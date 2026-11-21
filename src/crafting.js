@@ -28,13 +28,13 @@ export function createCraftingController(store) {
       if (state.phase !== GAME_PHASE.TITLE) {
         return { crafted: false, reason: "not-at-smithy" };
       }
-      if (state.inventory.gold < recipe.gold) {
-        return { crafted: false, reason: "not-enough-gold" };
-      }
       for (const [materialId, required] of Object.entries(recipe.materials)) {
         if ((state.inventory.items[materialId] ?? 0) < required) {
           return { crafted: false, reason: "not-enough-materials" };
         }
+      }
+      if (state.inventory.gold < recipe.gold) {
+        return { crafted: false, reason: "not-enough-gold" };
       }
 
       const next = store.dispatch({ type: GAME_ACTION.CRAFT_ITEM, itemId });

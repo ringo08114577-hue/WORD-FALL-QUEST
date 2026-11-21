@@ -54,7 +54,7 @@ test("鍛冶屋は素材とゴールドを使って装備を作成し、所持�
   const script = read("src/facility-page.js");
   assert.match(html, /data-facility="crafting"/);
   assert.match(script, /renderCrafting/);
-  assert.match(script, /crafting.craft(craftButton.dataset.craftItem)/);
+  assert.match(script, /crafting\.craft\(craftButton\.dataset\.craftItem\)/);
   assert.match(script, /data-equip-item/);
   assert.match(script, /saves.save()/);
 });
