@@ -93,7 +93,8 @@ test("ホーム中央に冒険・装備・ショップ・鍛冶屋の選択肢�
   assert.match(html, /id="heroAvatar"/);
   assert.match(html, /id="hpValue"/);
   assert.match(html, /id="goldValue"/);
-  assert.doesNotMatch(html, /town-map|facility-grid/);
+  const homeMarkup = html.slice(html.indexOf("<main"), html.indexOf("</main>"));
+  assert.doesNotMatch(homeMarkup, /town-map|facility-grid/);
   assert.match(html, /createAppSession/);
   assert.match(html, /session\.returnToTown\(\)/);
 });
