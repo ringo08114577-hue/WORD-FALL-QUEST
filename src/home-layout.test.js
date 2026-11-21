@@ -39,6 +39,21 @@ test("アイテム欄の上部に4枠の現在の装備と能力補正を表示�
   assert.match(script, /renderEquipmentOverview\(state\.inventory\)/);
 });
 
+test("アイテム欄の未装備カードには現在の装備との能力比較を表示する", () => {
+  const html = read("inventory.html");
+  const script = read("src/inventory-page.js");
+  const helper = read("src/equipment-comparison.js");
+  assert.match(html, /\.item-comparison\{/);
+  assert.match(html, /\.comparison-stat\.is-better/);
+  assert.match(html, /\.comparison-stat\.is-worse/);
+  assert.match(script, /compareEquipment\(item, currentItem\)/);
+  assert.match(script, /現在の「/);
+  assert.match(script, /未装備からの変化/);
+  assert.match(script, /createItemCard\(item, state\.inventory\)/);
+  assert.match(helper, /difference: after - before/);
+  assert.match(helper, /hasChanges: stats\.some/);
+});
+
 test("アイテム欄の素材カードには1個売却とまとめ売却の操作がある", () => {
   const html = read("inventory.html");
   const script = read("src/inventory-page.js");

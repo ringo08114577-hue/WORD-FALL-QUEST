@@ -6,6 +6,7 @@ import { ENEMY_DEFINITIONS } from "./data/enemies.js";
 import { ENEMY_DROP_TABLES } from "./data/enemy-drops.js";
 import { INVENTORY_CATEGORIES, getOwnedInventoryItems } from "./inventory.js";
 import { createSellController } from "./sell.js";
+import { compareEquipment } from "./equipment-comparison.js";
 
 const $ = (id) => document.getElementById(id);
 const session = createAppSession();
@@ -68,7 +69,38 @@ function getItemSources(itemId, item) {
   return [...new Set(sources)].join("・") || "冒険で入手";
 }
 
-function createItemCard(item) {
+function createEquipmentComparison(item, inventory) {
+  const currentId = inventory.equipment?.[item.slot];
+  const currentItem = currentId ? ITEM_DEFINITIONS[currentId] : null;
+  const comparison = compareEquipment(item, currentItem);
+  if (!comparison) return null;
+
+  const container = node("section", "item-comparison");
+  const title = comparison.currentItemName
+    ? "現在の「" + comparison.currentItemName + "」と比較"
+    : "未装備からの変化";
+  container.append(node("p", "item-comparison-title", title));
+
+  const values = node("div", "comparison-stats");
+  for (const stat of comparison.stats) {
+    const value = stat.difference > 0
+      ? "+" + stat.difference
+      : stat.difference < 0
+        ? String(stat.difference)
+        : "±0";
+    const stateClass = stat.difference > 0
+      ? "is-better"
+      : stat.difference < 0
+        ? "is-worse"
+        : "is-same";
+    values.append(node("span", "comparison-stat " + stateClass,
+      stat.label + " " + value));
+  }
+  container.append(values);
+  return container;
+}
+
+function createItemCard(item, inventory) {
   const card = node("article", "item-card");
   const head = node("div", "item-card-head");
   head.append(node("strong", "item-name", item.name));
@@ -82,6 +114,10 @@ function createItemCard(item) {
   if (item.description) card.append(node("p", "item-description", item.description));
   const effects = getItemEffects(item);
   if (effects) card.append(node("p", "item-effect", effects));
+  if (item.slot && !item.equipped) {
+    const comparison = createEquipmentComparison(item, inventory);
+    if (comparison) card.append(comparison);
+  }
   card.append(node("p", "item-source", "入手先：" + getItemSources(item.itemId, ITEM_DEFINITIONS[item.itemId])));
 
   if (item.slot && !item.equipped) {
@@ -186,7 +222,7 @@ function render(state = store.getState()) {
   const owned = getOwnedInventoryItems(state.inventory, activeCategory);
   const grid = $("inventoryGrid");
   grid.replaceChildren();
-  for (const item of owned) grid.append(createItemCard(item));
+  for (const item of owned) grid.append(createItemCard(item, state.inventory));
 
   const empty = $("emptyState");
   empty.hidden = owned.length > 0;
