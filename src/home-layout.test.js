@@ -15,6 +15,16 @@ test("アイテム欄には道具屋・武器防具屋への移動リンクを�
   assert.match(html, /href="\.\/index\.html"/);
 });
 
+test("アイテム欄の素材カードには1個売却とまとめ売却の操作がある", () => {
+  const html = read("inventory.html");
+  const script = read("src/inventory-page.js");
+  assert.match(html, /sell-controls/);
+  assert.match(script, /1個売る/);
+  assert.match(script, /全部売る/);
+  assert.match(script, /sellController\.sell\(itemId, quantity\)/);
+  assert.match(script, /saves\.save\(\)/);
+});
+
 test("ホームは冒険者ステータスと施設ページへの入口を表示する", () => {
   const html = read("index.html");
   for (const link of ["status.html", "inventory.html", "items.html", "equipment.html", "skills.html", "dungeons.html", "settings.html"]) {

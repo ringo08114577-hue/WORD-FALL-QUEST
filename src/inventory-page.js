@@ -4,11 +4,13 @@ import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 import { ENEMY_DEFINITIONS } from "./data/enemies.js";
 import { ENEMY_DROP_TABLES } from "./data/enemy-drops.js";
 import { INVENTORY_CATEGORIES, getOwnedInventoryItems } from "./inventory.js";
+import { createSellController } from "./sell.js";
 
 const $ = (id) => document.getElementById(id);
 const session = createAppSession();
 session.returnToTown();
 const { store, saves } = session;
+const sellController = createSellController(store);
 
 let activeCategory = "weapon";
 
@@ -81,6 +83,33 @@ function createItemCard(item) {
   const effects = getItemEffects(item);
   if (effects) card.append(node("p", "item-effect", effects));
   card.append(node("p", "item-source", "入手先：" + getItemSources(item.itemId, ITEM_DEFINITIONS[item.itemId])));
+
+  if (item.type === "material" &&
+      Number.isSafeInteger(item.sellPrice) && item.sellPrice > 0) {
+    card.append(node("p", "item-sell-price", "売値：1個 " + item.sellPrice + " G"));
+    const controls = node("div", "sell-controls");
+    const sellOne = node("button", "sell-button", "1個売る（+" + item.sellPrice + "G）");
+    sellOne.type = "button";
+    sellOne.dataset.sellItem = item.itemId;
+    sellOne.dataset.sellQuantity = "1";
+    controls.append(sellOne);
+
+    if (item.quantity > 1) {
+      const allPrice = item.sellPrice * item.quantity;
+      const canSellAll = Number.isSafeInteger(allPrice);
+      const sellAll = node(
+        "button",
+        "sell-button sell-all-button",
+        canSellAll ? "全部売る（+" + allPrice + "G）" : "全部売る（上限超過）",
+      );
+      sellAll.type = "button";
+      sellAll.dataset.sellItem = item.itemId;
+      sellAll.dataset.sellQuantity = "all";
+      sellAll.disabled = !canSellAll;
+      controls.append(sellAll);
+    }
+    card.append(controls);
+  }
   return card;
 }
 
@@ -109,7 +138,7 @@ function render(state = store.getState()) {
   const noteByCategory = {
     weapon: "武器タブには、武器・盾・鎧・アクセサリーなどの装備品をまとめて表示するよ。",
     tool: "回復薬など、使うことができる道具を表示するよ。",
-    other: "敵のドロップ素材や、ダンジョンの宝箱・初回制覇報酬で手に入るアイテムを表示するよ。",
+    other: "敵のドロップ素材やダンジョンの報酬を確認できるよ。売値のある素材はここから売却できるよ。",
   };
   $("categoryNote").textContent = noteByCategory[activeCategory];
 
@@ -128,6 +157,40 @@ function render(state = store.getState()) {
     }[activeCategory];
   }
 }
+
+$("inventoryGrid").addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-sell-item]");
+  if (!button || button.disabled) return;
+
+  const itemId = button.dataset.sellItem;
+  const item = ITEM_DEFINITIONS[itemId];
+  const currentQuantity = store.getState().inventory.items[itemId] ?? 0;
+  const quantity = button.dataset.sellQuantity === "all" ? currentQuantity : 1;
+  if (!item || quantity <= 0) return;
+
+  if (button.dataset.sellQuantity === "all" &&
+      typeof window.confirm === "function" &&
+      !window.confirm(item.name + "を" + quantity + "個、合計 " +
+        (item.sellPrice * quantity) + "Gで売却する？")) {
+    return;
+  }
+
+  const result = sellController.sell(itemId, quantity);
+  if (!result.sold) {
+    const message = {
+      "not-in-town": "街にいるときだけ素材を売却できるよ。",
+      "not-enough-items": "素材の所持数が足りないよ。",
+      "gold-limit": "ゴールドの上限を超えるため売却できないよ。",
+    }[result.reason] ?? "この素材は売却できなかったよ。";
+    $("feedback").textContent = message;
+    return;
+  }
+
+  $("feedback").textContent =
+    result.item.name + " ×" + result.quantity + "を売却！ +" +
+    result.totalPrice + "Gを獲得したよ。";
+  saves.save();
+});
 
 document.querySelector(".category-tabs").addEventListener("click", (event) => {
   const button = event.target.closest("button[data-category]");

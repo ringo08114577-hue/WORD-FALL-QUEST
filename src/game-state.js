@@ -37,6 +37,7 @@ export const GAME_ACTION = Object.freeze({
   ADD_ITEM: "ADD_ITEM",
   ADD_GOLD: "ADD_GOLD",
   BUY_ITEM: "BUY_ITEM",
+  SELL_ITEM: "SELL_ITEM",
   UPGRADE_SKILL: "UPGRADE_SKILL",
   EVOLVE_SKILL: "EVOLVE_SKILL",
   EQUIP_SKILL: "EQUIP_SKILL",
@@ -505,6 +506,32 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.SELL_ITEM: {
+      if (state.phase !== GAME_PHASE.TITLE) return state;
+      const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
+        ? ITEM_DEFINITIONS[action.itemId]
+        : null;
+      const quantity = action.quantity;
+      if (!item || item.type !== "material" ||
+          !isPositiveInteger(item.sellPrice) || !isPositiveInteger(quantity)) return state;
+      const ownedQuantity = state.inventory.items[action.itemId] ?? 0;
+      if (!isPositiveInteger(ownedQuantity) || quantity > ownedQuantity) return state;
+      const totalPrice = item.sellPrice * quantity;
+      const nextGold = state.inventory.gold + totalPrice;
+      if (!isPositiveInteger(totalPrice) || !isNonNegativeInteger(nextGold)) return state;
+      return {
+        ...state,
+        inventory: {
+          ...state.inventory,
+          gold: nextGold,
+          items: {
+            ...state.inventory.items,
+            [action.itemId]: ownedQuantity - quantity,
+          },
+        },
+      };
+    }
+
     case GAME_ACTION.BUY_ITEM: {
       if (![GAME_PHASE.TITLE, GAME_PHASE.PAUSED, GAME_PHASE.VICTORY].includes(state.phase)) return state;
       const itemExists = Object.hasOwn(ITEM_DEFINITIONS, action.itemId);
@@ -771,6 +798,15 @@ function describeActionLog(action, before, after) {
         category: ACTION_LOG_CATEGORY.ITEM,
         message: item.name + "を購入（-" + action.cost + "G）",
       } : null;
+    case GAME_ACTION.SELL_ITEM: {
+      const quantity = before.inventory.items[action.itemId] -
+        after.inventory.items[action.itemId];
+      const earned = after.inventory.gold - before.inventory.gold;
+      return item && quantity > 0 && earned > 0 ? {
+        category: ACTION_LOG_CATEGORY.ITEM,
+        message: item.name + " ×" + quantity + "を売却（+" + earned + "G）",
+      } : null;
+    }
     case GAME_ACTION.UPGRADE_SKILL: {
       const skill = SKILL_DEFINITIONS[action.skillId];
       return skill ? {
