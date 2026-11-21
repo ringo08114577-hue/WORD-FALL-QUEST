@@ -251,7 +251,7 @@ test("共通ナビゲーションは主要4項目と施設ドロワーを持つ"
   }
   assert.match(script, /aria-current/);
   assert.match(script, /aria-expanded/);
-  assert.match(script, /event\\.key === "Escape"/);
+  assert.ok(script.includes('event.key === "Escape"'));
   assert.match(script, /wfqFacilityDrawer/);
 });
 

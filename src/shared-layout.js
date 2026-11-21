@@ -38,11 +38,6 @@ function setupSharedLayout() {
   const pageTitle = document.title.split("|")[1]?.trim() || "冒険者の拠点";
   document.body.dataset.wfqPage = current;
 
-  // Load after the page's original styles so the shared theme takes priority.
-  const stylesheet = el("link");
-  stylesheet.rel = "stylesheet";
-  stylesheet.href = new URL("./shared-layout.css", import.meta.url).href;
-  document.head.append(stylesheet);
 
   const shell = el("div", "wfq-app-shell");
   const sidebar = el("aside", "wfq-sidebar");
