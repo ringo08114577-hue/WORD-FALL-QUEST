@@ -24,7 +24,16 @@
     .floor-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.floor-card{min-height:100px;justify-content:space-between}.boss-note{align-self:flex-end;color:#fda4af;font-size:.68rem;font-weight:900;letter-spacing:.12em}
     .primary-link{display:flex;justify-content:center;align-items:center;width:100%;min-height:48px;margin-top:12px;border-radius:12px;border:1px solid #3b82f6;background:#2563eb;color:#fff;text-decoration:none;font-size:.84rem;font-weight:900}
     @media(max-width:620px){body{padding:10px 8px 20px}.panel,.subpanel{padding:11px;margin:7px 0}.facility-grid{gap:7px}.facility-link{min-height:100px;padding:10px}.offer-grid{gap:7px}.offer-card{padding:10px}.floor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dungeon-grid{grid-template-columns:1fr}.inventory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:360px){.facility-grid,.offer-grid,.equipment-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
+    @media(max-width:360px){
+      .facility-grid,.equipment-grid{grid-template-columns:1fr}
+      .offer-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+      .offer-card{padding:8px;gap:6px}
+      .offer-name{font-size:.8rem;overflow-wrap:anywhere}
+      .offer-description{font-size:.66rem;overflow-wrap:anywhere}
+      .offer-meta{font-size:.65rem;overflow-wrap:anywhere}
+      .offer-card button{padding:8px 6px;font-size:.68rem;min-height:40px;overflow-wrap:anywhere}
+      .topline{align-items:flex-start}.back{font-size:.68rem}
+    }
 </style></head>
 <body data-facility="shop"><main>
 <div class="topline"><div class="eyebrow">WORD FALL QUEST · TOWN FACILITY</div><a class="back" href="./index.html">← ホームへ戻る</a></div>

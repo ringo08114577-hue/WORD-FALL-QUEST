@@ -50,6 +50,12 @@ test("統合ショップ・鍛冶屋・スキル工房はそれぞれ独立し�
   }
 });
 
+test("ショップのスマホ表示は幅360px以下でも商品カードを2列にする", () => {
+  const html = read("shop.html");
+  assert.match(html, /@media\(max-width:360px\)[\s\S]*?\.offer-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(html, /\.offer-card button\{padding:8px 6px/);
+});
+
 test("ショップは商品を種類ごとに選択でき、購入と装備変更ができる", () => {
   const html = read("shop.html");
   const script = read("src/facility-page.js");
