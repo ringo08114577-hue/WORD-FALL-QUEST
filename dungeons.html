@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#101827"><title>WORD FALL QUEST | ダンジョン選択</title><style>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f6f2e7"><title>WORD FALL QUEST | ダンジョン選択</title><style>
     :root{color-scheme:dark;font-family:Inter,"Noto Sans JP",system-ui,sans-serif;background:#0b1220;color:#eef4ff}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:14px 10px 28px;background:radial-gradient(circle at 50% 0%,rgba(56,117,201,.23),transparent 38rem),#0b1220}
     main{width:min(100%,900px);margin:0 auto}.topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
@@ -25,7 +25,8 @@
     .primary-link{display:flex;justify-content:center;align-items:center;width:100%;min-height:48px;margin-top:12px;border-radius:12px;border:1px solid #3b82f6;background:#2563eb;color:#fff;text-decoration:none;font-size:.84rem;font-weight:900}
     @media(max-width:620px){body{padding:10px 8px 20px}.panel,.subpanel{padding:11px;margin:7px 0}.facility-grid{gap:7px}.facility-link{min-height:100px;padding:10px}.offer-grid{gap:7px}.offer-card{padding:10px}.floor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dungeon-grid{grid-template-columns:1fr}.inventory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:360px){.facility-grid,.offer-grid,.equipment-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
-</style></head>
+</style>  <link rel="stylesheet" href="./src/shared-layout.css">
+</head>
 <body><main>
 <div class="topline"><div class="eyebrow">WORD FALL QUEST · DUNGEON GATE</div><a class="back" href="./index.html">← ホームへ戻る</a></div>
 <h1>ダンジョン選択</h1><p class="subtitle">ダンジョンごとに攻略状況は別々。解放した階層なら、好きな階層を選んで挑戦できるよ。</p>
@@ -34,4 +35,5 @@
 <div class="stat" id="selectedDungeonName">ダンジョン</div><div class="floor-grid" id="floorGrid"></div>
 <a class="primary-link" id="adventureButton" href="./battle.html">選んだ階層へ進む →</a></section>
 <p class="feedback" id="feedback" aria-live="polite"></p><p class="footer">WORD FALL QUEST · DUNGEON SELECT</p>
-</main><script type="module" src="./src/dungeons-page.js"></script></body></html>
+</main><script type="module" src="./src/dungeons-page.js"></script>  <script type="module" src="./src/shared-layout.js"></script>
+</body></html>

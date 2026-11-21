@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101827">
+<meta name="theme-color" content="#f6f2e7">
 <title>WORD FALL QUEST | アイテム欄</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,"Noto Sans JP",system-ui,sans-serif;background:#0b1220;color:#eef4ff}
@@ -72,6 +72,7 @@ h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}
 @media(max-width:520px){body{padding:10px 8px 20px}.panel{padding:11px;margin:7px 0}.inventory-grid{gap:7px}.item-card{padding:10px}.category-tabs{gap:5px}.category-tab{padding:7px 4px;font-size:.76rem}}
 @media(max-width:360px){.inventory-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
 </style>
+  <link rel="stylesheet" href="./src/shared-layout.css">
 </head>
 <body>
 <main>
@@ -104,5 +105,6 @@ h1{margin:7px 0 2px;font-size:clamp(1.6rem,5vw,2.3rem)}
   <p class="footer">WORD FALL QUEST · ADVENTURER INVENTORY</p>
 </main>
 <script type="module" src="./src/inventory-page.js"></script>
+  <script type="module" src="./src/shared-layout.js"></script>
 </body>
 </html>

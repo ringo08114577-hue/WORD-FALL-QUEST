@@ -228,3 +228,34 @@ test("ホームとステータスはバトルと同じ主人公画像を共通�
   assert.match(statusScript, /setCharacterImage\(\$\("heroAvatar"\), "hero"/);
   assert.match(imageLoader, /hero: Object\.freeze\(\{ image: "assets\/characters\/hero\.webp" \}\)/);
 });
+
+test("通常ページは共通レイアウトと明るいファンタジーのデザインを読み込む", () => {
+  const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html"];
+  for (const page of pages) {
+    const html = read(page);
+    assert.match(html, /shared-layout\\.css/, page + " stylesheet");
+    assert.match(html, /shared-layout\\.js/, page + " navigation");
+    assert.match(html, /<main\\b/, page + " main content");
+  }
+  const css = read("src/shared-layout.css");
+  assert.match(css, /--wfq-page:\\s*#f6f2e7/);
+  assert.match(css, /--wfq-green:/);
+  assert.match(css, /\\.wfq-mobile-nav/);
+  assert.match(css, /grid-template-columns:\\s*224px minmax\\(0,1fr\\)/);
+});
+
+test("共通ナビゲーションは主要4項目と施設ドロワーを持つ", () => {
+  const script = read("src/shared-layout.js");
+  for (const file of ["index.html","dungeons.html","inventory.html","status.html","shop.html","crafting.html","skills.html","settings.html","account.html"]) {
+    assert.ok(script.includes(file), file + " navigation");
+  }
+  assert.match(script, /aria-current/);
+  assert.match(script, /aria-expanded/);
+  assert.match(script, /event\\.key === "Escape"/);
+  assert.match(script, /wfqFacilityDrawer/);
+});
+
+test("バトル画面には通常ナビゲーションを追加せず、戦闘操作を優先する", () => {
+  const html = read("battle.html");
+  assert.doesNotMatch(html, /shared-layout\\.js|shared-layout\\.css/);
+});

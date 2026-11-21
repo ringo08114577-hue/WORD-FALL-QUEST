@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#101827">
+<meta name="theme-color" content="#f6f2e7">
 <title>WORD FALL QUEST | 鍛冶屋</title>
 <style>
 :root{color-scheme:dark;font-family:Inter,"Noto Sans JP",system-ui,sans-serif;background:#0b1220;color:#eef4ff}
@@ -27,6 +27,7 @@ button{font:inherit;color:#eef4ff;cursor:pointer}.primary-button,.secondary-butt
 @media(max-width:620px){body{padding:10px 8px 20px}.panel,.subpanel{padding:11px;margin:7px 0}.offer-grid{gap:7px}.offer-card{padding:10px}.equipment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:360px){.offer-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
 </style>
+  <link rel="stylesheet" href="./src/shared-layout.css">
 </head>
 <body data-facility="crafting">
 <main>
@@ -39,5 +40,6 @@ button{font:inherit;color:#eef4ff;cursor:pointer}.primary-button,.secondary-butt
   <p class="footer">WORD FALL QUEST · ADVENTURER TOWN</p>
 </main>
 <script type="module" src="./src/facility-page.js"></script>
+  <script type="module" src="./src/shared-layout.js"></script>
 </body>
 </html>
