@@ -102,7 +102,7 @@ test("鍛冶屋は素材とゴールドを使った装備作成だけを行う",
   assert.match(script, /CRAFTING_CATEGORY_LABELS/);
   assert.match(script, /ITEM_DEFINITIONS\[itemId\]\.slot === slot/);
   assert.match(script, /crafting\.craft\(craftButton\.dataset\.craftItem\)/);
-  assert.match(script, /data-equip-item/);
+  assert.doesNotMatch(script, /data-equip-item|PREPARE_EQUIPMENT|EQUIP_ITEM/);
   assert.match(script, /saves.save()/);
 });
 
