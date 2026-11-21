@@ -1,4 +1,5 @@
 import { createAppSession } from "./app-session.js";
+import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./items.js";
 import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 import { ENEMY_DEFINITIONS } from "./data/enemies.js";
@@ -71,18 +72,29 @@ function createItemCard(item) {
   const card = node("article", "item-card");
   const head = node("div", "item-card-head");
   head.append(node("strong", "item-name", item.name));
-  head.append(node("span", "item-quantity", "× " + item.quantity));
+  head.append(node("span", "item-quantity", item.equipped ? "装備中" : "× " + item.quantity));
   card.append(head);
 
   const tags = node("div", "item-tags");
   tags.append(node("span", "item-tag", getItemTypeLabel(item)));
-  if (item.equipped) tags.append(node("span", "item-tag equipped", "装備中"));
   card.append(tags);
 
   if (item.description) card.append(node("p", "item-description", item.description));
   const effects = getItemEffects(item);
   if (effects) card.append(node("p", "item-effect", effects));
   card.append(node("p", "item-source", "入手先：" + getItemSources(item.itemId, ITEM_DEFINITIONS[item.itemId])));
+
+  if (item.slot && !item.equipped) {
+    const controls = node("div", "equip-controls");
+    const equipButton = node("button", "equip-button",
+      "街で装備する");
+    equipButton.type = "button";
+    equipButton.dataset.equipItem = item.itemId;
+    equipButton.disabled = store.getState().phase !== GAME_PHASE.TITLE ||
+      item.quantity <= 0;
+    controls.append(equipButton);
+    card.append(controls);
+  }
 
   if (item.type === "material" &&
       Number.isSafeInteger(item.sellPrice) && item.sellPrice > 0) {
@@ -159,6 +171,26 @@ function render(state = store.getState()) {
 }
 
 $("inventoryGrid").addEventListener("click", (event) => {
+  const equipButton = event.target.closest("button[data-equip-item]");
+  if (equipButton && !equipButton.disabled) {
+    const itemId = equipButton.dataset.equipItem;
+    const item = ITEM_DEFINITIONS[itemId];
+    const before = store.getState();
+    const after = store.dispatch({
+      type: GAME_ACTION.PREPARE_EQUIPMENT,
+      itemId,
+    });
+    if (after === before) {
+      $("feedback").textContent = "装備を変更できなかったよ。所持数を確認してね。";
+      return;
+    }
+    const saved = saves.save();
+    $("feedback").textContent = item.name + "を装備したよ。" +
+      (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
+    render();
+    return;
+  }
+
   const button = event.target.closest("button[data-sell-item]");
   if (!button || button.disabled) return;
 

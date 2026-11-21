@@ -715,7 +715,7 @@
 
         const value = document.createElement("strong");
         value.className = "inventory-value";
-        value.textContent = item.name + " ×" + quantity + (equipped ? " · 装備中" : "");
+        value.textContent = item.name + (equipped ? " · 装備中" : " ×" + quantity);
         copy.append(label, value);
 
         const button = document.createElement("button");
@@ -725,9 +725,9 @@
           button.textContent = "使う";
           button.disabled = !active || quantity <= 0 || state.player.hp >= state.player.maxHp;
         } else if (slot) {
-          button.dataset.itemAction = "equip";
-          button.textContent = equipped ? "装備中" : "装備する";
-          button.disabled = !active || equipped || quantity <= 0;
+          button.textContent = equipped ? "装備中" : "アイテム欄で変更";
+          button.disabled = true;
+          button.title = "装備の変更はアイテム欄で行ってね。";
         } else {
           button.textContent = "使用不可";
           button.disabled = true;
@@ -1231,30 +1231,19 @@
     }
 
     $("inventoryItems").addEventListener("click", (event) => {
-      const button = event.target.closest("button[data-item-action]");
+      const button = event.target.closest('button[data-item-action="use"]');
       if (!button || button.disabled) return;
-      const { itemId, itemAction } = button.dataset;
+      const { itemId } = button.dataset;
       const item = ITEM_DEFINITIONS[itemId];
       const before = store.getState();
-      const action = itemAction === "use"
-        ? { type: GAME_ACTION.USE_ITEM, itemId }
-        : { type: GAME_ACTION.EQUIP_ITEM, itemId };
-      const after = store.dispatch(action);
+      const after = store.dispatch({ type: GAME_ACTION.USE_ITEM, itemId });
 
       if (after === before) {
-        setStatus(itemAction === "use"
-          ? "今はそのアイテムを使えないよ。"
-          : "その装備は今は装備できないよ。", "bad");
+        setStatus("今はそのアイテムを使えないよ。", "bad");
         return;
       }
-      if (itemAction === "use") {
-        setStatus(item.name + "を使った！HP +" +
-          (after.player.hp - before.player.hp) + " 回復したよ。", "good");
-      } else {
-        const slotLabel = EQUIPMENT_SLOT_LABELS[item.slot] ?? "装備";
-        setStatus(item.name + "を" + slotLabel + "に装備した！ ATK " +
-          after.player.attackPower + " · DEF " + after.player.defensePower, "good");
-      }
+      setStatus(item.name + "を使った！HP +" +
+        (after.player.hp - before.player.hp) + " 回復したよ。", "good");
       render();
     });
 

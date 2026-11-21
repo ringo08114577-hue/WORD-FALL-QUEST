@@ -126,6 +126,13 @@ test("旧セーブが一時停止状態ならロード時に自動でバトル�
 });
 
 
+test("バトル中の装備変更はできず、アイテム欄から行う案内を表示する", () => {
+  assert.match(html, /アイテム欄で変更/);
+  assert.match(html, /装備の変更はアイテム欄で行ってね/);
+  assert.doesNotMatch(html, /button\.dataset\.itemAction = "equip"/);
+  assert.doesNotMatch(html, /GAME_ACTION\.EQUIP_ITEM/);
+});
+
 test("バトルで選べる技はステータス画面で装備したスキルだけ", () => {
   assert.match(html, /const equippedSkillIds = state\.equippedSkillIds/);
   assert.match(html, /button\.hidden = !isEquipped/);

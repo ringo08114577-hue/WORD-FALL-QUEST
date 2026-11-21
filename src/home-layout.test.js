@@ -56,7 +56,7 @@ test("ショップのスマホ表示は幅360px以下でも商品カードを2�
   assert.match(html, /\.offer-card button\{padding:8px 6px/);
 });
 
-test("ショップは商品を種類ごとに選択でき、購入と装備変更ができる", () => {
+test("ショップは商品を種類ごとに選択して購入だけできる", () => {
   const html = read("shop.html");
   const script = read("src/facility-page.js");
   assert.match(html, /data-facility="shop"/);
@@ -68,7 +68,17 @@ test("ショップは商品を種類ごとに選択でき、購入と装備変�
   assert.match(script, /item\.type === "consumable"/);
   assert.match(script, /item\.slot === category/);
   assert.match(script, /shop\.buy\(shopButton\.dataset\.shopItem\)/);
-  assert.match(script, /data-equip-item/);
+  assert.doesNotMatch(script, /data-equip-item|PREPARE_EQUIPMENT|EQUIP_ITEM/);
+  assert.match(script, /saves\.save\(\)/);
+});
+
+test("装備変更はアイテム欄に集約し、装備中の装備と付け替えボタンを表示する", () => {
+  const html = read("inventory.html");
+  const script = read("src/inventory-page.js");
+  assert.match(html, /class="equip-button"/);
+  assert.match(script, /item\.equipped \? "装備中"/);
+  assert.match(script, /button\.dataset\.equipItem = item\.itemId/);
+  assert.match(script, /GAME_ACTION\.PREPARE_EQUIPMENT/);
   assert.match(script, /saves\.save\(\)/);
 });
 
@@ -81,7 +91,7 @@ test("道具屋と武器・防具屋の旧URLは統合ショップへ転送す�
   }
 });
 
-test("鍛冶屋は素材とゴールドを使って装備を作成し、所持装備を付け替えられる", () => {
+test("鍛冶屋は素材とゴールドを使った装備作成だけを行う", () => {
   const html = read("crafting.html");
   const script = read("src/facility-page.js");
   assert.match(html, /data-facility="crafting"/);

@@ -45,6 +45,18 @@ test("所持数があるものだけを表示し、個数と装備状態も取�
   assert.equal(getOwnedInventoryItems(inventory).length, 3);
 });
 
+test("装備中のアイテムは所持数0でもアイテム欄に表示される", () => {
+  const inventory = createInitialInventory();
+  inventory.items["wooden-sword"] = 0;
+  inventory.equipment.weapon = "wooden-sword";
+
+  const weapons = getOwnedInventoryItems(inventory, "weapon");
+  assert.equal(weapons.length, 1);
+  assert.equal(weapons[0].itemId, "wooden-sword");
+  assert.equal(weapons[0].quantity, 0);
+  assert.equal(weapons[0].equipped, true);
+});
+
 test("不正な分類や所持データでは空の一覧を返す", () => {
   const inventory = createInitialInventory();
   assert.deepEqual(getOwnedInventoryItems(inventory, "unknown"), []);

@@ -36,7 +36,9 @@ export function getOwnedInventoryItems(
   return Object.entries(definitions)
     .filter(([itemId, item]) => {
       const quantity = inventory.items[itemId] ?? 0;
-      return Number.isSafeInteger(quantity) && quantity > 0 &&
+      const equipped = Boolean(item.slot && inventory.equipment?.[item.slot] === itemId);
+      return Number.isSafeInteger(quantity) && quantity >= 0 &&
+        (quantity > 0 || equipped) &&
         (category === null || getInventoryCategory(item) === category);
     })
     .map(([itemId, item]) => ({

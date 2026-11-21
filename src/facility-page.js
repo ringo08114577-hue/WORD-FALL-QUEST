@@ -1,6 +1,6 @@
 import { createAppSession } from "./app-session.js";
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
-import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS } from "./items.js";
+import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
 import { createShopController, SHOP_CATALOG } from "./shop.js";
 import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
 import {
@@ -33,12 +33,10 @@ let selectedCraftSlot = null;
 let selectedShopCategory = null;
 const titleByPage = {
   shop: ["ショップ", "武器・防具・アクセサリー・道具をまとめて購入できるよ。"],
-  items: ["道具屋", "回復薬など、冒険に必要なアイテムを購入しよう。"],
-  equipment: ["武器・防具屋", "装備を購入して、持っている装備を付け替えよう。"],
   crafting: ["鍛冶屋", "モンスターから集めた素材とゴールドで、自分だけの装備を作ろう。"],
   skills: ["スキル工房", "ゴールドを使って攻撃・回復・防御・補助スキルを強化しよう。"],
 };
-const [title, subtitle] = titleByPage[page] ?? titleByPage.items;
+const [title, subtitle] = titleByPage[page] ?? titleByPage.shop;
 $("pageTitle").textContent = title;
 $("pageSubtitle").textContent = subtitle;
 
@@ -57,80 +55,6 @@ function addCard(root, heading, description, footer, button) {
   card.append(button);
   root.append(card);
 }
-
-function renderItems(state) {
-  const root = $("facilityContent");
-  root.replaceChildren();
-  const offers = Object.entries(SHOP_CATALOG).filter(([itemId]) => {
-    const item = ITEM_DEFINITIONS[itemId];
-    return page === "equipment" ? Boolean(item.slot) : !item.slot;
-  });
-
-  if (page === "equipment") {
-    const equippedPanel = node("section", "subpanel");
-    equippedPanel.append(node("h2", "", "現在の装備"));
-    const equippedGrid = node("div", "equipment-grid");
-    for (const slot of EQUIPMENT_SLOTS) {
-      const itemId = state.inventory.equipment[slot];
-      const item = itemId ? ITEM_DEFINITIONS[itemId] : null;
-      const card = node("div", "equipment-card");
-      card.append(node("span", "muted", EQUIPMENT_SLOT_LABELS[slot]));
-      card.append(node("strong", "", item?.name ?? "未装備"));
-      equippedGrid.append(card);
-    }
-    equippedPanel.append(equippedGrid);
-    root.append(equippedPanel);
-
-    const ownedPanel = node("section", "subpanel");
-    ownedPanel.append(node("h2", "", "所持している装備"));
-    const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
-      item.slot && (state.inventory.items[item.id] ?? 0) > 0 &&
-      state.inventory.equipment[item.slot] !== item.id
-    );
-    const ownedGrid = node("div", "offer-grid");
-    if (owned.length === 0) ownedGrid.append(node("p", "muted", "付け替えできる装備はまだないよ。"));
-    for (const item of owned) {
-      const button = node("button", "secondary-button", item.name + "を装備");
-      button.type = "button";
-      button.dataset.equipItem = item.id;
-      addCard(ownedGrid, item.name, item.description ?? "装備アイテム", "所持数 " + state.inventory.items[item.id], button);
-    }
-    ownedPanel.append(ownedGrid);
-    root.append(ownedPanel);
-  }
-
-  const shopPanel = node("section", "subpanel");
-  shopPanel.append(node("h2", "", page === "equipment" ? "装備を購入" : "アイテムを購入"));
-  const grid = node("div", "offer-grid");
-  for (const [itemId, offer] of offers) {
-    const item = ITEM_DEFINITIONS[itemId];
-    const count = state.inventory.items[itemId] ?? 0;
-    const button = node("button", "primary-button", item.name + "を購入");
-    button.type = "button";
-    button.dataset.shopItem = itemId;
-    button.disabled = state.phase !== GAME_PHASE.TITLE || state.inventory.gold < offer.cost;
-    addCard(grid, item.name, item.description ?? "冒険に役立つアイテム。", "所持数 " + count + " · " + offer.cost + "G", button);
-  }
-  if (offers.length === 0) grid.append(node("p", "muted", "商品は準備中だよ。"));
-  shopPanel.append(grid);
-  root.append(shopPanel);
-
-  if (page === "items") {
-    const inventory = node("section", "subpanel");
-    inventory.append(node("h2", "", "持ち物"));
-    const grid = node("div", "inventory-grid");
-    const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
-      !item.slot && (state.inventory.items[item.id] ?? 0) > 0
-    );
-    if (owned.length === 0) grid.append(node("p", "muted", "道具を購入するとここに表示されるよ。"));
-    for (const item of owned) {
-      grid.append(node("div", "inventory-item", item.name + " × " + state.inventory.items[item.id]));
-    }
-    inventory.append(grid);
-    root.append(inventory);
-  }
-}
-
 
 function getEquipmentEffectText(item) {
   const effects = [];
@@ -214,28 +138,7 @@ function renderCrafting(state) {
   if (recipes.length === 0) recipeGrid.append(node("p", "muted", "この種類のレシピはまだないよ。"));
   recipePanel.append(recipeGrid);
   root.append(recipePanel);
-
-  const ownedPanel = node("section", "subpanel");
-  ownedPanel.append(node("h2", "", "持っている" + CRAFTING_CATEGORY_LABELS[slot]));
-  const ownedGrid = node("div", "offer-grid");
-  const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
-    item.slot === slot && (state.inventory.items[item.id] ?? 0) > 0 &&
-    state.inventory.equipment[item.slot] !== item.id
-  );
-  if (owned.length === 0) {
-    ownedGrid.append(node("p", "muted", "まだ装備できる" + CRAFTING_CATEGORY_LABELS[slot] + "はないよ。"));
-  }
-  for (const item of owned) {
-    const button = node("button", "secondary-button", item.name + "を装備");
-    button.type = "button";
-    button.dataset.equipItem = item.id;
-    addCard(ownedGrid, item.name, item.description ?? "装備アイテム",
-      "所持数 " + state.inventory.items[item.id] + " · " + getEquipmentEffectText(item), button);
-  }
-  ownedPanel.append(ownedGrid);
-  root.append(ownedPanel);
 }
-
 
 function renderShop(state) {
   const root = $("facilityContent");
@@ -304,50 +207,6 @@ function renderShop(state) {
   offerPanel.append(offerGrid);
   root.append(offerPanel);
 
-  if (category.id !== "consumable") {
-    const slot = category.id;
-    const equippedId = state.inventory.equipment[slot];
-    const equippedItem = equippedId ? ITEM_DEFINITIONS[equippedId] : null;
-    const equippedPanel = node("section", "subpanel");
-    equippedPanel.append(node("h2", "", "現在の装備"));
-    const equippedCard = node("div", "equipment-card");
-    equippedCard.append(node("span", "muted", category.label));
-    equippedCard.append(node("strong", "", equippedItem?.name ?? "未装備"));
-    if (equippedItem) equippedCard.append(node("span", "muted", getEquipmentEffectText(equippedItem)));
-    equippedPanel.append(equippedCard);
-    root.append(equippedPanel);
-
-    const ownedPanel = node("section", "subpanel");
-    ownedPanel.append(node("h2", "", "所持している" + category.label));
-    const ownedGrid = node("div", "offer-grid");
-    const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
-      item.slot === slot && (state.inventory.items[item.id] ?? 0) > 0 && item.id !== equippedId
-    );
-    if (owned.length === 0) ownedGrid.append(node("p", "muted", "付け替えできる装備はまだないよ。"));
-    for (const item of owned) {
-      const button = node("button", "secondary-button", item.name + "を装備");
-      button.type = "button";
-      button.dataset.equipItem = item.id;
-      addCard(ownedGrid, item.name, item.description ?? "装備アイテム",
-        "所持数 " + state.inventory.items[item.id] + " · " + getEquipmentEffectText(item), button);
-    }
-    ownedPanel.append(ownedGrid);
-    root.append(ownedPanel);
-  } else {
-    const ownedPanel = node("section", "subpanel");
-    ownedPanel.append(node("h2", "", "持っている道具"));
-    const ownedGrid = node("div", "inventory-grid");
-    const owned = Object.values(ITEM_DEFINITIONS).filter((item) =>
-      item.type === "consumable" && (state.inventory.items[item.id] ?? 0) > 0
-    );
-    if (owned.length === 0) ownedGrid.append(node("p", "muted", "道具を購入するとここに表示されるよ。"));
-    for (const item of owned) {
-      ownedGrid.append(node("div", "inventory-item",
-        item.name + " × " + state.inventory.items[item.id]));
-    }
-    ownedPanel.append(ownedGrid);
-    root.append(ownedPanel);
-  }
 }
 
 function renderSkills(state) {
@@ -413,7 +272,7 @@ function render() {
   if (page === "skills") renderSkills(state);
   else if (page === "crafting") renderCrafting(state);
   else if (page === "shop") renderShop(state);
-  else renderItems(state);
+
 }
 
 $("facilityContent").addEventListener("click", (event) => {
@@ -479,24 +338,6 @@ $("facilityContent").addEventListener("click", (event) => {
     }
     const saved = saves.save();
     $("feedback").textContent = result.item.name + "を購入したよ。" +
-      (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
-    render();
-    return;
-  }
-
-  const equipButton = event.target.closest("button[data-equip-item]");
-  if (equipButton && !equipButton.disabled) {
-    const before = store.getState();
-    const after = store.dispatch({
-      type: GAME_ACTION.PREPARE_EQUIPMENT,
-      itemId: equipButton.dataset.equipItem,
-    });
-    if (after === before) {
-      $("feedback").textContent = "装備を変更できなかったよ。";
-      return;
-    }
-    const saved = saves.save();
-    $("feedback").textContent = "装備を変更したよ。" +
       (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
     render();
     return;
