@@ -17,7 +17,7 @@ function memoryStorage() {
 }
 function setup(storage, extra = {}) {
   const store = createGameStore({ playerMaxHp: 3, playerAttackPower: 1 });
-  const dungeon = createDungeonController(store);
+  const dungeon = createDungeonController(store, { random: () => 0 });
   let restoredExtra = extra;
   const controller = createSaveController({
     store,
@@ -77,11 +77,10 @@ test("フロアクリア後・報酬受取済みの状態も復元しショッ�
     spawnElapsed: 0,
   });
   first.dungeon.start();
-  winEnemy(first.store);
-  first.dungeon.advance();
-  winEnemy(first.store);
-  first.dungeon.advance();
-  winEnemy(first.store);
+  for (let index = 0; index < first.dungeon.getProgress().enemiesPerFloor; index += 1) {
+    winEnemy(first.store);
+    if (index < first.dungeon.getProgress().enemiesPerFloor - 1) first.dungeon.advance();
+  }
   first.dungeon.claimFloorReward();
   first.store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 5 });
   assert.equal(first.controller.save().saved, true);
@@ -587,9 +586,9 @@ test("ダンジョンごとの解放階層をセーブ・ロードで別々に�
     wordState: createWordBattleState(), spawnElapsed: 0,
   });
   first.dungeon.start();
-  for (let index = 0; index < 3; index += 1) {
+  for (let index = 0; index < first.dungeon.getProgress().enemiesPerFloor; index += 1) {
     winEnemy(first.store);
-    if (index < 2) first.dungeon.advance();
+    if (index < first.dungeon.getProgress().enemiesPerFloor - 1) first.dungeon.advance();
   }
   first.dungeon.claimFloorReward();
   assert.equal(first.dungeon.getUnlockedFloor("forest-ruins"), 2);
@@ -638,9 +637,9 @@ test("初回制覇報酬の受取記録はセーブ・ロード後も保持さ�
   first.dungeon.start();
 
   for (let floor = 1; floor <= 5; floor += 1) {
-    for (let enemy = 0; enemy < 3; enemy += 1) {
+    for (let enemy = 0; enemy < first.dungeon.getProgress().enemiesPerFloor; enemy += 1) {
       winEnemy(first.store);
-      if (enemy < 2) first.dungeon.advance();
+      if (enemy < first.dungeon.getProgress().enemiesPerFloor - 1) first.dungeon.advance();
     }
     const reward = first.dungeon.claimFloorReward();
     if (floor < 5) {
@@ -664,9 +663,9 @@ test("初回制覇報酬の受取記録はセーブ・ロード後も保持さ�
   second.store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
   assert.equal(second.dungeon.selectFloor(5).selected, true);
   second.dungeon.start();
-  for (let enemy = 0; enemy < 3; enemy += 1) {
+  for (let enemy = 0; enemy < second.dungeon.getProgress().enemiesPerFloor; enemy += 1) {
     winEnemy(second.store);
-    if (enemy < 2) second.dungeon.advance();
+    if (enemy < second.dungeon.getProgress().enemiesPerFloor - 1) second.dungeon.advance();
   }
   const repeat = second.dungeon.claimFloorReward();
   assert.equal(repeat.firstClearReward, null);
@@ -820,7 +819,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 12);
+  assert.equal(SAVE_VERSION, 13);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {
@@ -865,5 +864,5 @@ test("バージョン11のセーブを新しいドロップ素材に対応させ
   assert.equal(second.store.getState().inventory.items["slime-gel"], 0);
   assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 12);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 13);
 });

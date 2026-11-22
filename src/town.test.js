@@ -6,7 +6,7 @@ import { createTownController } from "./town.js";
 
 test("ホームへ戻るとHPが全回復し、挑戦中の階層は最初の敵からやり直しになる", () => {
   const store = createGameStore();
-  const dungeon = createDungeonController(store);
+  const dungeon = createDungeonController(store, { random: () => 0 });
   const town = createTownController(store, dungeon);
   dungeon.start();
   store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
@@ -24,7 +24,7 @@ test("ホームへ戻るとHPが全回復し、挑戦中の階層は最初の敵
 
 test("敗北から街へ戻っても育成・所持品を保持し、同じ階を再挑戦できる", () => {
   const store = createGameStore({ playerMaxHp: 1 });
-  const dungeon = createDungeonController(store);
+  const dungeon = createDungeonController(store, { random: () => 0 });
   const town = createTownController(store, dungeon);
   store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 70 });
   store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
@@ -57,7 +57,7 @@ test("敗北から街へ戻っても育成・所持品を保持し、同じ階�
 
 test("ホームにいるときに戻ってもデータを不必要に変更しない", () => {
   const store = createGameStore();
-  const dungeon = createDungeonController(store);
+  const dungeon = createDungeonController(store, { random: () => 0 });
   const town = createTownController(store, dungeon);
   const before = store.getState();
   const result = town.returnToTown();

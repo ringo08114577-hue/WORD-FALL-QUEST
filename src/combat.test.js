@@ -495,9 +495,15 @@ test("敵を倒すと素材が一度だけ所持品に追加され、戦闘メ�
     type: "word-complete",
   });
 
-  assert.deepEqual(result.drops, [{ itemId: "slime-gel", quantity: 1 }]);
+  assert.deepEqual(result.drops, [
+    { itemId: "slime-gel", quantity: 1 },
+    { itemId: "green-slime-moss-mucus", quantity: 1 },
+    { itemId: "slime-core", quantity: 1 },
+  ]);
   assert.equal(store.getState().inventory.items["slime-gel"], 1);
-  assert.match(result.message, /スライムゼリー ×1/);
+  assert.equal(store.getState().inventory.items["green-slime-moss-mucus"], 1);
+  assert.equal(store.getState().inventory.items["slime-core"], 1);
+  assert.match(result.message, /グリーンスライムのゼリー ×1/);
   assert.ok(store.getState().actionLog.some((entry) =>
     entry.message.includes("グリーンスライムのドロップ") &&
     entry.message.includes(ITEM_DEFINITIONS["slime-gel"].name)));
