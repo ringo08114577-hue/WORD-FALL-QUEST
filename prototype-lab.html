@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1220">
+<title>WORD FALL QUEST | 試作ラボ</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,"Noto Sans JP",system-ui,sans-serif;background:#0b1220;color:#eef4ff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:16px 10px 32px;background:radial-gradient(circle at 50% 0%,rgba(56,117,201,.22),transparent 38rem),#0b1220}
+main{width:min(100%,920px);margin:0 auto}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.back{color:#bfdbfe;text-decoration:none;font-size:.78rem;font-weight:800}
+.eyebrow{font-size:.68rem;letter-spacing:.16em;font-weight:900;color:#7dd3fc}
+h1{margin:8px 0 3px;font-size:clamp(1.7rem,6vw,2.5rem);letter-spacing:.02em}
+.subtitle{margin:0;color:#9eacc2;font-size:.82rem;line-height:1.55}
+.notice{display:flex;gap:9px;align-items:flex-start;margin:15px 0;padding:12px 13px;border:1px solid #35614f;border-radius:13px;background:rgba(18,62,47,.52);color:#bbf7d0;font-size:.76rem;line-height:1.55}
+.notice strong{display:block;color:#dcfce7;font-size:.82rem;margin-bottom:2px}
+.notice-icon{font-size:1.25rem;line-height:1.2}
+.panel{margin:11px 0;padding:14px;border:1px solid #2b3c55;border-radius:16px;background:rgba(18,29,47,.94);box-shadow:0 9px 26px rgba(0,0,0,.14)}
+.section-head{display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.section-number{display:grid;place-items:center;width:28px;height:28px;flex:none;border-radius:9px;background:#1e4267;color:#bae6fd;font-size:.72rem;font-weight:950}
+.section-head h2{margin:0;font-size:.98rem}
+.section-head p{margin:2px 0 0;color:#91a4be;font-size:.68rem;line-height:1.4}
+.field-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label,.field-label{color:#a9bad0;font-size:.72rem;font-weight:850}
+input,select{width:100%;min-width:0;min-height:43px;padding:9px 10px;border:1px solid #3a506d;border-radius:10px;background:#101d30;color:#f1f5f9;font:inherit;font-size:.82rem}
+input:focus,select:focus,button:focus-visible{outline:2px solid #7dd3fc;outline-offset:2px}
+select{cursor:pointer}
+.gear-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.gear-field{padding:10px;border:1px solid #30445f;border-radius:12px;background:#111e31}
+.gear-field .field{gap:7px}
+.helper{margin:10px 0 0;color:#8094ae;font-size:.68rem;line-height:1.5}
+.button-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+button{min-height:43px;padding:9px 13px;border:1px solid #3b82f6;border-radius:10px;background:#1d4f82;color:#eff6ff;font:inherit;font-size:.76rem;font-weight:900;cursor:pointer}
+button:hover{filter:brightness(1.15)}
+button.secondary{border-color:#465a74;background:#26364d;color:#dbeafe}
+button.ghost{border-color:#465a74;background:transparent;color:#a9bad0}
+.enemy-summary{margin-top:10px;padding:9px 11px;border-radius:10px;background:#111d30;color:#a9bad0;font-size:.74rem;line-height:1.5}
+.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.stat-card{min-width:0;padding:10px;border-radius:11px;background:#111d30}
+.stat-label{display:block;color:#91a4be;font-size:.66rem;font-weight:800}
+.stat-value{display:block;margin-top:3px;color:#f8fafc;font-size:1.05rem;font-weight:950;overflow-wrap:anywhere}
+.stat-note{display:block;margin-top:3px;color:#7f95b1;font-size:.6rem;line-height:1.4}
+.selected-gear{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.gear-chip{min-width:0;padding:8px 9px;border:1px solid #30445f;border-radius:10px;background:#142238}
+.gear-slot{display:block;color:#7f95b1;font-size:.62rem;font-weight:850}
+.gear-name{display:block;margin-top:2px;font-size:.75rem;overflow-wrap:anywhere}
+.gear-description{display:block;margin-top:4px;color:#91a4be;font-size:.62rem;line-height:1.45}
+.elemental-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:10px}
+.element-chip{padding:8px 5px;border:1px solid #30445f;border-radius:9px;background:#111d30;text-align:center}
+.element-chip.active{border-color:#4778a7;background:#162d49}
+.element-name{display:block;font-size:.78rem;font-weight:950}
+.element-detail{display:block;margin-top:3px;color:#91a4be;font-size:.58rem;line-height:1.35;overflow-wrap:anywhere}
+.results{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.result-card{min-width:0;padding:12px;border:1px solid #354c68;border-radius:13px;background:linear-gradient(145deg,#172941,#111d30)}
+.result-title{margin:0;color:#b9c9dc;font-size:.76rem;font-weight:900}
+.result-number{margin:6px 0 2px;color:#f8fafc;font-size:clamp(1.75rem,6vw,2.2rem);font-weight:950;line-height:1.1;font-variant-numeric:tabular-nums}
+.result-unit{font-size:.72rem;color:#9eacc2}
+.result-diff{min-height:2.7em;color:#86efac;font-size:.69rem;font-weight:850;line-height:1.4}
+.result-message{min-height:3.2em;margin:8px 0 0;padding-top:8px;border-top:1px solid #2d415b;color:#a9bad0;font-size:.68rem;line-height:1.5}
+.result-card button{width:100%;margin-top:7px}
+.warning{margin:9px 0 0;color:#7f93ad;font-size:.66rem;line-height:1.5}
+.footer{margin:18px 0 0;text-align:center;color:#667b96;font-size:.65rem}
+@media(max-width:620px){body{padding:12px 8px 24px}.panel{padding:11px;margin:8px 0}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.elemental-summary{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.element-chip{padding:7px 2px}.element-detail{font-size:.53rem}}
+@media(max-width:390px){.field-grid,.gear-grid,.results{grid-template-columns:1fr}.selected-gear{grid-template-columns:1fr 1fr}.section-head h2{font-size:.9rem}}
+</style>
+</head>
+<body>
+<main>
+  <div class="topline">
+    <div class="eyebrow">WORD FALL QUEST · DEVELOPMENT TOOL</div>
+    <a class="back" href="./index.html">← ゲーム本編へ</a>
+  </div>
+  <h1>試作ラボ</h1>
+  <p class="subtitle">装備や属性の性能を、レベル・素材・所持数を気にせず自由にテストできる場所。</p>
+
+  <div class="notice">
+    <span class="notice-icon">🧪</span>
+    <div><strong>本編とは完全に別のテスト環境</strong>ここでの装備変更・ダメージ計算は、本編のセーブデータ、所持品、ゴールド、経験値に一切反映されないよ。</div>
+  </div>
+
+  <section class="panel">
+    <div class="section-head"><span class="section-number">01</span><div><h2>プレイヤー設定</h2><p>基本能力とテストする攻撃を設定</p></div></div>
+    <div class="field-grid">
+      <div class="field"><label for="baseAttackPower">基本攻撃力</label><input id="baseAttackPower" type="number" min="1" max="99999" step="1" value="100"></div>
+      <div class="field"><label for="baseDefensePower">基本防御力</label><input id="baseDefensePower" type="number" min="0" max="99999" step="1" value="0"></div>
+      <div class="field"><label for="skillSelect">攻撃スキル</label><select id="skillSelect"></select></div>
+      <div class="field"><label for="difficultySelect">単語難易度</label><select id="difficultySelect"></select></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><span class="section-number">02</span><div><h2>装備を自由に選ぶ</h2><p>未所持・未解放の装備もすべて選択可能</p></div></div>
+    <div class="gear-grid">
+      <div class="gear-field"><div class="field"><label for="weaponSelect">⚔ 武器</label><select id="weaponSelect"></select></div></div>
+      <div class="gear-field"><div class="field"><label for="shieldSelect">🛡 盾</label><select id="shieldSelect"></select></div></div>
+      <div class="gear-field"><div class="field"><label for="armorSelect">鎧</label><select id="armorSelect"></select></div></div>
+      <div class="gear-field"><div class="field"><label for="accessorySelect">アクセサリー</label><select id="accessorySelect"></select></div></div>
+    </div>
+    <p class="helper">ここでは装備枠に選ぶだけ。素材の消費やクラフト、購入、装備の保存は行わないよ。</p>
+    <div class="button-row"><button class="secondary" id="clearEquipment" type="button">装備をすべて外す</button></div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><span class="section-number">03</span><div><h2>敵・属性を設定</h2><p>実在する敵を選んで、攻撃属性や弱点も自由に調整</p></div></div>
+    <div class="field-grid">
+      <div class="field"><label for="enemySelect">テストする敵</label><select id="enemySelect"></select></div>
+      <div class="field"><label for="enemyAttackPower">敵の攻撃力</label><input id="enemyAttackPower" type="number" min="1" max="99999" step="1" value="50"></div>
+      <div class="field"><label for="enemyAttackElement">敵の攻撃属性</label><select id="enemyAttackElement"></select></div>
+      <div class="field"><label for="enemyWeakness">敵の弱点</label><select id="enemyWeakness"></select></div>
+      <div class="field"><label for="enemyResistance">敵の耐性</label><select id="enemyResistance"></select></div>
+    </div>
+    <div class="enemy-summary" id="enemyPreview"></div>
+    <p class="warning">敵の弱点・耐性を試験用に変更しても、本編の敵データは変更されないよ。</p>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><span class="section-number">04</span><div><h2>現在の装備・能力</h2><p>選択中の装備を合算したテスト用ステータス</p></div></div>
+    <div class="stat-grid" id="effectiveStats"></div>
+    <div class="selected-gear" id="selectedGear"></div>
+    <div class="elemental-summary" id="elementalSummary"></div>
+  </section>
+
+  <section class="panel">
+    <div class="section-head"><span class="section-number">05</span><div><h2>ダメージテスト</h2><p>本編のバトル計算を使って攻撃・被ダメージを確認</p></div></div>
+    <div class="results">
+      <div class="result-card">
+        <p class="result-title">プレイヤーの攻撃</p>
+        <div class="result-number" id="attackDamage">— <span class="result-unit">ダメージ</span></div>
+        <div class="result-diff" id="attackDiff">装備と敵を選んで攻撃テストを実行</div>
+        <button id="attackTest" type="button">攻撃テスト</button>
+        <p class="result-message" id="attackMessage"></p>
+      </div>
+      <div class="result-card">
+        <p class="result-title">敵から受けるダメージ</p>
+        <div class="result-number" id="incomingDamage">— <span class="result-unit">ダメージ</span></div>
+        <div class="result-diff" id="incomingDiff">敵の攻撃と防具を選んで被ダメージテストを実行</div>
+        <button class="secondary" id="incomingTest" type="button">被ダメージテスト</button>
+        <p class="result-message" id="incomingMessage"></p>
+      </div>
+    </div>
+    <p class="warning">結果には、選んだ装備をすべて外した場合との差も表示するよ。試験用の設定はページを閉じるとリセットされるよ。</p>
+    <div class="button-row"><button class="ghost" id="resetAll" type="button">設定を初期状態に戻す</button></div>
+  </section>
+
+  <p class="footer">WORD FALL QUEST · PROTOTYPE LAB · NO MAIN SAVE ACCESS</p>
+</main>
+<script type="module" src="./src/prototype-lab.js"></script>
+</body>
+</html>
