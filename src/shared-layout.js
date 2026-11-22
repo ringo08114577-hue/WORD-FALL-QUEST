@@ -25,7 +25,7 @@ const NPC_PAGES = Object.freeze({
     lines: ["武器も道具も揃ってるよ。必要なものを選んでいってくれ！", "回復アイテムは冒険の前に用意しておくと安心だ。", "素材を売ってゴールドにするのも忘れずにな！"]
   },
   "crafting.html": {
-    name: "ガルド", role: "熟練の鍛冶職人", portrait: "./assets/npcs/blacksmith.svg",
+    name: "ガルド", role: "熟練の鍛冶職人", portrait: "./assets/npcs/blacksmith.webp",
     line: "素材を持ってきたな。よし、腕によりをかけて仕上げてやる！",
     lines: ["素材を持ってきたな。よし、腕によりをかけて仕上げてやる！", "強い装備を作るには、ダンジョンで珍しい素材を集めるんだ。", "作成した装備はアイテム欄から確認できるぞ！"]
   },
