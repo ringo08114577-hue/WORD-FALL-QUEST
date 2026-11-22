@@ -186,7 +186,7 @@ import { createAppSession } from "./src/app-session.js";
 import { setCharacterImage } from "./src/character-images.js";
 setCharacterImage(document.getElementById("heroAvatar"), "hero", { alt: "主人公", baseUrl: document.baseURI });
 const session = createAppSession();
-const { store } = session;
+const { store, dungeon } = session;
 const result = session.returnToTown();
 const state = store.getState();
 document.getElementById("levelValue").textContent = "LV." + state.player.level;
@@ -195,6 +195,14 @@ document.getElementById("goldValue").textContent = state.inventory.gold + " G";
 document.getElementById("heroMessage").textContent = result.restoredHp > 0
   ? "ホームに戻ったのでHPが全回復したよ。"
   : "次の冒険に向けて準備しよう。";
+window.WFQ_HOME_CONTEXT = {
+  player: {
+    level: state.player.level,
+    hp: state.player.hp,
+    maxHp: state.player.maxHp,
+  },
+  dungeonProgress: dungeon.getAllProgress(),
+};
 window.addEventListener("pagehide", () => session.save());
 </script>
   <script type="module" src="./src/shared-layout.js"></script>

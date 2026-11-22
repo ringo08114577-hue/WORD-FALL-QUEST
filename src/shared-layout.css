@@ -321,3 +321,84 @@ body {
   .wfq-npc-stage.is-talking .wfq-npc-portrait { animation:none; }
   .wfq-npc-next { transition:none; }
 }
+
+
+/* The home receptionist gives a progress-aware dungeon recommendation. */
+.wfq-npc-stage--home {
+  display:grid;
+  grid-template-columns:124px minmax(0,1fr);
+  grid-template-areas:"portrait dialogue" "advice advice";
+  align-items:stretch;
+  gap:8px 12px;
+  min-height:0;
+  padding:9px;
+}
+.wfq-npc-stage--home .wfq-npc-portrait {
+  grid-area:portrait;
+  align-self:center;
+  flex:none;
+  width:124px;
+  height:124px;
+}
+.wfq-npc-stage--home .wfq-npc-dialogue {
+  grid-area:dialogue;
+  min-height:0;
+}
+.wfq-npc-stage--home .wfq-npc-advice {
+  grid-area:advice;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  min-width:0;
+  padding:9px 11px;
+  border:1px solid rgba(205,184,133,.28);
+  border-radius:9px;
+  background:linear-gradient(110deg,rgba(50,59,46,.9),rgba(26,42,45,.92));
+}
+.wfq-npc-advice-copy { display:grid; gap:2px; min-width:0; }
+.wfq-npc-advice-label {
+  color:#d9b96e;
+  font-size:.58rem;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+.wfq-npc-advice-title { color:#f2e6c6; font-size:.82rem; line-height:1.25; }
+.wfq-npc-advice-detail { margin:1px 0 0; color:#d4dfd5; font-size:.69rem; line-height:1.4; }
+.wfq-npc-advice-meta { color:#91b4a1; font-size:.61rem; font-weight:800; }
+.wfq-npc-advice-link {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:34px;
+  padding:6px 10px;
+  border:1px solid #81734f;
+  border-radius:7px;
+  background:linear-gradient(145deg,#4b4935,#31423a);
+  color:#f5dda3;
+  font-size:.66rem;
+  font-weight:900;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.wfq-npc-advice-link:hover { filter:brightness(1.15); }
+@media(max-width:820px) {
+  .wfq-npc-stage--home {
+    grid-template-columns:96px minmax(0,1fr);
+    gap:7px 9px;
+    padding:7px;
+  }
+  .wfq-npc-stage--home .wfq-npc-portrait {
+    width:96px;
+    height:96px;
+  }
+  .wfq-npc-stage--home .wfq-npc-advice { gap:8px; padding:8px 9px; }
+  .wfq-npc-advice-detail { font-size:.65rem; }
+}
+@media(max-width:380px) {
+  .wfq-npc-stage--home { grid-template-columns:84px minmax(0,1fr); gap:6px 7px; }
+  .wfq-npc-stage--home .wfq-npc-portrait { width:84px; height:84px; }
+  .wfq-npc-stage--home .wfq-npc-advice { align-items:flex-start; flex-direction:column; }
+  .wfq-npc-advice-link { align-self:flex-end; min-height:29px; }
+}

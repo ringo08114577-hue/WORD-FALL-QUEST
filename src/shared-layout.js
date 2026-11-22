@@ -1,3 +1,5 @@
+import { getReceptionistAdvice } from "./receptionist-advisor.js";
+
 const NAV_ITEMS = Object.freeze([
   { href: "./index.html", file: "index.html", icon: "🏡", label: "ホーム" },
   { href: "./dungeons.html", file: "dungeons.html", icon: "🗺️", label: "冒険" },
@@ -78,9 +80,15 @@ function navLink(item, current, className) {
 
 function createNpcStage(current) {
   const npc = NPC_PAGES[current] ?? NPC_PAGES["index.html"];
-  const lines = Array.isArray(npc.lines) && npc.lines.length ? npc.lines : [npc.line];
+  const homeAdvice = current === "index.html"
+    ? getReceptionistAdvice(window.WFQ_HOME_CONTEXT ?? {})
+    : null;
+  const lines = homeAdvice
+    ? [homeAdvice.greeting, ...(npc.lines ?? []).slice(1)]
+    : (Array.isArray(npc.lines) && npc.lines.length ? npc.lines : [npc.line]);
   const stage = el("section", "wfq-npc-stage");
   if (npc.portrait.endsWith("guild-receptionist.webp")) stage.classList.add("wfq-npc-stage--reception");
+  if (homeAdvice) stage.classList.add("wfq-npc-stage--home");
   stage.setAttribute("aria-label", npc.name + "の案内");
 
   const portraitFrame = el("div", "wfq-npc-portrait");
@@ -109,6 +117,22 @@ function createNpcStage(current) {
   });
   dialogue.append(identity, line, nextButton);
   stage.append(portraitFrame, dialogue);
+
+  if (homeAdvice) {
+    const advice = el("aside", "wfq-npc-advice");
+    advice.setAttribute("aria-label", "リリアのおすすめ冒険先");
+    const copy = el("div", "wfq-npc-advice-copy");
+    copy.append(
+      el("span", "wfq-npc-advice-label", "本日のおすすめ"),
+      el("strong", "wfq-npc-advice-title", homeAdvice.dungeonIcon + " " + homeAdvice.dungeonName),
+      el("p", "wfq-npc-advice-detail", homeAdvice.detail),
+      el("span", "wfq-npc-advice-meta", homeAdvice.meta)
+    );
+    const link = el("a", "wfq-npc-advice-link", "冒険先を見る　›");
+    link.href = "./dungeons.html";
+    advice.append(copy, link);
+    stage.append(advice);
+  }
   return stage;
 }
 

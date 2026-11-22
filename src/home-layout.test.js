@@ -324,3 +324,23 @@ test("バトル画面には通常ナビゲーションを追加せず、戦闘�
   const html = read("battle.html");
   assert.doesNotMatch(html, /shared-layout\\.js|shared-layout\\.css/);
 });
+
+
+test("ホームは受付嬢にプレイヤーレベルと各ダンジョンの進行状況を渡す", () => {
+  const html = read("index.html");
+  const script = read("src/shared-layout.js");
+  assert.match(html, /window\.WFQ_HOME_CONTEXT = \{/);
+  assert.match(html, /dungeonProgress: dungeon\.getAllProgress\(\)/);
+  assert.match(script, /getReceptionistAdvice\(window\.WFQ_HOME_CONTEXT \?\? \{\}\)/);
+  assert.match(script, /wfq-npc-advice/);
+  assert.match(script, /冒険先を見る/);
+});
+
+test("受付嬢のおすすめ表示は現在のレベルとクリア状況に合わせて変わる", () => {
+  const script = read("src/receptionist-advisor.js");
+  assert.match(script, /推奨LV\.3/);
+  assert.match(script, /HPが少なくなっています/);
+  assert.match(script, /forestProgress\.cleared/);
+  assert.match(script, /frozenProgress\.cleared/);
+  assert.match(script, /presentation-only/);
+});
