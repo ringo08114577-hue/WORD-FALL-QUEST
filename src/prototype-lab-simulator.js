@@ -3,11 +3,22 @@
  * an app session, load/save player progress, or mutate the main game state.
  */
 import { GAME_PHASE } from "./game-state.js";
+import { GAME_CONFIG } from "./game-config.js";
 import { COMBAT_EVENT, resolveCombatEvent } from "./combat.js";
 import { EQUIPMENT_SLOTS, ITEM_DEFINITIONS, getEquipmentBonuses } from "./items.js";
 import { ENEMY_DEFINITIONS } from "./enemies.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
+
+export function getPrototypePlayerBaseStats(level) {
+  requirePositiveInteger(level, "プレイヤーレベル");
+  return Object.freeze({
+    maxHp: GAME_CONFIG.player.startingMaxHp +
+      (level - 1) * GAME_CONFIG.progression.hpPerLevel,
+    attackPower: GAME_CONFIG.player.startingAttackPower +
+      (level - 1) * GAME_CONFIG.progression.attackPowerPerLevel,
+  });
+}
 
 export function createEmptyPrototypeEquipment() {
   return Object.fromEntries(EQUIPMENT_SLOTS.map((slot) => [slot, null]));
@@ -36,14 +47,23 @@ function requireNonNegativeInteger(value, label) {
   }
 }
 
-export function createPrototypeBattleState({
-  equipment = {},
-  enemy = ENEMY_DEFINITIONS["forest-dragon"],
-  baseAttackPower = 100,
-  baseDefensePower = 0,
-  skillId = "quick-strike",
-} = {}) {
-  requirePositiveInteger(baseAttackPower, "基本攻撃力");
+export function createPrototypeBattleState(options = {}) {
+  const {
+    equipment = {},
+    enemy = ENEMY_DEFINITIONS["forest-dragon"],
+    playerLevel,
+    baseAttackPower,
+    baseMaxHp,
+    baseDefensePower = 0,
+    skillId = "quick-strike",
+  } = options;
+  const levelStats = playerLevel === undefined
+    ? { attackPower: 100, maxHp: 100 }
+    : getPrototypePlayerBaseStats(playerLevel);
+  const resolvedAttackPower = baseAttackPower ?? levelStats.attackPower;
+  const resolvedMaxHp = baseMaxHp ?? levelStats.maxHp;
+  requirePositiveInteger(resolvedAttackPower, "基本攻撃力");
+  requirePositiveInteger(resolvedMaxHp, "基本最大HP");
   requireNonNegativeInteger(baseDefensePower, "基本防御力");
 
   const safeEquipment = normalizePrototypeEquipment(equipment);
@@ -70,9 +90,9 @@ export function createPrototypeBattleState({
     phase: GAME_PHASE.BATTLE,
     enemy: testEnemy,
     player: {
-      hp: 100,
-      maxHp: 100 + equipmentBonuses.maxHpBonus,
-      attackPower: baseAttackPower + equipmentBonuses.attackBonus,
+      hp: resolvedMaxHp + equipmentBonuses.maxHpBonus,
+      maxHp: resolvedMaxHp + equipmentBonuses.maxHpBonus,
+      attackPower: resolvedAttackPower + equipmentBonuses.attackBonus,
       defensePower: baseDefensePower + equipmentBonuses.defenseBonus,
     },
     inventory: { equipment: safeEquipment },

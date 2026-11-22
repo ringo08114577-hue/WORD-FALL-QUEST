@@ -75,7 +75,7 @@ button.ghost{border-color:#465a74;background:transparent;color:#a9bad0}
     <a class="back" href="./index.html">← ゲーム本編へ</a>
   </div>
   <h1>試作ラボ</h1>
-  <p class="subtitle">装備や属性の性能を、レベル・素材・所持数を気にせず自由にテストできる場所。</p>
+  <p class="subtitle">プレイヤーレベル・敵の階層・装備を指定して、実際のバトル計算を試せる場所。</p>
 
   <div class="notice">
     <span class="notice-icon">🧪</span>
@@ -85,7 +85,7 @@ button.ghost{border-color:#465a74;background:transparent;color:#a9bad0}
   <section class="panel">
     <div class="section-head"><span class="section-number">01</span><div><h2>プレイヤー設定</h2><p>基本能力とテストする攻撃を設定</p></div></div>
     <div class="field-grid">
-      <div class="field"><label for="baseAttackPower">基本攻撃力</label><input id="baseAttackPower" type="number" min="1" max="99999" step="1" value="100"></div>
+      <div class="field"><label for="playerLevel">プレイヤーレベル</label><input id="playerLevel" type="number" min="1" max="99999" step="1" value="1"></div>
       <div class="field"><label for="baseDefensePower">基本防御力</label><input id="baseDefensePower" type="number" min="0" max="99999" step="1" value="0"></div>
       <div class="field"><label for="skillSelect">攻撃スキル</label><select id="skillSelect"></select></div>
       <div class="field"><label for="difficultySelect">単語難易度</label><select id="difficultySelect"></select></div>
@@ -108,13 +108,14 @@ button.ghost{border-color:#465a74;background:transparent;color:#a9bad0}
     <div class="section-head"><span class="section-number">03</span><div><h2>敵・属性を設定</h2><p>実在する敵を選んで、攻撃属性や弱点も自由に調整</p></div></div>
     <div class="field-grid">
       <div class="field"><label for="enemySelect">テストする敵</label><select id="enemySelect"></select></div>
-      <div class="field"><label for="enemyAttackPower">敵の攻撃力</label><input id="enemyAttackPower" type="number" min="1" max="99999" step="1" value="50"></div>
+      <div class="field"><label for="floorSelect">敵の階層補正</label><select id="floorSelect"></select></div>
+      <div class="field"><label for="enemyAttackPower">敵の攻撃力（調整可）</label><input id="enemyAttackPower" type="number" min="1" max="99999" step="1" value="50"></div>
       <div class="field"><label for="enemyAttackElement">敵の攻撃属性</label><select id="enemyAttackElement"></select></div>
       <div class="field"><label for="enemyWeakness">敵の弱点</label><select id="enemyWeakness"></select></div>
       <div class="field"><label for="enemyResistance">敵の耐性</label><select id="enemyResistance"></select></div>
     </div>
     <div class="enemy-summary" id="enemyPreview"></div>
-    <p class="warning">敵の弱点・耐性を試験用に変更しても、本編の敵データは変更されないよ。</p>
+    <p class="warning">選んだ階層のHP・攻撃力倍率を自動適用するよ。出現条件に関係なく同じ敵を別階層で比較できるよ。弱点・耐性の変更も本編データには影響しないよ。</p>
   </section>
 
   <section class="panel">

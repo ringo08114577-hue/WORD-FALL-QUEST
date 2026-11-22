@@ -2,12 +2,13 @@ import {
   EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LABELS, ITEM_DEFINITIONS,
   getEquipmentBonuses, getEquipmentElementalBonuses, getElementalResistanceMultiplier,
 } from "./items.js";
-import { ENEMY_DEFINITIONS } from "./enemies.js";
+import { createEnemy, ENEMY_DEFINITIONS } from "./enemies.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
 import { ELEMENT_IDS, ELEMENT_LABELS, getElementLabel } from "./elements.js";
 import {
-  createEmptyPrototypeEquipment, simulatePrototypeAttack, simulatePrototypeIncomingAttack,
+  createEmptyPrototypeEquipment, getPrototypePlayerBaseStats,
+  simulatePrototypeAttack, simulatePrototypeIncomingAttack,
 } from "./prototype-lab-simulator.js";
 
 const $ = (id) => document.getElementById(id);
@@ -43,6 +44,11 @@ function fillInitialSelects() {
     }
   }
 
+  const floorSelect = $("floorSelect");
+  for (let floor = 1; floor <= 5; floor += 1) {
+    addOption(floorSelect, String(floor), floor + "階");
+  }
+
   const enemySelect = $("enemySelect");
   for (const [enemyId, enemy] of Object.entries(ENEMY_DEFINITIONS)) {
     addOption(enemySelect, enemyId, enemy.name + (enemy.isBoss ? "（ボス）" : ""));
@@ -70,8 +76,9 @@ function fillInitialSelects() {
 }
 
 function applyEnemyDefaults() {
-  const enemy = ENEMY_DEFINITIONS[$("enemySelect").value];
-  if (!enemy) return;
+  const enemyId = $("enemySelect").value;
+  if (!Object.hasOwn(ENEMY_DEFINITIONS, enemyId)) return;
+  const enemy = createEnemy(enemyId, { floor: Number($("floorSelect").value) || 1 });
   $("enemyAttackPower").value = enemy.attackPower;
   fillElementSelect($("enemyAttackElement"), enemy.attackElement ?? "");
   fillElementSelect($("enemyWeakness"), enemy.elementalWeakness ?? "");
@@ -86,9 +93,15 @@ function readEquipment() {
 }
 
 function readEnemy() {
-  const original = ENEMY_DEFINITIONS[$("enemySelect").value];
+  const enemyId = $("enemySelect").value;
+  if (!Object.hasOwn(ENEMY_DEFINITIONS, enemyId)) {
+    throw new RangeError("テストする敵を選択してください。");
+  }
+  const scaledEnemy = createEnemy(enemyId, {
+    floor: Number($("floorSelect").value) || 1,
+  });
   return {
-    ...original,
+    ...scaledEnemy,
     attackPower: Number($("enemyAttackPower").value),
     attackElement: $("enemyAttackElement").value || null,
     elementalWeakness: $("enemyWeakness").value || null,
@@ -100,7 +113,7 @@ function readOptions() {
   return {
     equipment: readEquipment(),
     enemy: readEnemy(),
-    baseAttackPower: Number($("baseAttackPower").value),
+    playerLevel: Number($("playerLevel").value),
     baseDefensePower: Number($("baseDefensePower").value),
     skillId: $("skillSelect").value,
     wordDifficulty: Number($("difficultySelect").value),
@@ -126,9 +139,15 @@ function updatePreview() {
   const equipment = readEquipment();
   const bonuses = getEquipmentBonuses(equipment);
   const elements = getEquipmentElementalBonuses(equipment);
-  const baseAttack = Number($("baseAttackPower").value) || 0;
+  const playerLevel = Math.max(1, Number($("playerLevel").value) || 1);
+  const playerBase = getPrototypePlayerBaseStats(playerLevel);
+  const baseAttack = playerBase.attackPower;
+  const baseMaxHp = playerBase.maxHp;
   const baseDefense = Number($("baseDefensePower").value) || 0;
-  const baseEnemy = ENEMY_DEFINITIONS[$("enemySelect").value];
+  const enemyId = $("enemySelect").value;
+  const baseEnemy = Object.hasOwn(ENEMY_DEFINITIONS, enemyId)
+    ? createEnemy(enemyId, { floor: Number($("floorSelect").value) || 1 })
+    : null;
   const statGrid = $("effectiveStats");
   statGrid.replaceChildren();
 
@@ -136,8 +155,8 @@ function updatePreview() {
     "基本 " + baseAttack + " ＋装備 " + bonuses.attackBonus);
   renderStat(statGrid, "防御力", String(baseDefense + bonuses.defenseBonus),
     "基本 " + baseDefense + " ＋装備 " + bonuses.defenseBonus);
-  renderStat(statGrid, "最大HP", String(100 + bonuses.maxHpBonus),
-    "装備補正 +" + bonuses.maxHpBonus);
+  renderStat(statGrid, "最大HP", String(baseMaxHp + bonuses.maxHpBonus),
+    "Lv." + playerLevel + " 基本 " + baseMaxHp + " ＋装備 " + bonuses.maxHpBonus);
   renderStat(statGrid, "武器属性", getElementLabel(elements.attackElement) || "なし",
     elements.attackElement ? "通常攻撃スキルに属性が付く" : "属性付与なし");
 
@@ -171,9 +190,10 @@ function updatePreview() {
   }
 
   const enemyName = baseEnemy?.name ?? "未選択";
-  $("enemyPreview").textContent = enemyName + " / 攻撃力 " +
-    (Number($("enemyAttackPower").value) || 0) + " / 攻撃属性 " +
-    (getElementLabel($("enemyAttackElement").value) || "なし");
+  $("enemyPreview").textContent = enemyName + " / " + $("floorSelect").value + "階補正" +
+    " / HP " + (baseEnemy?.maxHp ?? "—") +
+    " / 攻撃力 " + (Number($("enemyAttackPower").value) || 0) +
+    " / 攻撃属性 " + (getElementLabel($("enemyAttackElement").value) || "なし");
 }
 
 function showResult(prefix, result, baseline, incoming = false) {
@@ -252,11 +272,12 @@ function clearEquipment() {
 }
 
 function resetAll() {
-  $("baseAttackPower").value = "100";
+  $("playerLevel").value = "1";
   $("baseDefensePower").value = "0";
   $("skillSelect").value = "quick-strike";
   $("difficultySelect").value = "1";
   $("enemySelect").value = "forest-dragon";
+  $("floorSelect").value = "1";
   clearEquipment();
   applyEnemyDefaults();
 }
@@ -266,13 +287,14 @@ updatePreview();
 resetResults();
 
 $("enemySelect").addEventListener("change", applyEnemyDefaults);
+$("floorSelect").addEventListener("change", applyEnemyDefaults);
 $("attackTest").addEventListener("click", runAttackTest);
 $("incomingTest").addEventListener("click", runIncomingTest);
 $("clearEquipment").addEventListener("click", clearEquipment);
 $("resetAll").addEventListener("click", resetAll);
 
 const controls = document.querySelectorAll(
-  "#baseAttackPower, #baseDefensePower, #skillSelect, #difficultySelect, " +
+  "#playerLevel, #baseDefensePower, #skillSelect, #difficultySelect, #floorSelect, " +
   "#weaponSelect, #shieldSelect, #armorSelect, #accessorySelect, #enemyAttackPower, " +
   "#enemyAttackElement, #enemyWeakness, #enemyResistance",
 );

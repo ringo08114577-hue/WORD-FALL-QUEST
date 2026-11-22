@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { simulatePrototypeAttack, simulatePrototypeIncomingAttack,
-  normalizePrototypeEquipment, createEmptyPrototypeEquipment } from "./prototype-lab-simulator.js";
+  normalizePrototypeEquipment, createEmptyPrototypeEquipment,
+  getPrototypePlayerBaseStats } from "./prototype-lab-simulator.js";
+import { createEnemy } from "./enemies.js";
 
 const forestEnemy = {
   id: "test-forest-boss", name: "試験用の森竜", maxHp: 1000, attackPower: 100,
@@ -65,4 +67,26 @@ test("敵の弱点に合う装備属性と耐性を個別に試せる", () => {
   });
   assert.equal(normal.ignored, false);
   assert.equal(normal.damage, 193);
+});
+
+
+test("試作ラボはプレイヤーレベルから本編と同じ攻撃力・最大HPを算出する", () => {
+  assert.deepEqual(getPrototypePlayerBaseStats(1), { attackPower: 20, maxHp: 100 });
+  assert.deepEqual(getPrototypePlayerBaseStats(10), { attackPower: 65, maxHp: 460 });
+
+  const result = simulatePrototypeIncomingAttack({
+    playerLevel: 10,
+    equipment: { accessory: "copper-charm" },
+    enemy: { ...forestEnemy, attackPower: 50 },
+  });
+  assert.equal(result.effectiveStats.attackPower, 75);
+  assert.equal(result.effectiveStats.maxHp, 520);
+  assert.equal(result.effectiveStats.hp, 520);
+});
+
+test("指定階層で作成した敵にHP・攻撃力倍率が適用される", () => {
+  const firstFloor = createEnemy("forest-dragon", { floor: 1 });
+  const fifthFloor = createEnemy("forest-dragon", { floor: 5 });
+  assert.deepEqual([firstFloor.maxHp, firstFloor.attackPower], [800, 50]);
+  assert.deepEqual([fifthFloor.maxHp, fifthFloor.attackPower], [2657, 122]);
 });
