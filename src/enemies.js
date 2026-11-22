@@ -188,10 +188,12 @@ export function createEnemy(enemyId, { floor = 1 } = {}) {
   const enemy = {
     id: definition.id,
     name: definition.name,
-    maxHp: definition.maxHp + difficulty * GAME_CONFIG.enemyScaling.hpPerFloor,
-    attackPower: definition.attackPower +
-      Math.floor(difficulty / GAME_CONFIG.enemyScaling.attackPowerEveryFloors) *
-      GAME_CONFIG.enemyScaling.attackPowerPerStep,
+    maxHp: Math.round(
+      definition.maxHp * GAME_CONFIG.enemyScaling.hpMultiplierPerFloor ** difficulty,
+    ),
+    attackPower: Math.round(
+      definition.attackPower * GAME_CONFIG.enemyScaling.attackPowerMultiplierPerFloor ** difficulty,
+    ),
     experienceReward: definition.experienceReward +
       difficulty * GAME_CONFIG.enemyScaling.experiencePerFloor,
     abilities: [...definition.abilities],

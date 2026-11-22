@@ -17,9 +17,9 @@ export const GAME_CONFIG = Object.freeze({
     attackPowerPerLevel: 5,
   }),
   enemyScaling: Object.freeze({
-    hpPerFloor: 35,
-    attackPowerEveryFloors: 2,
-    attackPowerPerStep: 5,
+    // Floor 1 is the baseline. Each deeper floor compounds both stats.
+    hpMultiplierPerFloor: 1.35,
+    attackPowerMultiplierPerFloor: 1.25,
     experiencePerFloor: 20,
   }),
   // Compatibility view for existing balance screens/tests. The source of

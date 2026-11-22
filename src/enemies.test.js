@@ -146,11 +146,20 @@ test("敵の能力一覧は個別生成され、呼び出し元の変更が定�
   assert.equal(ENEMY_ABILITY_DEFINITIONS.swift.name, "すばやい反撃");
 });
 
-test("階層補正は敵の基礎能力と経験値を保ちながら強化する", () => {
-  const dragon = createEnemy("forest-dragon", { floor: 5 });
-  assert.equal(dragon.maxHp, 940);
-  assert.equal(dragon.attackPower, 60);
-  assert.equal(dragon.experienceReward, 630);
-  assert.equal(dragon.isBoss, true);
+test("階層補正はHPと攻撃力を階層ごとの倍率で大きく強化する", () => {
+  const expected = [
+    [800, 50],
+    [1080, 63],
+    [1458, 78],
+    [1968, 98],
+    [2656, 122],
+  ];
+  for (let floor = 1; floor <= 5; floor += 1) {
+    const dragon = createEnemy("forest-dragon", { floor });
+    assert.equal(dragon.maxHp, expected[floor - 1][0]);
+    assert.equal(dragon.attackPower, expected[floor - 1][1]);
+    assert.equal(dragon.experienceReward, 550 + (floor - 1) * 20);
+    assert.equal(dragon.isBoss, true);
+  }
   assert.throws(() => createEnemy("unknown"), RangeError);
 });
