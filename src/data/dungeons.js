@@ -14,7 +14,7 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
     difficulty: "初級",
     recommendedLevel: 1,
     floorCount: 5,
-    description: "スライムやゴブリンが待ち受ける森。最深部には森のドラゴンがいる。",
+    description: "8種類の森の魔物が出現する。各階の最後には中ボス、5階には森のドラゴンが待ち受ける。",
     legacyEncounterSet: Object.freeze(["slime", "bat", "goblin"]),
     legacyEncounterSetsV2: Object.freeze([
       Object.freeze(["slime", "bat", "goblin"]),
@@ -23,6 +23,20 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
     ]),
     legacyEncounterSetsV3: Object.freeze([
       Object.freeze(["slime", "bat", "goblin"]),
+      Object.freeze(["bat", "orc", "moss-golem"]),
+      Object.freeze(["goblin", "orc", "moss-golem"]),
+      Object.freeze(["orc", "moss-golem", "goblin"]),
+      Object.freeze(["moss-golem", "goblin", "forest-dragon"]),
+    ]),
+    // New encounter generation is driven by each enemy's encounter settings.
+    encounterPlan: Object.freeze({
+      enemiesPerFloor: 5,
+      normalEnemyCount: 4,
+      majorBossEveryFloors: 5,
+    }),
+    // Version 4 layouts are retained only for existing saves.
+    legacyEncounterSetsV4: Object.freeze([
+      Object.freeze(["slime", "orange-slime", "goblin"]),
       Object.freeze(["bat", "orc", "moss-golem"]),
       Object.freeze(["goblin", "orc", "moss-golem"]),
       Object.freeze(["orc", "moss-golem", "goblin"]),
