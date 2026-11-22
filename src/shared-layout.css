@@ -552,3 +552,116 @@ body {
     align-self:flex-end;
   }
 }
+
+
+/* Merchant UI: portrait, dialogue and recommendation are one cohesive panel. */
+.wfq-npc-stage--merchant {
+  display:grid;
+  grid-template-columns:180px minmax(0,1fr);
+  grid-template-areas:
+    "portrait dialogue"
+    "advice advice";
+  align-items:center;
+  gap:7px 14px;
+  min-height:0;
+  padding:10px 14px 10px 10px;
+  border-color:rgba(177,139,86,.58);
+  background:
+    radial-gradient(circle at 12% 12%,rgba(184,137,76,.16),transparent 36%),
+    linear-gradient(112deg,rgba(47,48,39,.98),rgba(22,38,42,.98) 62%,rgba(25,34,43,.98));
+}
+.wfq-npc-stage--merchant .wfq-npc-portrait {
+  grid-area:portrait;
+  align-self:center;
+  width:180px;
+  height:101px;
+  margin:0;
+}
+.wfq-npc-stage--merchant .wfq-npc-dialogue {
+  grid-area:dialogue;
+  align-self:stretch;
+  justify-content:center;
+  min-height:101px;
+  padding:7px 5px 7px 0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.wfq-npc-stage--merchant .wfq-npc-identity { margin-bottom:5px; }
+.wfq-npc-stage--merchant .wfq-npc-name { color:#f1d18f; font-size:.86rem; }
+.wfq-npc-stage--merchant .wfq-npc-role { color:#b6c6a5; }
+.wfq-npc-stage--merchant .wfq-npc-line { color:#f1ead9; }
+.wfq-npc-stage--merchant .wfq-npc-next { align-self:flex-end; }
+.wfq-npc-stage--merchant .wfq-npc-advice--merchant {
+  grid-area:advice;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+  margin-top:2px;
+  padding:9px 2px 1px;
+  border:0;
+  border-top:1px solid rgba(206,174,112,.32);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+.wfq-npc-stage--merchant .wfq-npc-advice-copy { gap:3px; }
+.wfq-npc-stage--merchant .wfq-npc-advice-label { color:#e2bf79; }
+.wfq-npc-stage--merchant .wfq-npc-advice-title { color:#fff0ce; font-size:.86rem; }
+.wfq-npc-stage--merchant .wfq-npc-advice-detail { color:#e0dfd2; font-size:.72rem; }
+.wfq-npc-stage--merchant .wfq-npc-advice-meta { color:#c6b58b; }
+.wfq-npc-stage--merchant .wfq-npc-advice-actions {
+  display:flex;
+  flex:0 0 auto;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.wfq-npc-stage--merchant .wfq-npc-advice-link,
+.wfq-npc-stage--merchant .wfq-npc-advice-sell-link {
+  min-height:34px;
+  padding:6px 10px;
+}
+.wfq-npc-stage--merchant .wfq-npc-advice-sell {
+  color:#9bd0ae;
+  font-size:.66rem;
+}
+@media(max-width:820px) {
+  .wfq-npc-stage--merchant {
+    grid-template-columns:132px minmax(0,1fr);
+    gap:6px 10px;
+    padding:8px;
+  }
+  .wfq-npc-stage--merchant .wfq-npc-portrait {
+    width:132px;
+    height:74px;
+  }
+  .wfq-npc-stage--merchant .wfq-npc-dialogue { min-height:74px; padding:5px 2px 5px 0; }
+  .wfq-npc-stage--merchant .wfq-npc-advice--merchant { gap:8px; padding-top:8px; }
+  .wfq-npc-stage--merchant .wfq-npc-advice-detail { font-size:.68rem; }
+}
+@media(max-width:480px) {
+  .wfq-npc-stage--merchant {
+    grid-template-columns:104px minmax(0,1fr);
+    gap:6px 8px;
+    padding:7px;
+  }
+  .wfq-npc-stage--merchant .wfq-npc-portrait {
+    width:104px;
+    height:59px;
+  }
+  .wfq-npc-stage--merchant .wfq-npc-dialogue { min-height:76px; }
+  .wfq-npc-stage--merchant .wfq-npc-advice--merchant {
+    grid-template-columns:minmax(0,1fr);
+    gap:7px;
+  }
+  .wfq-npc-stage--merchant .wfq-npc-advice-actions {
+    width:100%;
+    justify-content:flex-end;
+  }
+  .wfq-npc-stage--merchant .wfq-npc-advice-detail { font-size:.66rem; }
+}

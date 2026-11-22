@@ -392,3 +392,15 @@ test("商人の案内は購入や売却を自動実行せず、アイテム欄�
   assert.match(script, /equipment/);
 });
 
+
+
+test("ショップのロウの画像・会話・おすすめ・操作ボタンは一つのパネルにまとまる", () => {
+  const script = read("src/shared-layout.js");
+  const css = read("src/shared-layout.css");
+  assert.match(script, /wfq-npc-stage--merchant/);
+  assert.match(script, /wfq-npc-advice-actions/);
+  assert.match(script, /素材を売却する/);
+  assert.match(css, /grid-template-areas:[\s\S]*"portrait dialogue"[\s\S]*"advice advice"/);
+  assert.match(css, /\.wfq-npc-stage--merchant \.wfq-npc-dialogue[\s\S]*background:transparent/);
+  assert.match(css, /@media\(max-width:480px\)[\s\S]*\.wfq-npc-stage--merchant/);
+});

@@ -177,14 +177,16 @@ function createNpcStage(current) {
       if (advice.sellableSummary) {
         copy.append(el("p", "wfq-npc-advice-sell", advice.sellableSummary));
       }
+      const actions = el("div", "wfq-npc-advice-actions");
       const link = el("a", "wfq-npc-advice-link", advice.actionLabel);
       link.href = advice.actionHref;
-      card.append(copy, link);
+      actions.append(link);
       if (advice.hasSellableMaterials) {
         const sellLink = el("a", "wfq-npc-advice-sell-link", "素材を売却する　›");
         sellLink.href = "./inventory.html";
-        card.append(sellLink);
+        actions.append(sellLink);
       }
+      card.append(copy, actions);
       return card;
     };
     const card = createMerchantCard(merchantAdvice);
