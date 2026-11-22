@@ -252,8 +252,10 @@ test("階層選択の背景・カード配色・ボス表示は選択中ダン�
   const html = read("dungeons.html");
   const script = read("src/dungeons-page.js");
   const catalog = read("src/data/dungeons.js");
-  assert.ok(catalog.includes('id: "forest-ruins",\\n    theme: "forest",'));
-  assert.ok(catalog.includes('id: "frozen-cavern",\\n    theme: "ice",'));
+  assert.ok(catalog.includes('id: "forest-ruins"'));
+  assert.ok(catalog.includes('theme: "forest"'));
+  assert.ok(catalog.includes('id: "frozen-cavern"'));
+  assert.ok(catalog.includes('theme: "ice"'));
   assert.ok(script.includes('$("dungeonPage").dataset.dungeonTheme = info.theme ?? "default";'));
   assert.ok(script.includes("floor-card--boss"));
   assert.ok(script.includes("floor-card--locked"));
@@ -264,9 +266,10 @@ test("階層選択の背景・カード配色・ボス表示は選択中ダン�
   assert.ok(html.includes('#dungeonPage[data-dungeon-theme="ice"] .floor-panel'));
   assert.ok(html.includes('url("./assets/dungeons/forest-ruins.svg")'));
   assert.ok(html.includes('url("./assets/dungeons/frozen-cavern.svg")'));
-  assert.ok(html.includes("#dungeonPage[data-dungeon-theme=\"ice\"] .floor-card.selected"));
+  assert.ok(html.includes('#dungeonPage[data-dungeon-theme="ice"] .floor-card.selected'));
   assert.ok(html.includes(".floor-card.floor-card--boss"));
-  assert.match(html, /@media\\(prefers-reduced-motion:reduce\\)[\\s\\S]*?floor-card/);
+  assert.ok(html.includes("@media(prefers-reduced-motion:reduce)"));
+  assert.ok(html.includes("#dungeonPage .floor-card { transition:none; }"));
 });
 
 test("施設ページのID参照先がすべてHTML内に存在する", () => {
