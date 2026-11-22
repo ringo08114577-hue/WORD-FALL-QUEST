@@ -38,8 +38,8 @@ function renderDungeons() {
       (progress.cleared ? "制覇済み · 初回報酬獲得済み" : "最高 " + progress.unlockedFloor + " / " + progress.maxFloors + " 階まで解放")));
     if (info.clearReward) {
       const bonusItem = ITEM_DEFINITIONS[info.clearReward.itemId];
-      button.append(node("span", "dungeon-description",
-        "初回制覇報酬：" + (bonusItem?.name ?? "特別素材") +
+      button.append(node("span", "dungeon-reward",
+        "初回報酬：" + (bonusItem?.name ?? "特別素材") +
         " ×" + info.clearReward.quantity + " · " + info.clearReward.gold + "G"));
     }
     root.append(button);
@@ -51,7 +51,7 @@ function renderFloors() {
   const root = $("floorGrid");
   root.replaceChildren();
   $("floorHeading").textContent = info.name + " · 階層選択";
-  $("floorHint").textContent = "解放済みの階層は自由に周回できるよ。通常の宝箱報酬は毎回獲得、初回制覇ボーナスはダンジョンごとに1回だけ。";
+  $("floorHint").textContent = "解放済みの階層は何度でも挑戦OK。初回制覇ボーナスは各ダンジョン1回だけ。";
   selectedFloor = progress.floor;
 
   for (let floor = 1; floor <= progress.maxFloors; floor += 1) {

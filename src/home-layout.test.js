@@ -217,14 +217,22 @@ test("鍛冶屋は素材とゴールドを使った装備作成だけを行う",
   assert.match(script, /saves.save()/);
 });
 
-test("ダンジョン選択ページはダンジョンと階層の両方を選べる", () => {
+test("ダンジョン選択画面はNPC案内の下に目的地・階層・出発操作を整理して表示する", () => {
   const html = read("dungeons.html");
   const script = read("src/dungeons-page.js");
+  assert.match(html, /<main id="dungeonPage">/);
   assert.match(html, /id="dungeonGrid"/);
   assert.match(html, /id="floorGrid"/);
+  assert.match(html, /id="selectedDungeonName"/);
+  assert.match(html, /id="selectedFloorLabel"/);
+  assert.match(html, /id="adventureButton" href="\.\/battle\.html"/);
+  assert.match(html, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(html, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
   assert.match(script, /dungeon\.selectDungeon\(id\)/);
   assert.match(script, /dungeon\.selectFloor\(Number\(button\.dataset\.floor\)\)/);
   assert.match(script, /progress\.unlockedFloor/);
+  assert.match(script, /\$\("selectedFloorLabel"\)\.textContent/);
+  assert.match(script, /saves\.save\(\)/);
 });
 
 test("施設ページのID参照先がすべてHTML内に存在する", () => {
