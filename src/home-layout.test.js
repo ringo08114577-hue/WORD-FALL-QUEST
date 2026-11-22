@@ -269,7 +269,7 @@ test("階層選択の背景・カード配色・ボス表示は選択中ダン�
   assert.ok(html.includes('#dungeonPage[data-dungeon-theme="ice"] .floor-card.selected'));
   assert.ok(html.includes(".floor-card.floor-card--boss"));
   assert.ok(html.includes("@media(prefers-reduced-motion:reduce)"));
-  assert.ok(html.includes("#dungeonPage .floor-card { transition:none; }"));
+  assert.ok(html.includes("#dungeonPage .dungeon-card,#dungeonPage .floor-card { transition:none; }"));
 });
 
 test("施設ページのID参照先がすべてHTML内に存在する", () => {
