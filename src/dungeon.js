@@ -367,7 +367,7 @@ export function createDungeonController(
           actual.experienceReward !== expected.experienceReward) return false;
       if (version === CURRENT_ENCOUNTER_SET_VERSION &&
           (actual.isBoss !== expected.isBoss ||
-           actual.isMiniBoss !== expected.isMiniBoss ||
+           Boolean(actual.isMiniBoss) !== Boolean(expected.isMiniBoss) ||
            actual.attackElement !== expected.attackElement ||
            actual.elementalWeakness !== expected.elementalWeakness ||
            actual.elementalResistance !== expected.elementalResistance ||

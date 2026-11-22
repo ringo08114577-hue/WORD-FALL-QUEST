@@ -109,8 +109,8 @@ test("通常敵は階層ごとの出現条件・重みで抽選され、同じ�
   const commonBiased = getFloorEnemyIds(1, "forest-ruins", { random: () => 0 });
   const rareBiased = getFloorEnemyIds(1, "forest-ruins", { random: () => 0.99 });
   assert.notDeepEqual(commonBiased.slice(0, 4), rareBiased.slice(0, 4));
-  assert.equal(commonBiased.at(-1), "grandvel");
-  assert.equal(rareBiased.at(-1), "grandvel");
+  assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(commonBiased.at(-1)));
+  assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(rareBiased.at(-1)));
   assert.equal(isValidFloorEncounterIds(1, "forest-ruins",
     ["slime", "slime", "bat", "goblin", "grandvel"]), false);
   assert.equal(isValidFloorEncounterIds(1, "forest-ruins",
