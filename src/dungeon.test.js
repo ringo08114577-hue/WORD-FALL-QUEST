@@ -143,7 +143,7 @@ test("各ダンジョンの解放階層は独立して保存される", () => {
 test("各階の5体目は中ボス、5階の5体目は森のドラゴン", () => {
   const store = createGameStore();
   const dungeon = createTestDungeon(store);
-  const expectedFinal = ["grandvel", "grandvel", "grandvel", "grandvel", "forest-dragon"];
+  const expectedFinal = ["grandvel", "morgal", "loggar", "volgrif", "forest-dragon"];
   for (let floor = 1; floor <= 5; floor += 1) {
     if (floor === 1) dungeon.start();
     else assert.equal(dungeon.getProgress().floor, floor);

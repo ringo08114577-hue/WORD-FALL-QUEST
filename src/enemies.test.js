@@ -94,14 +94,9 @@ test("各階は通常敵4体と中ボス、5階は通常敵4体と大ボスに�
       ENEMY_DEFINITIONS[id].encounter.type === "normal"));
     assert.equal(ENEMY_DEFINITIONS[ids.at(-1)].rank,
       floor === 5 ? "boss" : "miniBoss");
-    if (floor < 5) assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(ids.at(-1)));
-    else assert.equal(ids.at(-1), "forest-dragon");
+    const expectedSpecial = ["grandvel", "morgal", "loggar", "volgrif", "forest-dragon"][floor - 1];
+    assert.equal(ids.at(-1), expectedSpecial);
     assert.equal(isValidFloorEncounterIds(floor, "forest-ruins", ids), true);
-  }
-  for (const roll of [0, 0.3, 0.6, 0.9]) {
-    const sequence = [0, 0, 0, 0, roll];
-    const ids = getFloorEnemyIds(1, "forest-ruins", { random: () => sequence.shift() });
-    assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(ids.at(-1)));
   }
 });
 
@@ -109,8 +104,8 @@ test("通常敵は階層ごとの出現条件・重みで抽選され、同じ�
   const commonBiased = getFloorEnemyIds(1, "forest-ruins", { random: () => 0 });
   const rareBiased = getFloorEnemyIds(1, "forest-ruins", { random: () => 0.99 });
   assert.notDeepEqual(commonBiased.slice(0, 4), rareBiased.slice(0, 4));
-  assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(commonBiased.at(-1)));
-  assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(rareBiased.at(-1)));
+  assert.equal(commonBiased.at(-1), "grandvel");
+  assert.equal(rareBiased.at(-1), "grandvel");
   assert.equal(isValidFloorEncounterIds(1, "forest-ruins",
     ["slime", "slime", "bat", "goblin", "grandvel"]), false);
   assert.equal(isValidFloorEncounterIds(1, "forest-ruins",
