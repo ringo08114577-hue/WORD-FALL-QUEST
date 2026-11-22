@@ -43,8 +43,8 @@ test("現在の装備より強く、購入可能な装備を紹介する", () =>
     },
   }));
   assert.equal(advice.status, "equipment");
-  assert.equal(advice.itemName, "鉄の剣");
-  assert.match(advice.detail, /攻撃力が20上がる/);
+  assert.equal(advice.itemName, "革の鎧");
+  assert.match(advice.detail, /防御力が15、最大HPが120上がる/);
 });
 
 test("売却可能な素材を所持している場合は売値合計とアイテム欄への案内を表示する", () => {
