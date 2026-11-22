@@ -31,22 +31,42 @@ src/
 - `startingQuantity` を指定すると新規ゲームの初期所持数になる。
 - 回復薬は現在の形式（type: "consumable", effect: "heal", healAmount）で登録。
 
-## 敵と特殊能力
-`src/data/enemies.js` の `ENEMY_DEFINITIONS` に追加します。
-`id`、`name`、`maxHp`、`attackPower`、`experienceReward`、`abilities` を指定し、ボスなら `isBoss: true`。
-能力IDは同ファイルの `ENEMY_ABILITY_DEFINITIONS` に登録します。
-現在の効果キーは `counterAttackBonus`、`damageReduction`、`defensePiercing`。
-新しい種類の効果を増やす場合だけ、処理側の `combat.js` も変更します。
+## 敵キャラクターと特殊能力
+敵の基本情報は `src/data/enemies.js` の `ENEMY_DEFINITIONS` にまとめます。**新しい敵を追加するときは、まずこのカタログへ登録**します。
 
-## ダンジョンと階層（STEP 23）
-`src/data/dungeons.js` の `DUNGEON_DEFINITIONS` に新しいIDで追加します。
-各ダンジョンは `floorCount: 5` と、階層数と同じ数の `encounterSets` を持ちます。各配列がその階層の敵編成です。5階の最後の敵をボスにします。
-`reward` にゴールドとアイテム報酬を指定します。参照する敵・アイテムIDは各カタログに登録済みである必要があります。
-`src/dungeon.js` は `unlockedFloors` と `completedDungeons` をダンジョンIDごとに保存します。新しいダンジョンは1階だけ解放された状態で始まります。
-階層クリア後に報酬を受け取ると次の階が解放されます。解放済み階層は `dungeons.html` から自由に選び直せます。
-ダンジョンからホームへ戻ると、挑戦中の階層の敵番号と宝箱状態をリセットします。選んでいた階層と解放記録は残るため、次の挑戦ではその階の1体目から始まります。
-ホームへ戻るときは `src/town.js` が `RETURN_TO_TOWN` を実行し、HPを全回復します。レベル・経験値・所持品・装備・スキルレベルは維持します。
-セーブ形式はバージョン8です。旧セーブは段階的に現在の形式へ移行します。
+各キャラには次の項目を設定します。
+- 基本：`id`、`name`、`rank`（`normal` / `miniBoss` / `boss`）、`description`
+- 能力：`maxHp`、`attackPower`、`experienceReward`、`abilities`
+- 属性：必要に応じて `attackElement`、`elementalWeakness`、`elementalResistance`
+- 出現条件：`encounter`（出現タイプ・ダンジョン・階層・重み）
+
+通常敵の `encounter` は `type: "normal"`、`dungeonIds`、`minFloor`、`maxFloor`、`weight` を設定します。重みが大きいほど抽選されやすく、通常敵は同じ階の中で重複しないよう抽選されます。
+中ボスと大ボスは `type: "miniBoss"` / `"boss"` と `dungeonIds`、`minFloor` / `maxFloor` または `floors`、必要なら `weight` を設定します。中ボスは通常階、大ボスは指定されたボス階に選ばれます。
+
+特殊能力IDと説明・数値効果は同ファイルの `ENEMY_ABILITY_DEFINITIONS` に登録します。現在の効果キーは `counterAttackBonus`、`damageReduction`、`defensePiercing` です。新しい効果の種類を増やす場合だけ、処理側の `combat.js` も変更します。
+
+敵のドロップは `src/data/enemy-drops.js` に敵IDごとに登録します。素材は `src/data/items.js` の `ITEM_DEFINITIONS` に追加し、名前は `モンスター名 + の + 素材名` にします。通常素材1は60%、通常素材2は30%、レア素材は5%の独立抽選が基本です。
+キャラ画像は `src/character-images.js` の `CHARACTER_IMAGE_CATALOG` に同じ敵IDで登録します。画像がまだない場合は `image: null` とし、共通仮画像を使います。
+
+## ダンジョンと階層
+ダンジョン本体は `src/data/dungeons.js` の `DUNGEON_DEFINITIONS` に登録します。敵の出現先・階層・出現率は敵側の `encounter` に書くため、敵を追加するたびに階層編成表を手作業で作り直す必要はありません。
+
+ランダム編成を使うダンジョンには `encounterPlan` を設定します。
+```js
+encounterPlan: Object.freeze({
+  enemiesPerFloor: 5,
+  normalEnemyCount: 4,
+  majorBossEveryFloors: 5,
+})
+```
+この設定なら各階5体、通常敵4体を重み付き・重複なしで抽選し、最後の1体を特別枠にします。5の倍数階は大ボス、それ以外は中ボスです。ボス候補は各敵の `encounter` に登録します。
+
+現在の「はじまりの森」はこの方式で、雑魚8体・中ボス4体・森のドラゴンを登録済みです。4体の中ボスは通常階の候補プールから抽選されます。「氷結の洞窟」は専用中ボスが決まるまで既存の固定編成を維持しています。新しいダンジョンにランダム編成を設定するときは、そのダンジョン用の通常敵・中ボス・大ボスを先に登録してください。
+
+`reward` に階層報酬、`clearReward` に初回制覇報酬を設定します。参照する敵・アイテムIDは各カタログに登録済みである必要があります。
+`src/dungeon.js` は階層解放・制覇記録・現在の敵編成を管理します。ランダム抽選した編成IDはセーブデータにも保存されるため、途中で再開しても敵の順番は変わりません。
+ホームへ戻ると挑戦中の階層を最初の敵からやり直しますが、解放済み階層・レベル・経験値・所持品・装備・スキルレベルは維持します。HPは全回復します。
+現在のセーブ形式はバージョン13です。旧バージョンのセーブは段階的に移行します。
 
 ## 技と英単語
 - 技：`src/data/skills.js` に追加。各技は `category`（attack / heal / defense / support）、対応する文字数、`startingLevel`、`maxLevel`、`upgradeCosts` を持ちます。補助系は `wordDifficultyRange: { min: 1, max: 2 }` を指定すると、レベルに関係なく簡単な単語で発動します。

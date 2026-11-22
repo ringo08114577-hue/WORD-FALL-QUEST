@@ -1,6 +1,7 @@
 /**
- * Dungeon catalog. Each dungeon has five ordered floors; the fifth floor is
- * guarded by its boss. Earlier encounter layouts remain here for old saves.
+ * Dungeon catalog.
+ * New procedural dungeons use encounterPlan; encounterSets are retained for
+ * legacy saves and dungeons that have not moved to procedural encounters yet.
  */
 export const DEFAULT_DUNGEON_ID = "forest-ruins";
 
