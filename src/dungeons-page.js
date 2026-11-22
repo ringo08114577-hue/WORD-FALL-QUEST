@@ -29,13 +29,34 @@ function renderDungeons() {
     button.type = "button";
     button.dataset.dungeonId = info.id;
     button.setAttribute("aria-pressed", String(info.id === dungeon.getDungeonInfo().id));
-    button.append(node("span", "dungeon-icon", info.icon ?? "🗺️"));
-    button.append(node("strong", "dungeon-name", info.name));
-    button.append(node("span", "dungeon-meta", info.difficulty + " · 推奨 LV." + info.recommendedLevel));
-    button.append(node("span", "dungeon-progress",
-      progress.cleared
-        ? "✓ 制覇済み"
-        : "解放 " + progress.unlockedFloor + " / " + progress.maxFloors + "階"));
+    const art = node("span", "dungeon-card-art");
+    art.setAttribute("aria-hidden", "true");
+    const artImage = document.createElement("img");
+    artImage.src = info.art ?? "";
+    artImage.alt = "";
+    artImage.loading = "lazy";
+    artImage.decoding = "async";
+    art.append(artImage);
+
+    const shade = node("span", "dungeon-card-shade");
+    shade.setAttribute("aria-hidden", "true");
+
+    const heading = node("span", "dungeon-card-head");
+    heading.append(
+      node("span", "dungeon-icon", info.icon ?? "🗺️"),
+      node("strong", "dungeon-name", info.name)
+    );
+
+    const footer = node("span", "dungeon-card-footer");
+    footer.append(
+      node("span", "dungeon-meta", info.difficulty + " · 推奨 LV." + info.recommendedLevel),
+      node("span", "dungeon-progress",
+        progress.cleared
+          ? "✓ 制覇済み"
+          : "解放 " + progress.unlockedFloor + " / " + progress.maxFloors + "階")
+    );
+    button.setAttribute("aria-label", info.name + "、" + info.difficulty + "、推奨レベル " + info.recommendedLevel);
+    button.append(art, shade, heading, footer);
     root.append(button);
   }
 }

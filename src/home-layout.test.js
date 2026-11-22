@@ -217,21 +217,30 @@ test("鍛冶屋は素材とゴールドを使った装備作成だけを行う",
   assert.match(script, /saves.save()/);
 });
 
-test("ダンジョン選択カードは短い情報だけを表示し、追加時も自動で列を組み直す", () => {
+test("ダンジョンカードは専用背景画像とコンパクトな進行情報を表示する", () => {
   const html = read("dungeons.html");
   const script = read("src/dungeons-page.js");
+  const catalog = read("src/data/dungeons.js");
   assert.match(html, /<main id="dungeonPage">/);
   assert.match(html, /id="dungeonGrid"/);
   assert.match(html, /id="floorGrid"/);
   assert.match(html, /id="selectedDungeonName"/);
   assert.match(html, /id="selectedFloorLabel"/);
   assert.match(html, /id="adventureButton" href="\.\/battle\.html"/);
-  assert.match(html, /grid-template-columns:repeat\(auto-fill,minmax\(145px,1fr\)\)/);
-  assert.match(html, /grid-template-columns:repeat\(auto-fill,minmax\(130px,1fr\)\)/);
-  assert.match(script, /button\.append\(node\("strong", "dungeon-name", info\.name\)\)/);
-  assert.match(script, /button\.append\(node\("span", "dungeon-meta"/);
-  assert.match(script, /button\.append\(node\("span", "dungeon-progress"/);
-  assert.doesNotMatch(script, /info\.description|ITEM_DEFINITIONS|dungeon-reward/);
+  assert.match(html, /repeat\(auto-fill,minmax\(145px,1fr\)\)/);
+  assert.match(html, /repeat\(auto-fill,minmax\(130px,1fr\)\)/);
+  assert.match(html, /\.dungeon-card-art img/);
+  assert.match(html, /\.dungeon-card-shade/);
+  assert.match(script, /artImage\.src = info\.art/);
+  assert.match(script, /dungeon-card-head/);
+  assert.match(script, /dungeon-card-footer/);
+  assert.match(catalog, /art: "\.\/assets\/dungeons\/forest-ruins\.svg"/);
+  assert.match(catalog, /art: "\.\/assets\/dungeons\/frozen-cavern\.svg"/);
+  for (const path of ["assets/dungeons/forest-ruins.svg","assets/dungeons/frozen-cavern.svg"]) {
+    assert.ok(existsSync(new URL("../" + path, root)), path + " artwork exists");
+    assert.match(read(path), /<svg[\s\S]*viewBox=/);
+  }
+  assert.doesNotMatch(script, /info\.description|dungeon-reward/);
   assert.match(script, /dungeon\.selectDungeon\(id\)/);
   assert.match(script, /dungeon\.selectFloor\(Number\(button\.dataset\.floor\)\)/);
   assert.match(script, /progress\.unlockedFloor/);
