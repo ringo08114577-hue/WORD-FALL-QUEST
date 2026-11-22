@@ -20,8 +20,9 @@ export const ENEMY_DROP_TABLES = Object.freeze({
     drop("plain-slime-magic-core", 0.05),
   ]),
   "orange-slime": Object.freeze([
-    drop("orange-gel", 0.75, 1, 2),
-    drop("slime-core", 0.15),
+    drop("orange-gel", 0.60, 1, 2),
+    drop("orange-slime-mucus", 0.30),
+    drop("orange-slime-core", 0.05),
   ]),
   bat: Object.freeze([
     drop("bat-wing", 0.60, 1, 2),

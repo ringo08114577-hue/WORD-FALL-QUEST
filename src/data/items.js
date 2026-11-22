@@ -48,8 +48,16 @@ export const ITEM_DEFINITIONS = Object.freeze({
     description: "グリーンスライムから手に入る、若葉色のゼリー。",
   }),
   "orange-gel": Object.freeze({
-    id: "orange-gel", name: "オレンジゼリー", type: "material", sellPrice: 6,
+    id: "orange-gel", name: "オレンジスライムのゼリー", type: "material", sellPrice: 6,
     description: "オレンジスライムから手に入る、少し濃いゼリー。",
+  }),
+  "orange-slime-mucus": Object.freeze({
+    id: "orange-slime-mucus", name: "オレンジスライムの粘液", type: "material", sellPrice: 8,
+    description: "オレンジスライムの体から採れる、少し粘りのある素材。",
+  }),
+  "orange-slime-core": Object.freeze({
+    id: "orange-slime-core", name: "オレンジスライムの魔力核", type: "material", sellPrice: 18,
+    description: "オレンジスライムからまれに手に入る、濃い橙色の魔力核。",
   }),
   "slime-core": Object.freeze({
     id: "slime-core", name: "グリーンスライムの森の魔力核", type: "material", sellPrice: 15,

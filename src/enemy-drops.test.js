@@ -42,6 +42,14 @@ test("ドロップ抽選に外れた場合は素材を獲得せず、未知の�
   assert.deepEqual(resolveEnemyDrops("unknown-enemy", () => 0), []);
 });
 
+test("オレンジスライムも自分専用の素材を個別確率で落とす", () => {
+  assert.deepEqual(resolveEnemyDrops("orange-slime", () => 0), [
+    { itemId: "orange-gel", quantity: 1 },
+    { itemId: "orange-slime-mucus", quantity: 1 },
+    { itemId: "orange-slime-core", quantity: 1 },
+  ]);
+});
+
 test("中ボスも個別素材を落とし、大ボスは専用素材を確定で落とす", () => {
   assert.deepEqual(resolveEnemyDrops("grandvel", () => 0), [
     { itemId: "grandvel-giant-horn", quantity: 1 },
