@@ -355,7 +355,7 @@ test("鍛冶師NPCは素材・ゴールド・装備状況に応じた案内を�
   assert.match(script, /ガルドの鍛冶アドバイス/);
   assert.match(facility, /WFQ_BLACKSMITH_CONTEXT/);
   assert.match(facility, /wfq:blacksmith-context-updated/);
-  assert.match(html, /blacksmith\.svg/);
+  assert.match(script, /blacksmith\.svg/);
 });
 
 test("鍛冶師のおすすめは装備・レシピを参照し、ゲーム状態を変更しない", () => {
