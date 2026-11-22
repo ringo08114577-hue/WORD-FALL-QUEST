@@ -62,7 +62,7 @@ function normalizedProgressMap(raw, fallbackFactory, validateValue) {
 
 export function createDungeonController(
   store,
-  { dungeonId: initialDungeonId = DEFAULT_DUNGEON_ID } = {},
+  { dungeonId: initialDungeonId = DEFAULT_DUNGEON_ID, random = Math.random } = {},
 ) {
   if (!store || typeof store.getState !== "function" ||
       typeof store.dispatch !== "function") {
@@ -71,6 +71,7 @@ export function createDungeonController(
   if (!Object.hasOwn(DUNGEON_DEFINITIONS, initialDungeonId)) {
     throw new RangeError("登録されていないダンジョンです: " + initialDungeonId);
   }
+  if (typeof random !== "function") throw new TypeError("乱数関数を指定してください。");
 
   let dungeonId = initialDungeonId;
   let floor = 1;

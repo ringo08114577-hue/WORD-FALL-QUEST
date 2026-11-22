@@ -9,7 +9,7 @@ import { GAME_CONFIG } from "./game-config.js";
 import { createEnemy } from "./enemies.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -337,6 +337,22 @@ function migrateSnapshot(snapshot) {
 
   if (migrated.version === 11) {
     migrated = { ...migrated, version: 12 };
+  }
+
+  if (migrated.version === 12) {
+    const gameState = migrated.gameState;
+    if (!isRecord(gameState)) return null;
+    migrated = {
+      ...migrated,
+      version: 13,
+      gameState: {
+        ...gameState,
+        enemy: isRecord(gameState.enemy) ? {
+          ...gameState.enemy,
+          isMiniBoss: gameState.enemy.isMiniBoss === true,
+        } : gameState.enemy ?? null,
+      },
+    };
   }
 
   if (migrated.version === SAVE_VERSION) {

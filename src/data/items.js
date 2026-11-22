@@ -44,55 +44,55 @@ export const ITEM_DEFINITIONS = Object.freeze({
   }),
   // Materials dropped by monsters. sellPrice is used by trading; recipes live in crafting-recipes.js.
   "slime-gel": Object.freeze({
-    id: "slime-gel", name: "スライムゼリー", type: "material", sellPrice: 4,
-    description: "スライムから手に入る、ぷるぷるした素材。防具作りに使える。",
+    id: "slime-gel", name: "グリーンスライムの若葉ゼリー", type: "material", sellPrice: 4,
+    description: "グリーンスライムから手に入る、若葉色のゼリー。",
   }),
   "orange-gel": Object.freeze({
     id: "orange-gel", name: "オレンジゼリー", type: "material", sellPrice: 6,
     description: "オレンジスライムから手に入る、少し濃いゼリー。",
   }),
   "slime-core": Object.freeze({
-    id: "slime-core", name: "スライムコア", type: "material", sellPrice: 15,
-    description: "オレンジスライムからまれに手に入る、魔力を帯びた核。",
+    id: "slime-core", name: "グリーンスライムの森の魔力核", type: "material", sellPrice: 15,
+    description: "グリーンスライムの体内にある、森の魔力を宿した核。",
   }),
   "bat-wing": Object.freeze({
-    id: "bat-wing", name: "コウモリの羽", type: "material", sellPrice: 7,
-    description: "お化けコウモリの羽。軽い装備の素材になる。",
+    id: "bat-wing", name: "お化けコウモリの翼", type: "material", sellPrice: 7,
+    description: "お化けコウモリの大きな翼。軽い装備の素材になる。",
   }),
   "bat-silk": Object.freeze({
-    id: "bat-silk", name: "コウモリの薄布", type: "material", sellPrice: 18,
-    description: "お化けコウモリからまれに手に入る、丈夫で軽い布。",
+    id: "bat-silk", name: "お化けコウモリの羽根", type: "material", sellPrice: 18,
+    description: "お化けコウモリから落ちる、柔らかく軽い羽根。",
   }),
   "goblin-cloth": Object.freeze({
-    id: "goblin-cloth", name: "ゴブリンの布", type: "material", sellPrice: 8,
-    description: "ゴブリンが持っていた布切れ。防具作りに使える。",
+    id: "goblin-cloth", name: "ゴブリンの布切れ", type: "material", sellPrice: 8,
+    description: "ゴブリンが身につけていた布切れ。",
   }),
   "goblin-medal": Object.freeze({
-    id: "goblin-medal", name: "ゴブリンのメダル", type: "material", sellPrice: 20,
-    description: "ゴブリンからまれに手に入る古びたメダル。",
+    id: "goblin-medal", name: "ゴブリンのお守り", type: "material", sellPrice: 20,
+    description: "ゴブリンが身につけていた、小さなお守り。",
   }),
   "orc-fang": Object.freeze({
     id: "orc-fang", name: "オークの牙", type: "material", sellPrice: 12,
     description: "オークの鋭い牙。武器や盾の素材になる。",
   }),
   "orc-hide": Object.freeze({
-    id: "orc-hide", name: "オークの皮", type: "material", sellPrice: 16,
-    description: "オークからまれに手に入る、厚くて丈夫な皮。",
+    id: "orc-hide", name: "オークの硬い皮", type: "material", sellPrice: 16,
+    description: "オークの体を覆う、厚くて丈夫な皮。",
   }),
   "moss-stone": Object.freeze({
-    id: "moss-stone", name: "苔むした石", type: "material", sellPrice: 12,
-    description: "こけゴーレムの体を形作る石のかけら。",
+    id: "moss-stone", name: "苔ゴーレムの石片", type: "material", sellPrice: 12,
+    description: "苔ゴーレムの体を形作る石のかけら。",
   }),
   "moss-crystal": Object.freeze({
-    id: "moss-crystal", name: "苔の結晶", type: "material", sellPrice: 28,
-    description: "こけゴーレムからまれに手に入る、緑色の結晶。",
+    id: "moss-crystal", name: "苔ゴーレムの魔力核", type: "material", sellPrice: 28,
+    description: "苔ゴーレムの体内にある、緑色の魔力核。",
   }),
   "forest-dragon-scale": Object.freeze({
-    id: "forest-dragon-scale", name: "森竜のうろこ", type: "material", sellPrice: 45,
+    id: "forest-dragon-scale", name: "森のドラゴンのうろこ", type: "material", sellPrice: 45,
     description: "森のドラゴンが落とす、硬くて貴重なうろこ。",
   }),
   "forest-dragon-heart": Object.freeze({
-    id: "forest-dragon-heart", name: "森竜の心核", type: "material", sellPrice: 85,
+    id: "forest-dragon-heart", name: "森のドラゴンの心核", type: "material", sellPrice: 85,
     description: "森のドラゴンからまれに手に入る、希少な素材。",
   }),
   "ice-wolf-fang": Object.freeze({
@@ -118,6 +118,111 @@ export const ITEM_DEFINITIONS = Object.freeze({
   "ice-dragon-heart": Object.freeze({
     id: "ice-dragon-heart", name: "氷竜の心核", type: "material", sellPrice: 100,
     description: "氷結のドラゴンからまれに手に入る、極めて希少な素材。",
+  }),
+  // Additional character-specific materials. Keep sell values modest: crafting is the main use.
+  "green-slime-moss-mucus": Object.freeze({
+    id: "green-slime-moss-mucus", name: "グリーンスライムの苔粘液", type: "material", sellPrice: 7,
+    description: "グリーンスライムから手に入る、苔の香りがする粘液。",
+  }),
+  "plain-slime-gel": Object.freeze({
+    id: "plain-slime-gel", name: "スライムのゼリー", type: "material", sellPrice: 4,
+    description: "スライムから手に入る、ぷるぷるしたゼリー。",
+  }),
+  "plain-slime-mucus": Object.freeze({
+    id: "plain-slime-mucus", name: "スライムの粘液", type: "material", sellPrice: 5,
+    description: "スライムの体から採れる、少し粘りのある素材。",
+  }),
+  "plain-slime-magic-core": Object.freeze({
+    id: "plain-slime-magic-core", name: "スライムの魔力核", type: "material", sellPrice: 15,
+    description: "スライムからまれに手に入る、小さな魔力の結晶。",
+  }),
+  "bat-dark-crystal": Object.freeze({
+    id: "bat-dark-crystal", name: "お化けコウモリの暗闇結晶", type: "material", sellPrice: 18,
+    description: "お化けコウモリからまれに手に入る、暗い光を放つ結晶。",
+  }),
+  "goblin-fang": Object.freeze({
+    id: "goblin-fang", name: "ゴブリンの牙", type: "material", sellPrice: 8,
+    description: "ゴブリンの小さな牙。武器や道具の素材になる。",
+  }),
+  "orc-warrior-emblem": Object.freeze({
+    id: "orc-warrior-emblem", name: "オークの戦士の紋章", type: "material", sellPrice: 22,
+    description: "オークの戦士が持つ、力を示す紋章。",
+  }),
+  "poison-mushroom-cap": Object.freeze({
+    id: "poison-mushroom-cap", name: "毒キノコの傘", type: "material", sellPrice: 5,
+    description: "毒キノコの傘。加工すると薬や道具の素材になる。",
+  }),
+  "poison-mushroom-mycelium": Object.freeze({
+    id: "poison-mushroom-mycelium", name: "毒キノコの菌糸", type: "material", sellPrice: 7,
+    description: "毒キノコの根元から採れる細い菌糸。",
+  }),
+  "poison-mushroom-toxic-spore": Object.freeze({
+    id: "poison-mushroom-toxic-spore", name: "毒キノコの濃縮毒胞子", type: "material", sellPrice: 20,
+    description: "毒キノコからまれに手に入る、強い毒を含む胞子。",
+  }),
+  "forest-spider-leg": Object.freeze({
+    id: "forest-spider-leg", name: "森の大グモの脚", type: "material", sellPrice: 7,
+    description: "森の大グモの硬い脚。装備の補強に使える。",
+  }),
+  "forest-spider-thread": Object.freeze({
+    id: "forest-spider-thread", name: "森の大グモの糸", type: "material", sellPrice: 10,
+    description: "森の大グモが作る、丈夫で細い糸。",
+  }),
+  "forest-spider-queen-silkball": Object.freeze({
+    id: "forest-spider-queen-silkball", name: "森の大グモの女王糸玉", type: "material", sellPrice: 24,
+    description: "森の大グモからまれに手に入る、特別に強い糸玉。",
+  }),
+  "moss-golem-rock-arm": Object.freeze({
+    id: "moss-golem-rock-arm", name: "苔ゴーレムの岩腕", type: "material", sellPrice: 12,
+    description: "苔ゴーレムの腕を形作っていた頑丈な岩。",
+  }),
+  "grandvel-giant-horn": Object.freeze({
+    id: "grandvel-giant-horn", name: "グランヴェルの巨角", type: "material", sellPrice: 18,
+    description: "グランヴェルの大きな角。武器の素材になる。",
+  }),
+  "grandvel-guardian-fur": Object.freeze({
+    id: "grandvel-guardian-fur", name: "グランヴェルの守護毛", type: "material", sellPrice: 22,
+    description: "グランヴェルの体を覆う、丈夫な毛。",
+  }),
+  "grandvel-deep-green-crystal": Object.freeze({
+    id: "grandvel-deep-green-crystal", name: "グランヴェルの深緑結晶", type: "material", sellPrice: 38,
+    description: "グランヴェルからまれに手に入る、深い森の力を宿した結晶。",
+  }),
+  "morgal-venom-fang": Object.freeze({
+    id: "morgal-venom-fang", name: "モルガルの毒牙", type: "material", sellPrice: 18,
+    description: "モルガルの牙。かすかに毒が残っている。",
+  }),
+  "morgal-serpent-hide": Object.freeze({
+    id: "morgal-serpent-hide", name: "モルガルの蛇皮", type: "material", sellPrice: 22,
+    description: "モルガルの体を覆う、しなやかな皮。",
+  }),
+  "morgal-venom-crystal": Object.freeze({
+    id: "morgal-venom-crystal", name: "モルガルの猛毒結晶", type: "material", sellPrice: 38,
+    description: "モルガルからまれに手に入る、毒の力を閉じ込めた結晶。",
+  }),
+  "loggar-rotten-wood": Object.freeze({
+    id: "loggar-rotten-wood", name: "ログガルの朽木", type: "material", sellPrice: 16,
+    description: "ログガルの体を形作る、古くなった木材。",
+  }),
+  "loggar-roots": Object.freeze({
+    id: "loggar-roots", name: "ログガルの根", type: "material", sellPrice: 22,
+    description: "ログガルから採れる、地面に深く伸びた根。",
+  }),
+  "loggar-ancient-core": Object.freeze({
+    id: "loggar-ancient-core", name: "ログガルの古樹の核", type: "material", sellPrice: 40,
+    description: "ログガルからまれに手に入る、古い森の力を持つ核。",
+  }),
+  "volgrif-thunder-feather": Object.freeze({
+    id: "volgrif-thunder-feather", name: "ヴォルグリフの雷羽", type: "material", sellPrice: 18,
+    description: "ヴォルグリフの翼に生える、雷を帯びた羽根。",
+  }),
+  "volgrif-great-claw": Object.freeze({
+    id: "volgrif-great-claw", name: "ヴォルグリフの大爪", type: "material", sellPrice: 22,
+    description: "ヴォルグリフの鋭く大きな爪。",
+  }),
+  "volgrif-thunder-crystal": Object.freeze({
+    id: "volgrif-thunder-crystal", name: "ヴォルグリフの雷鳴結晶", type: "material", sellPrice: 40,
+    description: "ヴォルグリフからまれに手に入る、雷の力を宿した結晶。",
   }),
   "slime-buckler": Object.freeze({
     id: "slime-buckler", name: "スライムバックラー", type: "shield", slot: "shield",
