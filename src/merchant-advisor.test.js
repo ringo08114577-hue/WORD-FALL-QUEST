@@ -61,6 +61,19 @@ test("売却可能な素材を所持している場合は売値合計とアイ�
   assert.equal(advice.actionHref, "#facilityContent");
 });
 
+test("ゴールド不足の装備を次の候補として表示しない", () => {
+  const advice = getMerchantAdvice(context({
+    inventory: {
+      gold: 0,
+      items: { "small-potion": 2, "large-potion": 1 },
+      equipment: { weapon: "wooden-sword", shield: null, armor: null, accessory: null },
+    },
+  }));
+  assert.equal(advice.status, "ready");
+  assert.equal(advice.itemName, "冒険の準備は万全");
+  assert.notEqual(advice.label, "次の装備候補");
+});
+
 test("購入できる装備がない場合は素材売却か通常案内に切り替わる", () => {
   const advice = getMerchantAdvice(context({
     inventory: {

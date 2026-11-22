@@ -124,21 +124,16 @@ export function getMerchantAdvice(context = {}) {
     .filter(candidate => candidate.improvement > 0)
     .sort((a, b) => b.improvement - a.improvement || a.price - b.price || a.index - b.index);
 
-  const affordable = upgrades.find(candidate => candidate.price <= inventory.gold);
-  const nextUpgrade = affordable ?? upgrades[0];
-  if (nextUpgrade) {
-    const missingGold = Math.max(0, nextUpgrade.price - inventory.gold);
+  const affordableUpgrade = upgrades.find(candidate => candidate.price <= inventory.gold);
+  if (affordableUpgrade) {
     return {
       ...shared,
-      status: missingGold > 0 ? "save-gold" : "equipment",
-      label: missingGold > 0 ? "次の装備候補" : "購入できる装備",
-      greeting: missingGold > 0
-        ? "装備を新調するなら「" + nextUpgrade.item.name + "」がおすすめだ。もう少しゴールドを貯めよう！"
-        : "今の装備を強化するなら「" + nextUpgrade.item.name + "」がおすすめだ。いい品だぞ！",
-      itemName: nextUpgrade.item.name,
-      detail: (nextUpgrade.item.description ?? "冒険に役立つ装備だ。") +
-        (missingGold > 0 ? " あと" + missingGold + "Gで購入できるぞ。" : ""),
-      meta: nextUpgrade.price + "G · 所持 " + inventory.gold + "G",
+      status: "equipment",
+      label: "購入できる装備",
+      greeting: "今の装備を強化するなら「" + affordableUpgrade.item.name + "」がおすすめだ。いい品だぞ！",
+      itemName: affordableUpgrade.item.name,
+      detail: affordableUpgrade.item.description ?? "冒険に役立つ装備だ。",
+      meta: affordableUpgrade.price + "G · 所持 " + inventory.gold + "G",
       actionLabel: "装備を見る　›",
       actionHref: "#facilityContent",
     };
