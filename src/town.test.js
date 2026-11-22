@@ -31,9 +31,10 @@ test("敗北から街へ戻っても育成・所持品を保持し、同じ階�
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "large-potion", quantity: 2 });
   dungeon.start();
 
-  // Defeat the first enemy to gain one level, then lose the next encounter.
+  // Defeat the first enemy to earn EXP, then lose the next encounter.
   store.dispatch({ type: GAME_ACTION.DAMAGE_ENEMY, amount: store.getState().enemy.hp });
-  assert.equal(store.getState().player.level, 2);
+  assert.equal(store.getState().player.level, 1);
+  assert.equal(store.getState().player.experience, 30);
   assert.equal(dungeon.advance().started, true);
   store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: store.getState().player.hp });
 
@@ -42,14 +43,15 @@ test("敗北から街へ戻っても育成・所持品を保持し、同じ階�
   assert.equal(result.fromPhase, GAME_PHASE.DEFEAT);
   assert.equal(state.phase, GAME_PHASE.TITLE);
   assert.equal(state.player.hp, state.player.maxHp);
-  assert.equal(state.player.level, 2);
-  assert.equal(state.player.maxHp, 41);
-  assert.equal(state.player.attackPower, 25);
+  assert.equal(state.player.level, 1);
+  assert.equal(state.player.experience, 30);
+  assert.equal(state.player.maxHp, 1);
+  assert.equal(state.player.attackPower, 20);
   assert.equal(state.skillLevels["quick-strike"], 2);
   assert.equal(state.inventory.gold, 20);
   assert.equal(state.inventory.items["large-potion"], 2);
   assert.equal(state.stats.enemiesDefeated, 1);
-  assert.equal(state.stats.totalExperienceEarned, 100);
+  assert.equal(state.stats.totalExperienceEarned, 30);
   assert.equal(dungeon.getProgress().started, false);
   assert.equal(dungeon.getProgress().enemyNumber, 1);
   assert.equal(dungeon.start().enemy.id, "slime");

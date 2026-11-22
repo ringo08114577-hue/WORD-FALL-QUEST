@@ -147,7 +147,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   "ice-golem": Object.freeze({
     id: "ice-golem", name: "氷のゴーレム", rank: "normal",
-    maxHp: 500, attackPower: 45, experienceReward: 350, attackElement: "earth",
+    maxHp: 500, attackPower: 45, experienceReward: 70, attackElement: "earth",
     abilities: ids("guard", "crushing"),
     description: "氷の洞窟を守る大型のゴーレム。",
   }),

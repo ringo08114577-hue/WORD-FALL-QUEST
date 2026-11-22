@@ -37,7 +37,7 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
     name: "グリーンスライム",
     maxHp: 160,
     attackPower: 20,
-    experienceReward: 100,
+    experienceReward: 30,
     abilities: [],
     isBoss: false,
   });
