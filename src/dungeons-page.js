@@ -65,6 +65,7 @@ function renderFloors() {
   const progress = dungeon.getProgress();
   const root = $("floorGrid");
   root.replaceChildren();
+  $("dungeonPage").dataset.dungeonTheme = info.theme ?? "default";
   $("floorHeading").textContent = info.name + " · 階層選択";
   $("floorHint").textContent = "解放済みの階層は何度でも挑戦OK。初回制覇ボーナスは各ダンジョン1回だけ。";
   selectedFloor = progress.floor;
@@ -73,16 +74,23 @@ function renderFloors() {
     const unlocked = floor <= progress.unlockedFloor;
     const isSelected = floor === selectedFloor;
     const isBoss = floor === progress.maxFloors;
-    const button = node("button", "floor-card" + (isSelected ? " selected" : ""));
+    const isCleared = unlocked && floor < progress.unlockedFloor;
+    const stateClass = !unlocked ? "floor-card--locked" : isCleared ? "floor-card--cleared" : "floor-card--available";
+    const classes = ["floor-card", stateClass, isBoss ? "floor-card--boss" : "", isSelected ? "selected" : ""]
+      .filter(Boolean).join(" ");
+    const button = node("button", classes);
     button.type = "button";
     button.dataset.floor = String(floor);
+    button.dataset.floorState = !unlocked ? "locked" : isCleared ? "cleared" : "available";
     button.disabled = !unlocked || store.getState().phase !== GAME_PHASE.TITLE;
     button.setAttribute("aria-pressed", String(isSelected));
+    const statusText = !unlocked ? "🔒 未解放" :
+      (isBoss && progress.dungeonCleared ? "👑 撃破済み" :
+        isCleared ? "✓ クリア済み" : isBoss ? "ボス挑戦" : "挑戦可能");
+    button.setAttribute("aria-label", info.name + " " + floor + "階" +
+      (isBoss ? "、最深部・ボス階層" : "") + "、" + statusText);
     button.append(node("strong", "floor-name", isBoss ? floor + "階 · 最深部" : floor + "階"));
-    button.append(node("span", "floor-status",
-      !unlocked ? "🔒 未解放" :
-        (isBoss && progress.dungeonCleared ? "👑 ボス撃破済み · 周回可能" :
-          floor < progress.unlockedFloor ? "✓ クリア済み · 周回可能" : "挑戦可能")));
+    button.append(node("span", "floor-status", statusText));
     if (isBoss) button.append(node("span", "boss-note", "BOSS"));
     root.append(button);
   }

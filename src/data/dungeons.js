@@ -7,6 +7,7 @@ export const DEFAULT_DUNGEON_ID = "forest-ruins";
 export const DUNGEON_DEFINITIONS = Object.freeze({
   "forest-ruins": Object.freeze({
     id: "forest-ruins",
+    theme: "forest",
     name: "はじまりの森",
     icon: "🌲",
     art: "./assets/dungeons/forest-ruins.svg",
@@ -49,6 +50,7 @@ export const DUNGEON_DEFINITIONS = Object.freeze({
   }),
   "frozen-cavern": Object.freeze({
     id: "frozen-cavern",
+    theme: "ice",
     name: "氷結の洞窟",
     icon: "❄️",
     art: "./assets/dungeons/frozen-cavern.svg",

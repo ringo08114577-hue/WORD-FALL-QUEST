@@ -248,6 +248,26 @@ test("ダンジョンカードは専用背景画像とコンパクトな進行�
   assert.match(script, /saves\.save\(\)/);
 });
 
+test("階層選択の背景・カード配色・ボス表示は選択中ダンジョンのテーマに連動する", () => {
+  const html = read("dungeons.html");
+  const script = read("src/dungeons-page.js");
+  const catalog = read("src/data/dungeons.js");
+  assert.match(catalog, /id: "forest-ruins",[\\s\\S]*?theme: "forest"/);
+  assert.match(catalog, /id: "frozen-cavern",[\\s\\S]*?theme: "ice"/);
+  assert.match(script, /dataset\\.dungeonTheme = info\\.theme \\?\\? "default"/);
+  assert.match(script, /floor-card--boss/);
+  assert.match(script, /floor-card--locked/);
+  assert.match(script, /floor-card--cleared/);
+  assert.match(script, /dataset\\.floorState/);
+  assert.match(script, /aria-label", info\\.name/);
+  assert.match(html, /data-dungeon-theme="forest"[\\s\\S]*?frozen-cavern|frozen-cavern[\\s\\S]*?data-dungeon-theme="ice"/);
+  assert.match(html, /floor-ruins/);
+  assert.match(html, /frozen-cavern\\.svg/);
+  assert.match(html, /floor-card\\.selected/);
+  assert.match(html, /floor-card--boss/);
+  assert.match(html, /@media\\(prefers-reduced-motion:reduce\\)[\\s\\S]*?floor-card/);
+});
+
 test("施設ページのID参照先がすべてHTML内に存在する", () => {
   const html = read("index.html");
   const ids = [...html.matchAll(/id="([^"]+)"/g)].map((match) => match[1]);
