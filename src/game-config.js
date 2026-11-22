@@ -20,7 +20,7 @@ export const GAME_CONFIG = Object.freeze({
     // Floor 1 is the baseline. Each deeper floor compounds both stats.
     hpMultiplierPerFloor: 1.35,
     attackPowerMultiplierPerFloor: 1.25,
-    experiencePerFloor: 20,
+    experiencePerFloor: 5,
   }),
   // Compatibility view for existing balance screens/tests. The source of
   // truth is the selected dungeon's reward block, not this derived object.

@@ -22,7 +22,7 @@ test("初期能力と成長・敵強化の既存バランスを維持する", ()
   });
   assert.equal(GAME_CONFIG.enemyScaling.hpMultiplierPerFloor, 1.35);
   assert.equal(GAME_CONFIG.enemyScaling.attackPowerMultiplierPerFloor, 1.25);
-  assert.equal(GAME_CONFIG.enemyScaling.experiencePerFloor, 20);
+  assert.equal(GAME_CONFIG.enemyScaling.experiencePerFloor, 5);
 });
 
 test("奇数階と偶数階で既存どおりの宝箱報酬を生成する", () => {

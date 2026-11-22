@@ -158,8 +158,50 @@ test("階層補正はHPと攻撃力を階層ごとの倍率で大きく強化す
     const dragon = createEnemy("forest-dragon", { floor });
     assert.equal(dragon.maxHp, expected[floor - 1][0]);
     assert.equal(dragon.attackPower, expected[floor - 1][1]);
-    assert.equal(dragon.experienceReward, 550 + (floor - 1) * 20);
+    assert.equal(dragon.experienceReward, 120 + (floor - 1) * 5);
     assert.equal(dragon.isBoss, true);
   }
   assert.throws(() => createEnemy("unknown"), RangeError);
+});
+
+
+test("敵ごとの経験値は強さと役割に合わせて設定され、階層ごとの加算は5EXP", () => {
+  const expectedBaseExperience = {
+    "plain-slime": 25,
+    slime: 30,
+    bat: 30,
+    goblin: 35,
+    "poison-mushroom": 35,
+    "forest-spider": 40,
+    orc: 45,
+    "moss-golem": 60,
+    grandvel: 80,
+    morgal: 80,
+    loggar: 90,
+    volgrif: 85,
+    "forest-dragon": 120,
+    "ice-wolf": 50,
+    "ice-golem": 70,
+    "ice-dragon": 160,
+  };
+  for (const [enemyId, experience] of Object.entries(expectedBaseExperience)) {
+    assert.equal(ENEMY_DEFINITIONS[enemyId].experienceReward, experience, enemyId);
+    assert.equal(createEnemy(enemyId, { floor: 1 }).experienceReward, experience, enemyId);
+    assert.equal(createEnemy(enemyId, { floor: 5 }).experienceReward, experience + 20, enemyId);
+  }
+});
+
+test("はじまりの森を全階クリアした経験値はLV5〜LV6の範囲に収まる", () => {
+  let totalExperience = 0;
+  const expectedFloorExperience = [200, 225, 280, 300, 360];
+  for (let floor = 1; floor <= 5; floor += 1) {
+    const enemyIds = getFloorEnemyIds(floor, "forest-ruins", { random: () => 0 });
+    const floorExperience = enemyIds.reduce((total, enemyId) =>
+      total + createEnemy(enemyId, { floor }).experienceReward, 0);
+    assert.equal(floorExperience, expectedFloorExperience[floor - 1]);
+    totalExperience += floorExperience;
+  }
+  assert.equal(totalExperience, 1365);
+  // Level 5 begins at 1000 EXP; level 6 begins at 1500 EXP.
+  assert.ok(totalExperience >= 1000 && totalExperience < 1500);
 });
