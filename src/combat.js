@@ -8,7 +8,8 @@ import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { ENEMY_ABILITY_DEFINITIONS, getEnemyAbilityEffects } from "./enemies.js";
 import { SKILL_DEFINITIONS, getSkillEffectForLevel, getSkillDisplayName } from "./skills.js";
 import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
-import { ITEM_DEFINITIONS } from "./items.js";
+import { ITEM_DEFINITIONS, getEquipmentElementalBonuses, getElementalResistanceMultiplier } from "./items.js";
+import { getElementLabel, getElementalMatchup } from "./elements.js";
 import { resolveEnemyDrops } from "./enemy-drops.js";
 
 export const COMBAT_EVENT = Object.freeze({
@@ -54,10 +55,22 @@ export function resolveCombatEvent(gameState, event) {
       ? gameState.battleEffects.defenseBonus : 0;
     const effectiveDefense = Math.max(0, defensePower - effects.defensePiercing) + battleDefenseBonus;
     const minimumDamage = battleDefenseBonus > 0 ? 0 : 1;
-    const amount = Math.max(
+    const rawAmount = Math.max(
       minimumDamage,
       enemyPower + effects.counterAttackBonus - effectiveDefense,
     );
+    const incomingElement = gameState.enemy.attackElement ?? null;
+    const incomingResistanceMultiplier = getElementalResistanceMultiplier(
+      gameState.inventory?.equipment, incomingElement,
+    );
+    const amount = rawAmount === 0 ? 0 : Math.max(1, Math.ceil(rawAmount * incomingResistanceMultiplier));
+    const resistanceValue = incomingElement
+      ? getEquipmentElementalBonuses(gameState.inventory?.equipment).resistance[incomingElement] ?? 0
+      : 0;
+    const incomingElementNote = incomingElement
+      ? "（" + getElementLabel(incomingElement) + "属性攻撃" +
+        (resistanceValue > 0 ? "・耐性" : resistanceValue < 0 ? "・弱点" : "") + "）"
+      : "";
     const counterAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.counterAttackBonus>0);
     const abilityNote = counterAbility ? "（"+counterAbility.name+"）" : "";
     const piercingNote = effects.defensePiercing>0 ? " 防御力を一部無視！" : "";
@@ -69,10 +82,10 @@ export function resolveCombatEvent(gameState, event) {
         logReason: event.type === COMBAT_EVENT.TIMED_ATTACK ? "時間攻撃" : "反撃",
       }, damageTarget:"player", damage:amount,
       message: amount === 0
-        ? gameState.enemy.name + "の攻撃を「鉄壁の構え」で完全に防いだ！ダメージ0。"
+        ? gameState.enemy.name + "の攻撃を「鉄壁の構え」で完全に防いだ！ダメージ0。" + incomingElementNote
         : event.type === COMBAT_EVENT.TIMED_ATTACK
-          ? gameState.enemy.name + "の時間攻撃！ HP -" + amount + "。" + abilityNote + piercingNote
-          : gameState.enemy.name + "の反撃" + abilityNote + "！「" + (event.letter || "?") + "」は違う文字。HP -" + amount + "。" + piercingNote,
+          ? gameState.enemy.name + "の時間攻撃！ HP -" + amount + "。" + abilityNote + piercingNote + incomingElementNote
+          : gameState.enemy.name + "の反撃" + abilityNote + "！「" + (event.letter || "?") + "」は違う文字。HP -" + amount + "。" + piercingNote + incomingElementNote,
       tone:"bad",
     };
   }
@@ -146,13 +159,25 @@ export function resolveCombatEvent(gameState, event) {
   const difficultyMultiplier = WORD_DIFFICULTY_DEFINITIONS[wordDifficulty].damageMultiplier;
   const activeAttackMultiplier = gameState.battleEffects?.attackUsesRemaining > 0
     ? gameState.battleEffects.attackMultiplier : 1;
+  const equipmentElements = getEquipmentElementalBonuses(gameState.inventory?.equipment);
+  const attackElement = skillEffect?.element ?? skill?.element ?? equipmentElements.attackElement;
+  const elementalMatchup = getElementalMatchup(attackElement, gameState.enemy);
+  const elementalAttackBonus = attackElement ? equipmentElements.attackBonus[attackElement] ?? 0 : 0;
+  const elementalAttackMultiplier = attackElement
+    ? (1 + elementalAttackBonus) * elementalMatchup.multiplier : 1;
   const baseDamage = Math.ceil(
     positivePower(gameState.player.attackPower) *
     (skillEffect?.damageMultiplier ?? skill?.damageMultiplier ?? 1) *
     difficultyMultiplier *
-    activeAttackMultiplier,
+    activeAttackMultiplier *
+    elementalAttackMultiplier,
   );
   const amount = Math.max(1, baseDamage - effects.damageReduction);
+  const outgoingElementNote = attackElement
+    ? "（" + getElementLabel(attackElement) + "属性" +
+      (elementalMatchup.label ? "・" + elementalMatchup.label : "") +
+      (elementalAttackBonus > 0 ? "・装備効果 +" + Math.round(elementalAttackBonus * 100) + "%" : "") + "）"
+    : "";
   const guardAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.damageReduction>0);
   const abilityNote = guardAbility ? "（"+guardAbility.name+"でダメージ軽減）" : "";
   return {
@@ -164,7 +189,7 @@ export function resolveCombatEvent(gameState, event) {
     },
     damageTarget:"enemy",
     damage:amount,
-    message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+
+    message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+outgoingElementNote+
       (activeAttackMultiplier > 1 ? " 攻撃強化が発動！" : "") + abilityNote,
     tone:"good",
   };

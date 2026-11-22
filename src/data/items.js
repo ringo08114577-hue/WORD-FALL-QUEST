@@ -133,23 +133,31 @@ export const ITEM_DEFINITIONS = Object.freeze({
   }),
   "moss-guardian-armor": Object.freeze({
     id: "moss-guardian-armor", name: "苔守りの鎧", type: "armor", slot: "armor",
-    defenseBonus: 35, maxHpBonus: 180, description: "苔の結晶で補強した重い鎧。防御力が35、最大HPが180上がる。",
+    defenseBonus: 35, maxHpBonus: 180,
+    elementalResistance: Object.freeze({ earth: 0.15 }),
+    description: "苔の結晶で補強した重い鎧。防御力が35、最大HPが180上がり、土属性ダメージを15%軽減する。",
   }),
   "wolf-fang-sword": Object.freeze({
     id: "wolf-fang-sword", name: "氷狼の牙剣", type: "weapon", slot: "weapon",
-    attackBonus: 50, description: "氷狼の牙と氷結鉱石を使った剣。攻撃力が50上がる。",
+    attackBonus: 50, attackElement: "water",
+    description: "氷狼の牙と氷結鉱石を使った水属性の剣。攻撃力が50上がる。",
   }),
   "ice-crystal-charm": Object.freeze({
     id: "ice-crystal-charm", name: "氷晶のお守り", type: "accessory", slot: "accessory",
     attackBonus: 25, defenseBonus: 25, maxHpBonus: 120,
-    description: "氷の結晶を磨いて作ったお守り。攻撃力・防御力が25、最大HPが120上がる。",
+    elementalResistance: Object.freeze({ water: 0.10 }),
+    description: "氷の結晶を磨いて作ったお守り。攻撃力・防御力が25、最大HPが120上がり、水属性ダメージを10%軽減する。",
   }),
   "forest-dragon-sword": Object.freeze({
     id: "forest-dragon-sword", name: "森竜の大剣", type: "weapon", slot: "weapon",
-    attackBonus: 75, description: "森竜の心核を宿した大剣。攻撃力が75上がる。",
+    attackBonus: 75, attackElement: "wind",
+    elementalAttackBonus: Object.freeze({ wind: 0.10 }),
+    description: "森竜の心核を宿した風属性の大剣。攻撃力が75上がり、風属性ダメージが10%増える。",
   }),
   "ice-dragon-armor": Object.freeze({
     id: "ice-dragon-armor", name: "氷竜の鎧", type: "armor", slot: "armor",
-    defenseBonus: 65, maxHpBonus: 300, description: "氷竜の素材で鍛えた最上級の鎧。防御力が65、最大HPが300上がる。",
+    defenseBonus: 65, maxHpBonus: 300,
+    elementalResistance: Object.freeze({ water: 0.20, fire: -0.10 }),
+    description: "氷竜の素材で鍛えた最上級の鎧。防御力が65、最大HPが300上がり、水属性ダメージを20%軽減するが炎属性には弱い。",
   }),
 });

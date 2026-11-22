@@ -2,6 +2,7 @@ import { ITEM_DEFINITIONS, ITEM_SHOP_PRICES, EQUIPMENT_SLOTS, EQUIPMENT_SLOT_LAB
 import { CRAFTING_RECIPES } from "./data/crafting-recipes.js";
 import { ENEMY_ABILITY_DEFINITIONS } from "./enemies.js";
 import { GAME_CONFIG } from "./game-config.js";
+import { isElementId } from "./elements.js";
 import {
   SKILL_DEFINITIONS, createInitialSkillLevels, isValidSkillLevels, getSkillUpgradeCost,
   createInitialEquippedSkillIds, isValidEquippedSkillIds,
@@ -87,17 +88,30 @@ function normalizeEnemy(enemy) {
   const experienceReward = enemy.experienceReward === undefined ? 0 : enemy.experienceReward;
   const abilities = enemy.abilities === undefined ? [] : enemy.abilities;
   const isBoss = enemy.isBoss === undefined ? false : enemy.isBoss;
+  const attackElement = enemy.attackElement ?? null;
+  const elementalWeakness = enemy.elementalWeakness ?? null;
+  const elementalResistance = enemy.elementalResistance ?? null;
+  const validOptionalElement = (element) => element === null || isElementId(element);
   if (
     (typeof id !== "string" && typeof id !== "number") ||
     typeof name !== "string" || name.trim() === "" ||
     !isPositiveInteger(maxHp) || !isPositiveInteger(attackPower) ||
     !isNonNegativeInteger(experienceReward) || !Array.isArray(abilities) ||
     abilities.some((abilityId) => typeof abilityId !== "string" || !Object.hasOwn(ENEMY_ABILITY_DEFINITIONS,abilityId)) ||
-    new Set(abilities).size !== abilities.length || typeof isBoss !== "boolean"
-  ) throw new TypeError("敵データは有効な能力IDの配列とisBossを含む正しいステータスを指定してください。");
+    new Set(abilities).size !== abilities.length || typeof isBoss !== "boolean" ||
+    !validOptionalElement(attackElement) ||
+    !validOptionalElement(elementalWeakness) ||
+    !validOptionalElement(elementalResistance)
+  ) throw new TypeError("敵データは正しいステータスと登録済みの属性を指定してください。");
   const hp = enemy.hp === undefined ? maxHp : enemy.hp;
   if (!Number.isSafeInteger(hp) || hp < 1 || hp > maxHp) throw new TypeError("敵のhpは1以上maxHp以下の整数にしてください。");
-  return {id,name:name.trim(),hp,maxHp,attackPower,experienceReward,abilities:[...abilities],isBoss};
+  return {
+    id, name: name.trim(), hp, maxHp, attackPower, experienceReward,
+    abilities: [...abilities], isBoss,
+    ...(attackElement ? { attackElement } : {}),
+    ...(elementalWeakness ? { elementalWeakness } : {}),
+    ...(elementalResistance ? { elementalResistance } : {}),
+  };
 }
 
 function normalizeAmount(amount) {

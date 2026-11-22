@@ -7,6 +7,7 @@ import { ENEMY_DROP_TABLES } from "./data/enemy-drops.js";
 import { INVENTORY_CATEGORIES, getOwnedInventoryItems } from "./inventory.js";
 import { createSellController } from "./sell.js";
 import { compareEquipment } from "./equipment-comparison.js";
+import { ELEMENT_IDS, ELEMENT_LABELS, getElementLabel } from "./elements.js";
 
 const $ = (id) => document.getElementById(id);
 const session = createAppSession();
@@ -36,6 +37,19 @@ function getItemEffects(item) {
   }
   if (Number.isSafeInteger(item.healAmount) && item.healAmount > 0) {
     effects.push("HPを " + item.healAmount + " 回復");
+  }
+  if (item.attackElement) effects.push(getElementLabel(item.attackElement) + "属性攻撃");
+  for (const element of ELEMENT_IDS) {
+    const attackBonus = item.elementalAttackBonus?.[element];
+    if (Number.isFinite(attackBonus) && attackBonus !== 0) {
+      effects.push(ELEMENT_LABELS[element] + "属性ダメージ " +
+        (attackBonus > 0 ? "+" : "") + Math.round(attackBonus * 100) + "%");
+    }
+    const resistance = item.elementalResistance?.[element];
+    if (Number.isFinite(resistance) && resistance !== 0) {
+      effects.push(ELEMENT_LABELS[element] + (resistance > 0 ? "属性耐性 +" : "属性弱点 ") +
+        Math.round(Math.abs(resistance) * 100) + "%");
+    }
   }
   return effects.join(" · ");
 }

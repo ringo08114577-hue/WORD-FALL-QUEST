@@ -29,12 +29,12 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   "orange-slime": Object.freeze({
     id: "orange-slime", name: "オレンジスライム",
-    maxHp: 190, attackPower: 23, experienceReward: 130,
+    maxHp: 190, attackPower: 23, experienceReward: 130, attackElement: "water",
     abilities: Object.freeze([]),
   }),
   bat: Object.freeze({
     id: "bat", name: "お化けコウモリ",
-    maxHp: 180, attackPower: 25, experienceReward: 120,
+    maxHp: 180, attackPower: 25, experienceReward: 120, attackElement: "wind",
     abilities: Object.freeze(["swift"]),
   }),
   goblin: Object.freeze({
@@ -48,24 +48,28 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   "moss-golem": Object.freeze({
     id: "moss-golem", name: "こけゴーレム", maxHp: 420, attackPower: 40,
-    experienceReward: 280, abilities: Object.freeze(["guard", "crushing"]),
+    experienceReward: 280, attackElement: "earth", abilities: Object.freeze(["guard", "crushing"]),
   }),
   "forest-dragon": Object.freeze({
     id: "forest-dragon", name: "森のドラゴン", maxHp: 800, attackPower: 50,
-    experienceReward: 550, isBoss: true,
+    experienceReward: 550, isBoss: true, attackElement: "wind",
+    elementalWeakness: "fire", elementalResistance: "wind",
     abilities: Object.freeze(["swift", "guard", "piercing"]),
   }),
   "ice-wolf": Object.freeze({
     id: "ice-wolf", name: "氷狼", maxHp: 330, attackPower: 35,
-    experienceReward: 250, abilities: Object.freeze(["swift"]),
+    experienceReward: 250, attackElement: "water",
+    abilities: Object.freeze(["swift"]),
   }),
   "ice-golem": Object.freeze({
     id: "ice-golem", name: "氷のゴーレム", maxHp: 500, attackPower: 45,
-    experienceReward: 350, abilities: Object.freeze(["guard", "crushing"]),
+    experienceReward: 350, attackElement: "earth",
+    abilities: Object.freeze(["guard", "crushing"]),
   }),
   "ice-dragon": Object.freeze({
     id: "ice-dragon", name: "氷結のドラゴン", maxHp: 1000, attackPower: 60,
-    experienceReward: 700, isBoss: true,
+    experienceReward: 700, isBoss: true, attackElement: "water",
+    elementalWeakness: "fire", elementalResistance: "water",
     abilities: Object.freeze(["swift", "guard", "piercing"]),
   }),
 });
