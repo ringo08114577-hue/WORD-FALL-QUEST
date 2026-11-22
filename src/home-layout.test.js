@@ -66,16 +66,18 @@ test("アイテム欄の素材カードには1個売却とまとめ売却の操�
   assert.match(script, /saves\.save\(\)/);
 });
 
-test("ホームは町マップを中心にし、施設一覧を重複表示しない", () => {
+test("ホームは冒険を主役にし、プレイヤー情報と4つの施設をコンパクトにまとめる", () => {
   const html = read("index.html");
-  assert.match(html, /<main id="homePage">/);
+  assert.match(html, /<main id="homePage"/);
   assert.match(html, /冒険者ギルド/);
+  assert.match(html, /id="home-player-panel"|class="home-player-panel"/);
   assert.match(html, /id="hpValue"/);
   assert.match(html, /id="goldValue"/);
   assert.match(html, /id="heroAvatar"/);
+  assert.match(html, /class="home-choice-card home-choice-featured" href="\.\/dungeons\.html"/);
+  assert.match(html, /次の行動を選ぼう/);
   assert.doesNotMatch(html, /class="facility-grid"/);
-  assert.doesNotMatch(html, /<h2>街の施設<\/h2>/);
-  assert.match(html, /town-map-panel/);
+  assert.doesNotMatch(html, /town-map-panel|town-map|<h2>街の施設<\/h2>/);
   assert.match(html, /createAppSession/);
   assert.match(html, /session\.returnToTown\(\)/);
   assert.doesNotMatch(html, /宿屋|innRestButton/);
