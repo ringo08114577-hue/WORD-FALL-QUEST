@@ -1,6 +1,5 @@
 import { createAppSession } from "./app-session.js";
 import { DUNGEON_DEFINITIONS } from "./data/dungeons.js";
-import { ITEM_DEFINITIONS } from "./items.js";
 import { GAME_PHASE } from "./game-state.js";
 
 const $ = (id) => document.getElementById(id);
@@ -33,15 +32,10 @@ function renderDungeons() {
     button.append(node("span", "dungeon-icon", info.icon ?? "🗺️"));
     button.append(node("strong", "dungeon-name", info.name));
     button.append(node("span", "dungeon-meta", info.difficulty + " · 推奨 LV." + info.recommendedLevel));
-    button.append(node("span", "dungeon-description", info.description));
     button.append(node("span", "dungeon-progress",
-      (progress.cleared ? "制覇済み · 初回報酬獲得済み" : "最高 " + progress.unlockedFloor + " / " + progress.maxFloors + " 階まで解放")));
-    if (info.clearReward) {
-      const bonusItem = ITEM_DEFINITIONS[info.clearReward.itemId];
-      button.append(node("span", "dungeon-reward",
-        "初回報酬：" + (bonusItem?.name ?? "特別素材") +
-        " ×" + info.clearReward.quantity + " · " + info.clearReward.gold + "G"));
-    }
+      progress.cleared
+        ? "✓ 制覇済み"
+        : "解放 " + progress.unlockedFloor + " / " + progress.maxFloors + "階"));
     root.append(button);
   }
 }

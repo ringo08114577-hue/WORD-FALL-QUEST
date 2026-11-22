@@ -217,7 +217,7 @@ test("鍛冶屋は素材とゴールドを使った装備作成だけを行う",
   assert.match(script, /saves.save()/);
 });
 
-test("ダンジョン選択画面はNPC案内の下に目的地・階層・出発操作を整理して表示する", () => {
+test("ダンジョン選択カードは短い情報だけを表示し、追加時も自動で列を組み直す", () => {
   const html = read("dungeons.html");
   const script = read("src/dungeons-page.js");
   assert.match(html, /<main id="dungeonPage">/);
@@ -226,8 +226,12 @@ test("ダンジョン選択画面はNPC案内の下に目的地・階層・出�
   assert.match(html, /id="selectedDungeonName"/);
   assert.match(html, /id="selectedFloorLabel"/);
   assert.match(html, /id="adventureButton" href="\.\/battle\.html"/);
-  assert.match(html, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(html, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(html, /grid-template-columns:repeat\(auto-fill,minmax\(145px,1fr\)\)/);
+  assert.match(html, /grid-template-columns:repeat\(auto-fill,minmax\(130px,1fr\)\)/);
+  assert.match(script, /button\.append\(node\("strong", "dungeon-name", info\.name\)\)/);
+  assert.match(script, /button\.append\(node\("span", "dungeon-meta"/);
+  assert.match(script, /button\.append\(node\("span", "dungeon-progress"/);
+  assert.doesNotMatch(script, /info\.description|ITEM_DEFINITIONS|dungeon-reward/);
   assert.match(script, /dungeon\.selectDungeon\(id\)/);
   assert.match(script, /dungeon\.selectFloor\(Number\(button\.dataset\.floor\)\)/);
   assert.match(script, /progress\.unlockedFloor/);

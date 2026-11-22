@@ -86,24 +86,26 @@
     }
     #dungeonPage .dungeon-grid {
       display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:9px;
+      grid-template-columns:repeat(auto-fill,minmax(145px,1fr));
+      gap:8px;
     }
     #dungeonPage .dungeon-card {
-      position:relative;
-      display:flex;
-      flex-direction:column;
-      align-items:flex-start;
-      gap:6px;
+      display:grid;
+      grid-template-columns:30px minmax(0,1fr);
+      grid-template-areas:"icon title" "meta meta" "progress progress";
+      align-content:center;
+      align-items:center;
+      column-gap:8px;
+      row-gap:4px;
       min-width:0;
-      min-height:164px;
-      padding:12px;
+      min-height:88px;
+      padding:9px;
       border:1px solid #365260;
-      border-radius:11px;
+      border-radius:10px;
       background:linear-gradient(145deg,#1a303d,#122430);
       color:#edf4f1;
       text-align:left;
-      box-shadow:0 5px 15px rgba(0,0,0,.16);
+      box-shadow:0 4px 12px rgba(0,0,0,.14);
       transition:border-color .16s ease,background .16s ease,transform .16s ease;
     }
     #dungeonPage .dungeon-card:hover {
@@ -113,7 +115,7 @@
     #dungeonPage .dungeon-card.selected {
       border-color:#6bc59b;
       background:linear-gradient(145deg,#205141,#17343a);
-      box-shadow:inset 0 0 0 1px rgba(107,197,155,.18),0 6px 17px rgba(0,0,0,.2);
+      box-shadow:inset 0 0 0 1px rgba(107,197,155,.18),0 5px 13px rgba(0,0,0,.17);
     }
     #dungeonPage .dungeon-card:focus-visible,
     #dungeonPage .floor-card:focus-visible {
@@ -121,42 +123,36 @@
       outline-offset:2px;
     }
     #dungeonPage .dungeon-icon {
+      grid-area:icon;
       display:grid;
       place-items:center;
-      width:34px;
-      height:34px;
-      border-radius:9px;
+      width:30px;
+      height:30px;
+      border-radius:8px;
       background:rgba(7,19,26,.42);
-      font-size:1.35rem;
+      font-size:1.18rem;
     }
     #dungeonPage .dungeon-name {
+      grid-area:title;
+      min-width:0;
       color:#f4f5e9;
-      font-size:.9rem;
+      font-size:.82rem;
       font-weight:900;
       line-height:1.25;
-    }
-    #dungeonPage .dungeon-meta {
-      color:#a6d6bb;
-      font-size:.66rem;
-      font-weight:850;
-    }
-    #dungeonPage .dungeon-description {
-      color:#b1c2c2;
-      font-size:.68rem;
-      line-height:1.45;
       overflow-wrap:anywhere;
     }
-    #dungeonPage .dungeon-progress {
-      margin-top:auto;
-      color:#e4c77e;
-      font-size:.64rem;
+    #dungeonPage .dungeon-meta {
+      grid-area:meta;
+      color:#a6d6bb;
+      font-size:.61rem;
       font-weight:850;
-      line-height:1.4;
     }
-    #dungeonPage .dungeon-reward {
-      color:#93b6a5;
-      font-size:.62rem;
-      line-height:1.35;
+    #dungeonPage .dungeon-progress {
+      grid-area:progress;
+      color:#e4c77e;
+      font-size:.61rem;
+      font-weight:850;
+      line-height:1.3;
     }
 
     #dungeonPage .floor-panel {
@@ -287,7 +283,8 @@
       #dungeonPage { gap:9px; }
       #dungeonPage .dungeon-panel { padding:10px; }
       #dungeonPage .dungeon-grid { gap:7px; }
-      #dungeonPage .dungeon-card { min-height:155px; padding:9px; }
+      #dungeonPage .dungeon-grid { grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:7px; }
+      #dungeonPage .dungeon-card { min-height:82px; padding:8px; }
       #dungeonPage .floor-grid { gap:5px; }
       #dungeonPage .floor-card { min-height:70px; }
     }
@@ -295,11 +292,9 @@
       #dungeonPage .dungeon-page-heading { align-items:center; }
       #dungeonPage .dungeon-page-intro { max-width:230px; font-size:.68rem; }
       #dungeonPage .dungeon-wallet { padding:6px 8px; font-size:.68rem; }
-      #dungeonPage .dungeon-card { min-height:166px; padding:8px; gap:5px; }
-      #dungeonPage .dungeon-name { font-size:.82rem; }
-      #dungeonPage .dungeon-description { font-size:.63rem; }
-      #dungeonPage .dungeon-progress { font-size:.59rem; }
-      #dungeonPage .dungeon-reward { font-size:.57rem; }
+      #dungeonPage .dungeon-card { min-height:78px; padding:7px; }
+      #dungeonPage .dungeon-name { font-size:.76rem; }
+      #dungeonPage .dungeon-meta,#dungeonPage .dungeon-progress { font-size:.56rem; }
       #dungeonPage .floor-grid { gap:4px; }
       #dungeonPage .floor-card { min-height:66px; padding:6px 2px; }
       #dungeonPage .floor-name { font-size:.7rem; }
