@@ -9,9 +9,9 @@ function defeatEnemy(store) {
 }
 function clearFloor(store, dungeon) {
   dungeon.start();
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < dungeon.getProgress().enemiesPerFloor; i += 1) {
     defeatEnemy(store);
-    if (i < 2) dungeon.advance();
+    if (i < dungeon.getProgress().enemiesPerFloor - 1) dungeon.advance();
   }
 }
 test("フロアクリア後は宝箱報酬で得たゴールドをショップで利用できる", () => {
