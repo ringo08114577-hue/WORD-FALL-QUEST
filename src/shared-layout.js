@@ -1,4 +1,5 @@
 import { getReceptionistAdvice } from "./receptionist-advisor.js";
+import { getBlacksmithAdvice } from "./blacksmith-advisor.js";
 
 const NAV_ITEMS = Object.freeze([
   { href: "./index.html", file: "index.html", icon: "🏡", label: "ホーム" },
@@ -83,12 +84,17 @@ function createNpcStage(current) {
   const homeAdvice = current === "index.html"
     ? getReceptionistAdvice(window.WFQ_HOME_CONTEXT ?? {})
     : null;
-  const lines = homeAdvice
-    ? [homeAdvice.greeting, ...(npc.lines ?? []).slice(1)]
+  const blacksmithAdvice = current === "crafting.html"
+    ? getBlacksmithAdvice(window.WFQ_BLACKSMITH_CONTEXT ?? {})
+    : null;
+  const dynamicAdvice = homeAdvice ?? blacksmithAdvice;
+  const lines = dynamicAdvice
+    ? [dynamicAdvice.greeting, ...(npc.lines ?? []).slice(1)]
     : (Array.isArray(npc.lines) && npc.lines.length ? npc.lines : [npc.line]);
   const stage = el("section", "wfq-npc-stage");
   if (npc.portrait.endsWith("guild-receptionist.webp")) stage.classList.add("wfq-npc-stage--reception");
   if (homeAdvice) stage.classList.add("wfq-npc-stage--home");
+  if (blacksmithAdvice) stage.classList.add("wfq-npc-stage--blacksmith");
   stage.setAttribute("aria-label", npc.name + "の案内");
 
   const portraitFrame = el("div", "wfq-npc-portrait");
@@ -118,24 +124,42 @@ function createNpcStage(current) {
   dialogue.append(identity, line, nextButton);
   stage.append(portraitFrame, dialogue);
 
-  if (homeAdvice) {
-    const advice = el("aside", "wfq-npc-advice");
-    advice.setAttribute("aria-label", "リリアのおすすめ冒険先");
+  const createAdviceCard = (advice, isBlacksmith) => {
+    const card = el("aside", "wfq-npc-advice");
+    card.setAttribute("aria-label", isBlacksmith ? "ガルドの鍛冶アドバイス" : "リリアのおすすめ冒険先");
     const copy = el("div", "wfq-npc-advice-copy");
     copy.append(
-      el("span", "wfq-npc-advice-label", "本日のおすすめ"),
-      el("strong", "wfq-npc-advice-title", homeAdvice.dungeonIcon + " " + homeAdvice.dungeonName),
-      el("p", "wfq-npc-advice-detail", homeAdvice.detail),
-      el("span", "wfq-npc-advice-meta", homeAdvice.meta)
+      el("span", "wfq-npc-advice-label",
+        isBlacksmith
+          ? advice.status === "ready" ? "今すぐ作成できる装備" : "次に作るおすすめ装備"
+          : "本日のおすすめ"
+      ),
+      el("strong", "wfq-npc-advice-title",
+        isBlacksmith ? "⚒️ " + advice.itemName : advice.dungeonIcon + " " + advice.dungeonName
+      ),
+      el("p", "wfq-npc-advice-detail", advice.detail),
+      el("span", "wfq-npc-advice-meta", advice.meta)
     );
-    const link = el("a", "wfq-npc-advice-link", "冒険先を見る　›");
-    link.href = "./dungeons.html";
-    advice.append(copy, link);
-    stage.append(advice);
+    const link = el("a", "wfq-npc-advice-link",
+      isBlacksmith ? "レシピを見る　›" : "冒険先を見る　›"
+    );
+    link.href = isBlacksmith ? "#facilityContent" : "./dungeons.html";
+    card.append(copy, link);
+    return card;
+  };
+
+  if (homeAdvice) stage.append(createAdviceCard(homeAdvice, false));
+  if (blacksmithAdvice) {
+    const card = createAdviceCard(blacksmithAdvice, true);
+    stage.append(card);
+    window.addEventListener("wfq:blacksmith-context-updated", () => {
+      const updated = getBlacksmithAdvice(window.WFQ_BLACKSMITH_CONTEXT ?? {});
+      if (lineIndex === 0) line.textContent = "「" + updated.greeting + "」";
+      card.replaceWith(createAdviceCard(updated, true));
+    });
   }
   return stage;
 }
-
 function setupSharedLayout() {
   const main = document.querySelector("main");
   if (!main || document.querySelector(".wfq-app-shell")) return;

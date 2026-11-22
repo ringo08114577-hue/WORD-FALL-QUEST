@@ -402,3 +402,58 @@ body {
   .wfq-npc-stage--home .wfq-npc-advice { align-items:flex-start; flex-direction:column; }
   .wfq-npc-advice-link { align-self:flex-end; min-height:29px; }
 }
+
+
+/* The blacksmith panel adds a compact, live recipe recommendation. */
+.wfq-npc-stage--blacksmith {
+  display:grid;
+  grid-template-columns:124px minmax(0,1fr);
+  grid-template-areas:"portrait dialogue" "advice advice";
+  align-items:stretch;
+  gap:8px 12px;
+  min-height:0;
+  padding:9px;
+}
+.wfq-npc-stage--blacksmith .wfq-npc-portrait {
+  grid-area:portrait;
+  align-self:center;
+  flex:none;
+  width:124px;
+  height:124px;
+  border-color:#a87853;
+  background:#171d20;
+}
+.wfq-npc-stage--blacksmith .wfq-npc-dialogue {
+  grid-area:dialogue;
+  min-height:0;
+}
+.wfq-npc-stage--blacksmith .wfq-npc-advice {
+  grid-area:advice;
+  border-color:rgba(188,132,91,.38);
+  background:linear-gradient(110deg,rgba(57,43,35,.94),rgba(29,39,40,.96));
+}
+.wfq-npc-stage--blacksmith .wfq-npc-advice-label { color:#e1ad7c; }
+.wfq-npc-stage--blacksmith .wfq-npc-advice-title { color:#f5dfc7; }
+.wfq-npc-stage--blacksmith .wfq-npc-advice-detail { color:#e0d1c2; }
+.wfq-npc-stage--blacksmith .wfq-npc-advice-meta { color:#d3ad8d; }
+.wfq-npc-stage--blacksmith .wfq-npc-advice-link {
+  border-color:#946b4c;
+  background:linear-gradient(145deg,#594332,#3e3c32);
+  color:#ffe0b5;
+}
+.wfq-npc-stage--blacksmith .wfq-npc-advice-link:hover { filter:brightness(1.16); }
+@media(max-width:820px) {
+  .wfq-npc-stage--blacksmith {
+    grid-template-columns:96px minmax(0,1fr);
+    gap:7px 9px;
+    padding:7px;
+  }
+  .wfq-npc-stage--blacksmith .wfq-npc-portrait { width:96px; height:96px; }
+  .wfq-npc-stage--blacksmith .wfq-npc-advice { gap:8px; padding:8px 9px; }
+}
+@media(max-width:380px) {
+  .wfq-npc-stage--blacksmith { grid-template-columns:84px minmax(0,1fr); gap:6px 7px; }
+  .wfq-npc-stage--blacksmith .wfq-npc-portrait { width:84px; height:84px; }
+  .wfq-npc-stage--blacksmith .wfq-npc-advice { align-items:flex-start; flex-direction:column; }
+  .wfq-npc-stage--blacksmith .wfq-npc-advice-link { align-self:flex-end; min-height:29px; }
+}

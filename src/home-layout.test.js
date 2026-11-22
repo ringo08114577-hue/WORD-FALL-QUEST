@@ -344,3 +344,25 @@ test("受付嬢のおすすめ表示は現在のレベルとクリア状況に�
   assert.match(script, /frozenProgress\.cleared/);
   assert.match(script, /presentation-only/);
 });
+
+
+test("鍛冶師NPCは素材・ゴールド・装備状況に応じた案内を表示する", () => {
+  const script = read("src/shared-layout.js");
+  const html = read("crafting.html");
+  const facility = read("src/facility-page.js");
+  assert.match(script, /getBlacksmithAdvice\(window\.WFQ_BLACKSMITH_CONTEXT/);
+  assert.match(script, /wfq-npc-stage--blacksmith/);
+  assert.match(script, /ガルドの鍛冶アドバイス/);
+  assert.match(facility, /WFQ_BLACKSMITH_CONTEXT/);
+  assert.match(facility, /wfq:blacksmith-context-updated/);
+  assert.match(html, /blacksmith\.svg/);
+});
+
+test("鍛冶師のおすすめは装備・レシピを参照し、ゲーム状態を変更しない", () => {
+  const script = read("src/blacksmith-advisor.js");
+  assert.match(script, /CRAFTING_RECIPES/);
+  assert.match(script, /ITEM_DEFINITIONS/);
+  assert.match(script, /missingMaterials/);
+  assert.match(script, /equipmentPower/);
+  assert.match(script, /never spends gold, crafts items, or changes equipment/);
+});

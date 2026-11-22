@@ -269,6 +269,17 @@ function render() {
   $("goldValue").textContent = state.inventory.gold + " G";
   $("levelValue").textContent = "LV." + state.player.level;
   $("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
+  if (page === "crafting") {
+    window.WFQ_BLACKSMITH_CONTEXT = {
+      phase: state.phase,
+      inventory: {
+        gold: state.inventory.gold,
+        items: { ...state.inventory.items },
+        equipment: { ...state.inventory.equipment },
+      },
+    };
+    window.dispatchEvent(new Event("wfq:blacksmith-context-updated"));
+  }
   if (page === "skills") renderSkills(state);
   else if (page === "crafting") renderCrafting(state);
   else if (page === "shop") renderShop(state);
