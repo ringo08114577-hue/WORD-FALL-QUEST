@@ -16,7 +16,7 @@ test("素材を1個売ると所持数が減り、売値分のゴールドを獲�
   assert.equal(result.remainingQuantity, 2);
   assert.equal(store.getState().inventory.items["slime-gel"], 2);
   assert.equal(store.getState().inventory.gold, 4);
-  assert.match(store.getState().actionLog.at(-1).message, /スライムゼリー ×1を売却（\+4G）/);
+  assert.match(store.getState().actionLog.at(-1).message, /グリーンスライムのゼリー ×1を売却（\+4G）/);
 });
 
 test("素材を全部売ると所持数0になり、個数分の合計ゴールドを獲得する", () => {

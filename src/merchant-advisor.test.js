@@ -56,8 +56,8 @@ test("売却可能な素材を所持している場合は売値合計とアイ�
   }));
   assert.equal(advice.hasSellableMaterials, true);
   assert.equal(advice.totalSellValue, 48);
-  assert.match(advice.sellableSummary, /スライムゼリー ×3（12G）/);
-  assert.match(advice.sellableSummary, /コウモリの薄布 ×2（36G）/);
+  assert.match(advice.sellableSummary, /グリーンスライムのゼリー ×3（12G）/);
+  assert.match(advice.sellableSummary, /お化けコウモリの羽根 ×2（36G）/);
   assert.equal(advice.actionHref, "#facilityContent");
 });
 

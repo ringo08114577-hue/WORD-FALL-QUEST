@@ -44,7 +44,7 @@ export const ITEM_DEFINITIONS = Object.freeze({
   }),
   // Materials dropped by monsters. sellPrice is used by trading; recipes live in crafting-recipes.js.
   "slime-gel": Object.freeze({
-    id: "slime-gel", name: "グリーンスライムの若葉ゼリー", type: "material", sellPrice: 4,
+    id: "slime-gel", name: "グリーンスライムのゼリー", type: "material", sellPrice: 4,
     description: "グリーンスライムから手に入る、若葉色のゼリー。",
   }),
   "orange-gel": Object.freeze({

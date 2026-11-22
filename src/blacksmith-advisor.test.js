@@ -19,8 +19,8 @@ test("素材がないときは最初に作れる強化装備と必要素材の�
   assert.equal(advice.status, "gather");
   assert.equal(advice.itemName, "スライムバックラー");
   assert.match(advice.greeting, /スライムバックラー/);
-  assert.match(advice.detail, /スライムゼリー ×5/);
-  assert.match(advice.detail, /スライムから手に入る/);
+  assert.match(advice.detail, /グリーンスライムのゼリー ×5/);
+  assert.match(advice.detail, /グリーンスライムから手に入る/);
   assert.match(advice.meta, /35G/);
 });
 
