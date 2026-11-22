@@ -20,7 +20,7 @@ const NPC_PAGES = Object.freeze({
     lines: ["新しい依頼が届いていますよ。準備ができたら出発しましょう！", "ダンジョンごとに現れる魔物も手に入る素材も違います。", "無理は禁物です。帰ってきたら報酬を確認しましょうね！"]
   },
   "shop.html": {
-    name: "ロウ", role: "道具屋の店主", portrait: "./assets/npcs/merchant.svg",
+    name: "ロウ", role: "道具屋の店主", portrait: "./assets/npcs/merchant.webp",
     line: "武器も道具も揃ってるよ。必要なものを選んでいってくれ！",
     lines: ["武器も道具も揃ってるよ。必要なものを選んでいってくれ！", "回復アイテムは冒険の前に用意しておくと安心だ。", "素材を売ってゴールドにするのも忘れずにな！"]
   },
@@ -95,6 +95,7 @@ function createNpcStage(current) {
   if (npc.portrait.endsWith("guild-receptionist.webp")) stage.classList.add("wfq-npc-stage--reception");
   if (homeAdvice) stage.classList.add("wfq-npc-stage--home");
   if (blacksmithAdvice) stage.classList.add("wfq-npc-stage--blacksmith");
+  if (current === "shop.html") stage.classList.add("wfq-npc-stage--merchant");
   stage.setAttribute("aria-label", npc.name + "の案内");
 
   const portraitFrame = el("div", "wfq-npc-portrait");

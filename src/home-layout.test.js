@@ -115,7 +115,7 @@ test("共通レイアウトはページごとにNPCの立ち絵とセリフを�
   for (const [page, portrait] of [
     ["index.html", "guild-receptionist.webp"],
     ["dungeons.html", "guild-receptionist.webp"],
-    ["shop.html", "merchant.svg"],
+    ["shop.html", "merchant.webp"],
     ["crafting.html", "blacksmith.webp"],
     ["inventory.html", "quartermaster.svg"],
     ["status.html", "trainer.svg"],
@@ -134,9 +134,9 @@ test("共通レイアウトはページごとにNPCの立ち絵とセリフを�
   assert.match(css, /@keyframes wfq-npc-line-in/);
   assert.match(script, /lineIndex = \(lineIndex \+ 1\) % lines\.length/);
   assert.ok(existsSync(new URL("assets/npcs/guild-receptionist.webp", root)), "受付嬢のWebP画像が存在する");
+  assert.ok(existsSync(new URL("assets/npcs/merchant.webp", root)), "商人のWebP画像が存在する");
   assert.ok(existsSync(new URL("assets/npcs/blacksmith.webp", root)), "鍛冶師のWebP画像が存在する");
   for (const file of [
-    "assets/npcs/merchant.svg",
     "assets/npcs/blacksmith.svg",
     "assets/npcs/quartermaster.svg",
     "assets/npcs/trainer.svg",
