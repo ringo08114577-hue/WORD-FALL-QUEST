@@ -295,6 +295,13 @@ test("ホームとステータスはバトルと同じ主人公画像を共通�
   assert.match(imageLoader, /hero: Object\.freeze\(\{ image: "assets\/characters\/hero\.webp" \}\)/);
 });
 
+test("共通UIにカードへ重なる円形の装飾ラインを表示しない", () => {
+  const css = read("src/shared-layout.css");
+  assert.doesNotMatch(css, /\.wfq-npc-stage::after/);
+  assert.doesNotMatch(css, /\.wfq-content \.facility-link::after/);
+  assert.doesNotMatch(css, /border-radius:\s*50%/);
+});
+
 test("通常ページは共通レイアウトとダークファンタジーのデザインを読み込む", () => {
   const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html"];
   for (const page of pages) {

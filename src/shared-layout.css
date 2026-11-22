@@ -113,10 +113,7 @@ body {
   box-shadow:0 5px 16px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.025);
 }
 .wfq-content .facility-link { min-height:104px; position:relative; overflow:hidden; }
-.wfq-content .facility-link::after {
-  content:""; position:absolute; right:-24px; bottom:-36px; width:90px; height:90px;
-  border:1px solid rgba(103,187,157,.13); border-radius:50%; pointer-events:none;
-}
+/* Decorative circular overlay removed from facility links. */
 .wfq-content .facility-link strong { color:#f1f5ef !important; }
 .wfq-content .facility-link small { color:#9cafb1 !important; }
 .wfq-content .facility-link:hover,.wfq-content .dungeon-card:hover,.wfq-content .floor-card:hover {
@@ -207,11 +204,7 @@ body {
   background:linear-gradient(112deg,rgba(30,66,62,.97),rgba(19,38,48,.98) 58%,rgba(24,34,46,.98));
   box-shadow:0 8px 24px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.04);
 }
-.wfq-npc-stage::after {
-  content:""; position:absolute; right:-27px; bottom:-47px; width:130px; height:130px;
-  border:1px solid rgba(221,190,123,.16); border-radius:50%; box-shadow:0 0 0 13px rgba(221,190,123,.025),0 0 0 27px rgba(221,190,123,.02);
-  pointer-events:none;
-}
+/* Decorative circular overlay removed for a cleaner NPC panel. */
 .wfq-npc-portrait {
   position:relative; z-index:1; display:grid; place-items:center; flex:0 0 88px;
   width:88px; height:88px; overflow:hidden; border:1px solid #a88c57; border-radius:12px;
