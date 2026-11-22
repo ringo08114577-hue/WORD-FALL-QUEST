@@ -33,8 +33,11 @@ function isEligible(definition, type, floor, dungeonId) {
       floor >= rule.minFloor && floor <= rule.maxFloor &&
       Number.isFinite(rule.weight) && rule.weight > 0;
   }
-  return Array.isArray(rule.floors) && rule.floors.includes(floor) &&
-    Number.isFinite(rule.weight ?? 1) && (rule.weight ?? 1) > 0;
+  const matchesFloor = Array.isArray(rule.floors)
+    ? rule.floors.includes(floor)
+    : Number.isSafeInteger(rule.minFloor) && floor >= rule.minFloor &&
+      (rule.maxFloor === undefined || (Number.isSafeInteger(rule.maxFloor) && floor <= rule.maxFloor));
+  return matchesFloor && Number.isFinite(rule.weight ?? 1) && (rule.weight ?? 1) > 0;
 }
 
 function randomValue(random) {
@@ -148,7 +151,7 @@ export function getLegacyFloorEnemyIds(dungeonId = DEFAULT_DUNGEON_ID) {
 export function getLegacyFloorV4EnemyIds(floor, dungeonId = DEFAULT_DUNGEON_ID) {
   validateFloor(floor);
   const dungeon = getDungeon(dungeonId);
-  const sets = dungeon?.legacyEncounterSetsV4;
+  const sets = dungeon?.legacyEncounterSetsV4 ?? dungeon?.encounterSets;
   if (!Array.isArray(sets) || !sets[floor - 1]) {
     throw new RangeError("旧編成バージョン4に対応していないダンジョンです: " + dungeonId);
   }
@@ -176,16 +179,21 @@ export function createEnemy(enemyId, { floor = 1 } = {}) {
   if (!definition) throw new RangeError("登録されていない敵です: " + enemyId);
   validateFloor(floor);
   const difficulty = floor - 1;
-  return {
-    ...definition,
-    abilities: [...definition.abilities],
-    isBoss: definition.isBoss === true,
-    isMiniBoss: definition.isMiniBoss === true,
+  const enemy = {
+    id: definition.id,
+    name: definition.name,
     maxHp: definition.maxHp + difficulty * GAME_CONFIG.enemyScaling.hpPerFloor,
     attackPower: definition.attackPower +
       Math.floor(difficulty / GAME_CONFIG.enemyScaling.attackPowerEveryFloors) *
       GAME_CONFIG.enemyScaling.attackPowerPerStep,
     experienceReward: definition.experienceReward +
       difficulty * GAME_CONFIG.enemyScaling.experiencePerFloor,
+    abilities: [...definition.abilities],
+    isBoss: definition.isBoss === true,
   };
+  if (definition.isMiniBoss === true) enemy.isMiniBoss = true;
+  for (const property of ["attackElement", "elementalWeakness", "elementalResistance"]) {
+    if (definition[property]) enemy[property] = definition[property];
+  }
+  return enemy;
 }

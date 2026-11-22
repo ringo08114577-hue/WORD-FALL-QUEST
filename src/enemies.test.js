@@ -86,17 +86,22 @@ test("共通カタログに登録した専用画像がすべて実在し、形�
 });
 
 test("各階は通常敵4体と中ボス、5階は通常敵4体と大ボスになる", () => {
-  const specialIds = ["grandvel", "morgal", "loggar", "volgrif", "forest-dragon"];
   for (let floor = 1; floor <= 5; floor += 1) {
     const ids = getFloorEnemyIds(floor, "forest-ruins", { random: () => 0 });
     assert.equal(ids.length, 5);
-    assert.equal(ids.at(-1), specialIds[floor - 1]);
     assert.equal(new Set(ids.slice(0, 4)).size, 4);
     assert.ok(ids.slice(0, 4).every((id) =>
       ENEMY_DEFINITIONS[id].encounter.type === "normal"));
     assert.equal(ENEMY_DEFINITIONS[ids.at(-1)].rank,
       floor === 5 ? "boss" : "miniBoss");
+    if (floor < 5) assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(ids.at(-1)));
+    else assert.equal(ids.at(-1), "forest-dragon");
     assert.equal(isValidFloorEncounterIds(floor, "forest-ruins", ids), true);
+  }
+  for (const roll of [0, 0.3, 0.6, 0.9]) {
+    const sequence = [0, 0, 0, 0, roll];
+    const ids = getFloorEnemyIds(1, "forest-ruins", { random: () => sequence.shift() });
+    assert.ok(["grandvel", "morgal", "loggar", "volgrif"].includes(ids.at(-1)));
   }
 });
 

@@ -101,7 +101,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
     elementalWeakness: "fire", elementalResistance: "earth",
     abilities: ids("guard", "crushing"),
     description: "巨大な角と苔むした体を持つ、森を守る古代の獣。",
-    encounter: encounter("miniBoss", ["forest-ruins"], { floors: ids(1), weight: 1 }),
+    encounter: encounter("miniBoss", ["forest-ruins"], { minFloor: 1, weight: 1 }),
   }),
   morgal: Object.freeze({
     id: "morgal", name: "毒牙の大蛇 モルガル", rank: "miniBoss",
@@ -110,7 +110,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
     elementalWeakness: "thunder", elementalResistance: "water",
     abilities: ids("piercing"),
     description: "毒を帯びた牙を持つ、森の大蛇。",
-    encounter: encounter("miniBoss", ["forest-ruins"], { floors: ids(2), weight: 1 }),
+    encounter: encounter("miniBoss", ["forest-ruins"], { minFloor: 1, weight: 1 }),
   }),
   loggar: Object.freeze({
     id: "loggar", name: "朽木の巨人 ログガル", rank: "miniBoss",
@@ -119,7 +119,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
     elementalWeakness: "fire", elementalResistance: "earth",
     abilities: ids("guard", "crushing"),
     description: "朽ちた大木と根が集まって生まれた、巨大な森の魔物。",
-    encounter: encounter("miniBoss", ["forest-ruins"], { floors: ids(3), weight: 1 }),
+    encounter: encounter("miniBoss", ["forest-ruins"], { minFloor: 1, weight: 1 }),
   }),
   volgrif: Object.freeze({
     id: "volgrif", name: "雷鳴の大梟 ヴォルグリフ", rank: "miniBoss",
@@ -128,7 +128,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
     elementalWeakness: "earth", elementalResistance: "wind",
     abilities: ids("swift", "piercing"),
     description: "雷をまとい、森の上空から襲いかかる巨大なフクロウ。",
-    encounter: encounter("miniBoss", ["forest-ruins"], { floors: ids(4), weight: 1 }),
+    encounter: encounter("miniBoss", ["forest-ruins"], { minFloor: 1, weight: 1 }),
   }),
   "forest-dragon": Object.freeze({
     id: "forest-dragon", name: "森のドラゴン", rank: "boss",
