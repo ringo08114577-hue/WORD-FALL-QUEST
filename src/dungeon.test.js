@@ -249,8 +249,9 @@ test("ランダム抽選した編成はセーブ・復元後も同じ順番で�
   firstDungeon.start();
   winCurrentEnemy(firstStore);
   firstDungeon.advance();
-  const expectedNextId = firstDungeon.getSaveData().encounterIds[2];
   const savedDungeon = firstDungeon.getSaveData();
+  const expectedCurrentId = savedDungeon.encounterIds[1];
+  const expectedNextId = savedDungeon.encounterIds[2];
 
   const secondStore = createGameStore();
   assert.equal(secondStore.restoreState(firstStore.getState()), true);
