@@ -237,7 +237,7 @@ test("ダンジョンカードは専用背景画像とコンパクトな進行�
   assert.match(catalog, /art: "\.\/assets\/dungeons\/forest-ruins\.svg"/);
   assert.match(catalog, /art: "\.\/assets\/dungeons\/frozen-cavern\.svg"/);
   for (const path of ["assets/dungeons/forest-ruins.svg","assets/dungeons/frozen-cavern.svg"]) {
-    assert.ok(existsSync(new URL("../" + path, root)), path + " artwork exists");
+    assert.ok(existsSync(new URL(path, root)), path + " artwork exists");
     assert.match(read(path), /<svg[\s\S]*viewBox=/);
   }
   assert.doesNotMatch(script, /info\.description|dungeon-reward/);
