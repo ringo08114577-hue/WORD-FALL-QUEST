@@ -256,7 +256,8 @@ test("ランダム抽選した編成はセーブ・復元後も同じ順番で�
   assert.equal(secondStore.restoreState(firstStore.getState()), true);
   const secondDungeon = createDungeonController(secondStore, { random: () => 0 });
   assert.equal(secondDungeon.restoreSaveData(savedDungeon), true);
-  assert.equal(secondDungeon.getSaveData().encounterIds[1], expectedNextId);
+  assert.equal(secondDungeon.getSaveData().encounterIds[1], expectedCurrentId);
+  assert.equal(secondStore.getState().enemy.id, expectedCurrentId);
   winCurrentEnemy(secondStore);
   assert.equal(secondDungeon.advance().enemy.id, expectedNextId);
 });
