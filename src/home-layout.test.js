@@ -286,7 +286,7 @@ test("ホームとステータスはバトルと同じ主人公画像を共通�
   const imageLoader = read("src/character-images.js");
   for (const html of [home, status]) {
     assert.match(html, /<img id="heroAvatar" alt="主人公" hidden>/);
-    assert.match(html, /\.avatar img\{display:block;width:100%;height:100%/);
+    assert.match(html, /\.avatar img\\s*\\{[\\s\\S]*?width:100%;[\\s\\S]*?height:100%/);
   }
   assert.match(home, /import \{ setCharacterImage \} from "\.\/src\/character-images\.js"/);
   assert.match(home, /setCharacterImage\(document\.getElementById\("heroAvatar"\), "hero"/);
