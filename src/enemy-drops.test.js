@@ -6,7 +6,7 @@ import { ITEM_DEFINITIONS } from "./data/items.js";
 import { ENEMY_DROP_TABLES } from "./data/enemy-drops.js";
 import { resolveEnemyDrops } from "./enemy-drops.js";
 
-test("すべての敵に有効な素材ドロップテーブルが登録されている", () => {
+test("すべての敵に個別の有効な素材ドロップテーブルが登録されている", () => {
   assert.deepEqual(Object.keys(ENEMY_DROP_TABLES).sort(), Object.keys(ENEMY_DEFINITIONS).sort());
   for (const [enemyId, entries] of Object.entries(ENEMY_DROP_TABLES)) {
     assert.ok(entries.length > 0, enemyId + " のドロップがありません");
@@ -21,15 +21,20 @@ test("すべての敵に有効な素材ドロップテーブルが登録され�
   assert.equal(Object.isFrozen(ENEMY_DROP_TABLES), true);
 });
 
-test("ドロップ率に当たると素材を獲得し、個数は設定範囲内になる", () => {
-  const drops = resolveEnemyDrops("slime", () => 0);
-  assert.deepEqual(drops, [{ itemId: "slime-gel", quantity: 1 }]);
-
-  const twoGels = resolveEnemyDrops("slime", (() => {
-    const values = [0, 0.99];
-    return () => values.shift() ?? 0;
-  })());
-  assert.deepEqual(twoGels, [{ itemId: "slime-gel", quantity: 2 }]);
+test("通常敵の素材は60%・30%・5%で個別抽選され、複数同時に落ちる", () => {
+  assert.deepEqual(resolveEnemyDrops("slime", () => 0), [
+    { itemId: "slime-gel", quantity: 1 },
+    { itemId: "green-slime-moss-mucus", quantity: 1 },
+    { itemId: "slime-core", quantity: 1 },
+  ]);
+  assert.deepEqual(resolveEnemyDrops("plain-slime", () => 0), [
+    { itemId: "plain-slime-gel", quantity: 1 },
+    { itemId: "plain-slime-mucus", quantity: 1 },
+    { itemId: "plain-slime-magic-core", quantity: 1 },
+  ]);
+  assert.deepEqual(resolveEnemyDrops("poison-mushroom", () => 0).map((entry) => entry.itemId), [
+    "poison-mushroom-cap", "poison-mushroom-mycelium", "poison-mushroom-toxic-spore",
+  ]);
 });
 
 test("ドロップ抽選に外れた場合は素材を獲得せず、未知の敵も空になる", () => {
@@ -37,12 +42,16 @@ test("ドロップ抽選に外れた場合は素材を獲得せず、未知の�
   assert.deepEqual(resolveEnemyDrops("unknown-enemy", () => 0), []);
 });
 
-test("ボスは通常素材を必ず落とし、レア素材は追加抽選になる", () => {
-  const drops = resolveEnemyDrops("forest-dragon", () => 0.99);
-  assert.deepEqual(drops, [{ itemId: "forest-dragon-scale", quantity: 1 }]);
-
-  const rareDrops = resolveEnemyDrops("forest-dragon", () => 0);
-  assert.deepEqual(rareDrops, [
+test("中ボスも個別素材を落とし、大ボスは専用素材を確定で落とす", () => {
+  assert.deepEqual(resolveEnemyDrops("grandvel", () => 0), [
+    { itemId: "grandvel-giant-horn", quantity: 1 },
+    { itemId: "grandvel-guardian-fur", quantity: 1 },
+    { itemId: "grandvel-deep-green-crystal", quantity: 1 },
+  ]);
+  assert.deepEqual(resolveEnemyDrops("forest-dragon", () => 0.99), [
+    { itemId: "forest-dragon-scale", quantity: 1 },
+  ]);
+  assert.deepEqual(resolveEnemyDrops("forest-dragon", () => 0), [
     { itemId: "forest-dragon-scale", quantity: 1 },
     { itemId: "forest-dragon-heart", quantity: 1 },
   ]);

@@ -63,6 +63,7 @@
     .enemy-info { flex:1; min-width:0; }
     .enemy-traits { min-height:1em; margin-top:6px; color:#a8bdd7; font-size:.68rem; line-height:1.4; }
     .enemy-traits.boss { color:#fda4af; font-weight:850; }
+    .enemy-traits.mini-boss { color:#fcd34d; font-weight:850; }
     .bar { height:8px; background:#26354b; overflow:hidden; border-radius:99px; }
     .bar-fill { height:100%; width:100%; border-radius:99px; background:linear-gradient(90deg,#34d399,#86efac); transition:width .18s ease; }
     .bar-fill.enemy { background:linear-gradient(90deg,#f97316,#fbbf24); }
@@ -828,7 +829,7 @@
         clearCharacterImage(enemyImage);
       }
       $("enemyName").textContent = enemy
-        ? (enemy.isBoss ? "🐉 BOSS " : "") + enemy.name
+        ? (enemy.isBoss ? "🐉 BOSS " : enemy.isMiniBoss ? "⚔ MINI BOSS " : "") + enemy.name
         : "敵";
       const enemyHp = enemy ? enemy.hp : 3;
       const enemyMaxHp = enemy ? enemy.maxHp : 3;
@@ -838,12 +839,13 @@
         .map((abilityId) => ENEMY_ABILITY_DEFINITIONS[abilityId])
         .filter(Boolean);
       $("enemyTraits").textContent = enemy
-        ? (enemy.isBoss ? "👑 ボス · " : "") +
+        ? (enemy.isBoss ? "👑 大ボス · " : enemy.isMiniBoss ? "⚔ 中ボス · " : "") +
           (enemyAbilities.length > 0
             ? enemyAbilities.map((ability) => ability.name + "：" + ability.description).join(" / ")
             : "特殊能力なし")
         : "";
-      $("enemyTraits").className = "enemy-traits" + (enemy?.isBoss ? " boss" : "");
+      $("enemyTraits").className = "enemy-traits" +
+        (enemy?.isBoss ? " boss" : enemy?.isMiniBoss ? " mini-boss" : "");
 
       const active = state.phase === GAME_PHASE.BATTLE;
       const inBattle = active;
