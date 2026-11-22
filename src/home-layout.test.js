@@ -367,3 +367,28 @@ test("鍛冶師のおすすめは装備・レシピを参照し、ゲーム状�
   assert.match(script, /equipmentPower/);
   assert.match(script, /never spends gold, crafts items, or changes equipment/);
 });
+
+
+test("商人ロウは所持HP・回復薬・装備・素材に応じた案内を表示する", () => {
+  const script = read("src/shared-layout.js");
+  const facility = read("src/facility-page.js");
+  const html = read("shop.html");
+  assert.match(script, /getMerchantAdvice\(window\.WFQ_MERCHANT_CONTEXT/);
+  assert.match(script, /wfq-npc-advice--merchant/);
+  assert.match(script, /wfq:merchant-context-updated/);
+  assert.match(facility, /WFQ_MERCHANT_CONTEXT/);
+  assert.match(facility, /state\.player\.hp/);
+  assert.match(script, /素材を売却する/);
+  assert.match(html, /data-facility="shop"/);
+});
+
+test("商人の案内は購入や売却を自動実行せず、アイテム欄の売却画面へ案内する", () => {
+  const script = read("src/merchant-advisor.js");
+  assert.match(script, /ITEM_SHOP_PRICES/);
+  assert.match(script, /sellPrice/);
+  assert.match(script, /never purchases items or sells materials/);
+  assert.match(script, /inventory\.html/);
+  assert.match(script, /small-potion/);
+  assert.match(script, /equipment/);
+});
+

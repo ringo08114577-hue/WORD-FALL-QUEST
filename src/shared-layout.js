@@ -1,5 +1,6 @@
 import { getReceptionistAdvice } from "./receptionist-advisor.js";
 import { getBlacksmithAdvice } from "./blacksmith-advisor.js";
+import { getMerchantAdvice } from "./merchant-advisor.js";
 
 const NAV_ITEMS = Object.freeze([
   { href: "./index.html", file: "index.html", icon: "🏡", label: "ホーム" },
@@ -87,7 +88,10 @@ function createNpcStage(current) {
   const blacksmithAdvice = current === "crafting.html"
     ? getBlacksmithAdvice(window.WFQ_BLACKSMITH_CONTEXT ?? {})
     : null;
-  const dynamicAdvice = homeAdvice ?? blacksmithAdvice;
+  const merchantAdvice = current === "shop.html"
+    ? getMerchantAdvice(window.WFQ_MERCHANT_CONTEXT ?? {})
+    : null;
+  const dynamicAdvice = homeAdvice ?? blacksmithAdvice ?? merchantAdvice;
   const lines = dynamicAdvice
     ? [dynamicAdvice.greeting, ...(npc.lines ?? []).slice(1)]
     : (Array.isArray(npc.lines) && npc.lines.length ? npc.lines : [npc.line]);
@@ -157,6 +161,38 @@ function createNpcStage(current) {
       const updated = getBlacksmithAdvice(window.WFQ_BLACKSMITH_CONTEXT ?? {});
       if (lineIndex === 0) line.textContent = "「" + updated.greeting + "」";
       card.replaceWith(createAdviceCard(updated, true));
+    });
+  }
+  if (merchantAdvice) {
+    const createMerchantCard = (advice) => {
+      const card = el("aside", "wfq-npc-advice wfq-npc-advice--merchant");
+      card.setAttribute("aria-label", "ロウのおすすめ商品と売却案内");
+      const copy = el("div", "wfq-npc-advice-copy");
+      copy.append(
+        el("span", "wfq-npc-advice-label", advice.label),
+        el("strong", "wfq-npc-advice-title", "🛒 " + advice.itemName),
+        el("p", "wfq-npc-advice-detail", advice.detail),
+        el("span", "wfq-npc-advice-meta", advice.meta)
+      );
+      if (advice.sellableSummary) {
+        copy.append(el("p", "wfq-npc-advice-sell", advice.sellableSummary));
+      }
+      const link = el("a", "wfq-npc-advice-link", advice.actionLabel);
+      link.href = advice.actionHref;
+      card.append(copy, link);
+      if (advice.hasSellableMaterials) {
+        const sellLink = el("a", "wfq-npc-advice-sell-link", "素材を売却する　›");
+        sellLink.href = "./inventory.html";
+        card.append(sellLink);
+      }
+      return card;
+    };
+    const card = createMerchantCard(merchantAdvice);
+    stage.append(card);
+    window.addEventListener("wfq:merchant-context-updated", () => {
+      const updated = getMerchantAdvice(window.WFQ_MERCHANT_CONTEXT ?? {});
+      if (lineIndex === 0) line.textContent = "「" + updated.greeting + "」";
+      card.replaceWith(createMerchantCard(updated));
     });
   }
   return stage;

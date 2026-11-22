@@ -498,3 +498,57 @@ body {
   .wfq-npc-stage--merchant { grid-template-columns:112px minmax(0,1fr); }
   .wfq-npc-stage--merchant .wfq-npc-portrait { width:112px; height:63px; }
 }
+
+
+/* Merchant Row's advice highlights supplies and optional material selling. */
+.wfq-npc-advice--merchant {
+  border-color:rgba(181,143,82,.38);
+  background:linear-gradient(110deg,rgba(52,47,35,.94),rgba(27,42,43,.96));
+}
+.wfq-npc-advice--merchant .wfq-npc-advice-label { color:#e3c27b; }
+.wfq-npc-advice--merchant .wfq-npc-advice-title { color:#f4e3bf; }
+.wfq-npc-advice--merchant .wfq-npc-advice-detail { color:#e0d9c8; }
+.wfq-npc-advice--merchant .wfq-npc-advice-meta { color:#c8b78c; }
+.wfq-npc-advice-sell {
+  margin:3px 0 0;
+  color:#96c6a7;
+  font-size:.63rem;
+  line-height:1.4;
+}
+.wfq-npc-advice-sell-link {
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:30px;
+  padding:5px 9px;
+  border:1px solid rgba(125,177,139,.55);
+  border-radius:7px;
+  color:#b5e0bd;
+  background:rgba(30,63,48,.58);
+  font-size:.64rem;
+  font-weight:850;
+  text-decoration:none;
+  white-space:nowrap;
+}
+.wfq-npc-advice-sell-link:hover { filter:brightness(1.16); }
+.wfq-npc-stage--merchant .wfq-npc-advice {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  min-width:0;
+}
+.wfq-npc-stage--merchant .wfq-npc-advice-copy { flex:1 1 auto; }
+.wfq-npc-stage--merchant .wfq-npc-advice--merchant {}
+.wfq-npc-stage--merchant .wfq-npc-advice-link { align-self:center; }
+@media(max-width:480px) {
+  .wfq-npc-stage--merchant .wfq-npc-advice {
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .wfq-npc-stage--merchant .wfq-npc-advice-link,
+  .wfq-npc-stage--merchant .wfq-npc-advice-sell-link {
+    align-self:flex-end;
+  }
+}

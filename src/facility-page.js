@@ -280,6 +280,21 @@ function render() {
     };
     window.dispatchEvent(new Event("wfq:blacksmith-context-updated"));
   }
+  if (page === "shop") {
+    window.WFQ_MERCHANT_CONTEXT = {
+      phase: state.phase,
+      player: {
+        hp: state.player.hp,
+        maxHp: state.player.maxHp,
+      },
+      inventory: {
+        gold: state.inventory.gold,
+        items: { ...state.inventory.items },
+        equipment: { ...state.inventory.equipment },
+      },
+    };
+    window.dispatchEvent(new Event("wfq:merchant-context-updated"));
+  }
   if (page === "skills") renderSkills(state);
   else if (page === "crafting") renderCrafting(state);
   else if (page === "shop") renderShop(state);
