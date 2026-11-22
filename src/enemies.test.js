@@ -152,7 +152,7 @@ test("階層補正はHPと攻撃力を階層ごとの倍率で大きく強化す
     [1080, 63],
     [1458, 78],
     [1968, 98],
-    [2656, 122],
+    [2657, 122],
   ];
   for (let floor = 1; floor <= 5; floor += 1) {
     const dragon = createEnemy("forest-dragon", { floor });

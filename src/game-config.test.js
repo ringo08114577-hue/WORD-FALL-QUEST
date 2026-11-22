@@ -20,9 +20,8 @@ test("初期能力と成長・敵強化の既存バランスを維持する", ()
     hpPerLevel: 40,
     attackPowerPerLevel: 5,
   });
-  assert.equal(GAME_CONFIG.enemyScaling.hpPerFloor, 35);
-  assert.equal(GAME_CONFIG.enemyScaling.attackPowerEveryFloors, 2);
-  assert.equal(GAME_CONFIG.enemyScaling.attackPowerPerStep, 5);
+  assert.equal(GAME_CONFIG.enemyScaling.hpMultiplierPerFloor, 1.35);
+  assert.equal(GAME_CONFIG.enemyScaling.attackPowerMultiplierPerFloor, 1.25);
   assert.equal(GAME_CONFIG.enemyScaling.experiencePerFloor, 20);
 });
 
