@@ -90,7 +90,13 @@ export function getFloorEnemyIds(floor, dungeonId = DEFAULT_DUNGEON_ID, { random
   }
   const normalPool = getEligibleEntries("normal", floor, dungeonId);
   const normalCount = plan.normalEnemyCount;
-  if (!Number.isSafeInteger(normalCount) || normalCount < 1 || normalPool.length < normalCount) {
+  if (!Number.isSafeInteger(plan.enemiesPerFloor) || plan.enemiesPerFloor < 2 ||
+      !Number.isSafeInteger(normalCount) || normalCount < 1 ||
+      plan.enemiesPerFloor !== normalCount + 1 ||
+      !Number.isSafeInteger(plan.majorBossEveryFloors) || plan.majorBossEveryFloors < 1) {
+    throw new Error("階層編成設定が不正です: " + dungeonId);
+  }
+  if (normalPool.length < normalCount) {
     throw new Error("階層の通常敵プールが不足しています: " + dungeonId + " / " + floor);
   }
 

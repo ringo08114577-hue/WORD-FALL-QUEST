@@ -8,13 +8,15 @@
 ```text
 src/data/
   items.js       アイテム・装備・価格・初期所持数
-  enemies.js     敵の種類・能力
+  enemies.js     敵の種類・能力・出現階層・出現率
+  enemy-drops.js 敵ごとの素材ドロップ率
   dungeons.js    ダンジョン・階層ごとの敵編成・報酬
   skills.js      プレイヤーの技
   words.js       日本語のお題・英単語
 src/
   items.js       装備ボーナス・初期所持品の計算
-  enemies.js     敵生成・階層補正・能力効果
+  enemies.js     敵生成・階層補正・能力効果・敵編成抽選
+  character-images.js キャラクター画像の登録先
   dungeon.js     ダンジョン進行・セーブ復元
   skills.js      技データの検索・スキルレベル・強化費用・4枠装備
   word-battle.js スペル進行・レーン操作
