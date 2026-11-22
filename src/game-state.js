@@ -88,6 +88,7 @@ function normalizeEnemy(enemy) {
   const experienceReward = enemy.experienceReward === undefined ? 0 : enemy.experienceReward;
   const abilities = enemy.abilities === undefined ? [] : enemy.abilities;
   const isBoss = enemy.isBoss === undefined ? false : enemy.isBoss;
+  const isMiniBoss = enemy.isMiniBoss === undefined ? false : enemy.isMiniBoss;
   const attackElement = enemy.attackElement ?? null;
   const elementalWeakness = enemy.elementalWeakness ?? null;
   const elementalResistance = enemy.elementalResistance ?? null;
@@ -99,6 +100,7 @@ function normalizeEnemy(enemy) {
     !isNonNegativeInteger(experienceReward) || !Array.isArray(abilities) ||
     abilities.some((abilityId) => typeof abilityId !== "string" || !Object.hasOwn(ENEMY_ABILITY_DEFINITIONS,abilityId)) ||
     new Set(abilities).size !== abilities.length || typeof isBoss !== "boolean" ||
+    typeof isMiniBoss !== "boolean" || (isBoss && isMiniBoss) ||
     !validOptionalElement(attackElement) ||
     !validOptionalElement(elementalWeakness) ||
     !validOptionalElement(elementalResistance)
@@ -107,7 +109,7 @@ function normalizeEnemy(enemy) {
   if (!Number.isSafeInteger(hp) || hp < 1 || hp > maxHp) throw new TypeError("敵のhpは1以上maxHp以下の整数にしてください。");
   return {
     id, name: name.trim(), hp, maxHp, attackPower, experienceReward,
-    abilities: [...abilities], isBoss,
+    abilities: [...abilities], isBoss, isMiniBoss,
     ...(attackElement ? { attackElement } : {}),
     ...(elementalWeakness ? { elementalWeakness } : {}),
     ...(elementalResistance ? { elementalResistance } : {}),
@@ -1009,7 +1011,9 @@ export function isValidSavedGameState(saved) {
       !Array.isArray(enemy.abilities) ||
       enemy.abilities.some((abilityId) => typeof abilityId !== "string" || !Object.hasOwn(ENEMY_ABILITY_DEFINITIONS,abilityId)) ||
       new Set(enemy.abilities).size !== enemy.abilities.length ||
-      typeof enemy.isBoss !== "boolean"
+      typeof enemy.isBoss !== "boolean" ||
+      typeof enemy.isMiniBoss !== "boolean" ||
+      (enemy.isBoss && enemy.isMiniBoss)
     ) return false;
   }
 
@@ -1055,6 +1059,10 @@ function copySavedGameState(saved) {
       experienceReward: saved.enemy.experienceReward,
       abilities: [...saved.enemy.abilities],
       isBoss: saved.enemy.isBoss,
+      isMiniBoss: saved.enemy.isMiniBoss,
+      ...(saved.enemy.attackElement ? { attackElement: saved.enemy.attackElement } : {}),
+      ...(saved.enemy.elementalWeakness ? { elementalWeakness: saved.enemy.elementalWeakness } : {}),
+      ...(saved.enemy.elementalResistance ? { elementalResistance: saved.enemy.elementalResistance } : {}),
     } : null,
     inventory: {
       items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map(

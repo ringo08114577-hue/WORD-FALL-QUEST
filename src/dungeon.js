@@ -3,11 +3,14 @@
  * Each dungeon keeps its own unlocked floor and clear record.
  */
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
-import { createEnemy, getFloorEnemyIds, getLegacyFloorEnemyIds } from "./enemies.js";
+import {
+  createEnemy, getFloorEnemyIds, getLegacyFloorEnemyIds,
+  getLegacyFloorV4EnemyIds, isValidFloorEncounterIds,
+} from "./enemies.js";
 import { getDungeonFloorReward } from "./game-config.js";
 import { DEFAULT_DUNGEON_ID, DUNGEON_DEFINITIONS } from "./data/dungeons.js";
 
-export const CURRENT_ENCOUNTER_SET_VERSION = 4;
+export const CURRENT_ENCOUNTER_SET_VERSION = 5;
 export const MAX_DUNGEON_FLOORS = 5;
 
 const dungeonIds = Object.keys(DUNGEON_DEFINITIONS);
@@ -75,14 +78,20 @@ export function createDungeonController(
   let started = false;
   let rewardClaimed = false;
   let encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+  let currentEncounterIds = null;
   let unlockedFloors = initialUnlockedFloors();
   let completedDungeons = initialCompletedDungeons();
 
-  const getEncounterIds = (targetFloor = floor, version = encounterSetVersion, targetId = dungeonId) => {
+  const getEncounterIds = (targetFloor = floor, version = encounterSetVersion, targetId = dungeonId, savedIds = null) => {
     if (version === 1) return getLegacyFloorEnemyIds(targetId);
     if (version === 2) return getLegacyV2EncounterIds(targetFloor, targetId);
     if (version === 3) return getLegacyV3EncounterIds(targetFloor, targetId);
-    return getFloorEnemyIds(targetFloor, targetId);
+    if (version === 4) return getLegacyFloorV4EnemyIds(targetFloor, targetId);
+    if (Array.isArray(savedIds)) return [...savedIds];
+    if (targetFloor === floor && targetId === dungeonId && Array.isArray(currentEncounterIds)) {
+      return [...currentEncounterIds];
+    }
+    return getFloorEnemyIds(targetFloor, targetId, { random });
   };
 
   function startCurrentEnemy() {
@@ -122,6 +131,7 @@ export function createDungeonController(
       enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      currentEncounterIds = getFloorEnemyIds(floor, dungeonId, { random });
       return startCurrentEnemy();
     },
 
@@ -154,6 +164,7 @@ export function createDungeonController(
         enemyIndex = 0;
         rewardClaimed = false;
         encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+        currentEncounterIds = getFloorEnemyIds(floor, dungeonId, { random });
       } else {
         enemyIndex += 1;
       }
@@ -173,6 +184,7 @@ export function createDungeonController(
       enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      currentEncounterIds = null;
       store.dispatch({
         type: GAME_ACTION.LOG_EVENT,
         category: "progress",
@@ -197,6 +209,7 @@ export function createDungeonController(
       enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      currentEncounterIds = null;
       store.dispatch({
         type: GAME_ACTION.LOG_EVENT,
         category: "progress",
@@ -215,6 +228,7 @@ export function createDungeonController(
       enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      currentEncounterIds = null;
       if (floor > getFloorCount(dungeonId)) floor = getFloorCount(dungeonId);
       if (previous.started) {
         store.dispatch({
@@ -232,6 +246,7 @@ export function createDungeonController(
       enemyIndex = 0;
       rewardClaimed = false;
       encounterSetVersion = CURRENT_ENCOUNTER_SET_VERSION;
+      currentEncounterIds = null;
     },
 
     claimFloorReward() {
@@ -286,6 +301,7 @@ export function createDungeonController(
     getSaveData() {
       return {
         dungeonId, floor, enemyIndex, started, rewardClaimed, encounterSetVersion,
+        encounterIds: Array.isArray(currentEncounterIds) ? [...currentEncounterIds] : null,
         unlockedFloors: { ...unlockedFloors },
         completedDungeons: { ...completedDungeons },
       };
@@ -298,7 +314,7 @@ export function createDungeonController(
       const version = data.encounterSetVersion ?? 1;
       if (!Number.isSafeInteger(data.floor) || data.floor < 1 ||
           !Number.isSafeInteger(data.enemyIndex) || data.enemyIndex < 0 ||
-          ![1, 2, 3, CURRENT_ENCOUNTER_SET_VERSION].includes(version) ||
+          ![1, 2, 3, 4, CURRENT_ENCOUNTER_SET_VERSION].includes(version) ||
           typeof data.started !== "boolean" || typeof data.rewardClaimed !== "boolean") {
         return false;
       }
@@ -321,7 +337,16 @@ export function createDungeonController(
 
       let ids;
       try {
-        ids = getEncounterIds(data.floor, version, savedDungeonId);
+        if (version === CURRENT_ENCOUNTER_SET_VERSION && data.started) {
+          if (!isValidFloorEncounterIds(data.floor, savedDungeonId, data.encounterIds)) return false;
+          ids = [...data.encounterIds];
+        } else if (version === CURRENT_ENCOUNTER_SET_VERSION) {
+          if (data.encounterIds !== undefined && data.encounterIds !== null &&
+              !isValidFloorEncounterIds(data.floor, savedDungeonId, data.encounterIds)) return false;
+          ids = getFloorEnemyIds(data.floor, savedDungeonId, { random: () => 0 });
+        } else {
+          ids = getEncounterIds(data.floor, version, savedDungeonId);
+        }
       } catch {
         return false;
       }
@@ -341,6 +366,10 @@ export function createDungeonController(
           actual.experienceReward !== expected.experienceReward) return false;
       if (version === CURRENT_ENCOUNTER_SET_VERSION &&
           (actual.isBoss !== expected.isBoss ||
+           actual.isMiniBoss !== expected.isMiniBoss ||
+           actual.attackElement !== expected.attackElement ||
+           actual.elementalWeakness !== expected.elementalWeakness ||
+           actual.elementalResistance !== expected.elementalResistance ||
            JSON.stringify(actual.abilities) !== JSON.stringify(expected.abilities))) return false;
       if (data.rewardClaimed &&
           (data.enemyIndex !== ids.length - 1 || savedGameState.phase !== GAME_PHASE.VICTORY)) {
@@ -357,6 +386,8 @@ export function createDungeonController(
       started = data.started;
       rewardClaimed = data.rewardClaimed;
       encounterSetVersion = data.encounterSetVersion ?? 1;
+      currentEncounterIds = encounterSetVersion === CURRENT_ENCOUNTER_SET_VERSION &&
+        Array.isArray(data.encounterIds) ? [...data.encounterIds] : null;
       unlockedFloors = normalizedProgressMap(
         data.unlockedFloors,
         initialUnlockedFloors,
