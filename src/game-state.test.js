@@ -444,17 +444,22 @@ test("宝箱報酬で登録済みアイテムとゴールドを追加できる",
 });
 
 
-test("回復薬は最大HPに応じて回復量が増え、最低回復量も保証する", () => {
+test("回復薬は最大HPに関係なく固定量だけHPを回復する", () => {
   let state = createInitialGameState({ playerMaxHp: 500, playerAttackPower: 20 });
   state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
+
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 100 });
   state = gameReducer(state, { type: GAME_ACTION.USE_ITEM, itemId: "small-potion" });
-  assert.equal(state.player.hp, 500);
+  assert.equal(state.player.hp, 420); // 回復薬は常に20回復
+  assert.equal(state.inventory.items["small-potion"], 1);
 
-  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 250 });
-  state = gameReducer(state, { type: GAME_ACTION.USE_ITEM, itemId: "small-potion" });
-  assert.equal(state.player.hp, 350);
-  assert.equal(state.inventory.items["small-potion"], 0);
+  state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "large-potion" });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 300 });
+  state = gameReducer(state, { type: GAME_ACTION.USE_ITEM, itemId: "large-potion" });
+  assert.equal(state.player.hp, 160); // 大きな回復薬は常に40回復
+  assert.equal(state.inventory.items["large-potion"], 0);
+  assert.equal(ITEM_DEFINITIONS["small-potion"].healPercent, undefined);
+  assert.equal(ITEM_DEFINITIONS["large-potion"].healPercent, undefined);
 });
 
 test("敵を倒した直後の次戦準備中は回復薬を使え、許可なしでは使えない", () => {

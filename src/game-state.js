@@ -465,10 +465,7 @@ export function gameReducer(state, action) {
       if (!isPositiveInteger(quantity) || state.player.hp >= state.player.maxHp) {
         return state;
       }
-      const percentageHeal = Number.isFinite(item.healPercent) && item.healPercent > 0
-        ? Math.ceil(state.player.maxHp * item.healPercent)
-        : 0;
-      const healAmount = Math.max(item.healAmount, percentageHeal);
+      const healAmount = item.healAmount;
 
       const healedHp = Math.min(
         state.player.maxHp,

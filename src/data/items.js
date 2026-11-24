@@ -7,13 +7,13 @@ export const EQUIPMENT_SLOT_LABELS = Object.freeze({
 export const ITEM_DEFINITIONS = Object.freeze({
   "small-potion": Object.freeze({
     id: "small-potion", name: "回復薬", type: "consumable", effect: "heal",
-    healAmount: 20, healPercent: 0.2, startingQuantity: 2, shopPrice: 15,
-    description: "最大HPの20%（最低20）を回復する。",
+    healAmount: 20, startingQuantity: 2, shopPrice: 15,
+    description: "HPを20回復する。",
   }),
   "large-potion": Object.freeze({
     id: "large-potion", name: "大きな回復薬", type: "consumable", effect: "heal",
-    healAmount: 40, healPercent: 0.4, shopPrice: 30,
-    description: "最大HPの40%（最低40）を回復する。",
+    healAmount: 40, shopPrice: 30,
+    description: "HPを40回復する。",
   }),
   "wooden-sword": Object.freeze({
     id: "wooden-sword", name: "木の剣", type: "weapon", slot: "weapon",
