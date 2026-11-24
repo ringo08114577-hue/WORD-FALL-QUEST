@@ -720,7 +720,9 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
   storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
   const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
   assert.equal(second.controller.load().loaded, true);
-  assert.deepEqual(second.store.getState().equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
+  assert.deepEqual(second.store.getState().equippedSkillIds, [
+    "quick-strike", "power-strike", "ultimate-strike", "healing-light",
+  ]);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });
