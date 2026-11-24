@@ -433,7 +433,7 @@ test("バージョン13のセーブは新しい成長値へ移行し、HP割合�
   assert.equal(player.experience, 120);
   assert.equal(player.nextLevelXp, 500);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 14);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 15);
 });
 
 test("バージョン9のセーブは新しい成長バランスへHP割合と経験値進捗を引き継ぐ", () => {
@@ -623,6 +623,11 @@ test("以前のセーブにスキルレベルがなくてもLv.1で補完して�
     "quick-strike": 1,
     "power-strike": 1,
     "ultimate-strike": 1,
+    "fireball": 1,
+    "thunder-bolt": 1,
+    "water-shot": 1,
+    "wind-cutter": 1,
+    "earth-spike": 1,
     "healing-light": 1,
     "iron-guard": 1,
     "battle-cry": 1,
@@ -871,7 +876,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 14);
+  assert.equal(SAVE_VERSION, 15);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {
@@ -916,5 +921,5 @@ test("バージョン11のセーブを新しいドロップ素材に対応させ
   assert.equal(second.store.getState().inventory.items["slime-gel"], 0);
   assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 14);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 15);
 });

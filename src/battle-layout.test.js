@@ -149,6 +149,7 @@ test("バトルのスキル選択ボタンはスキル定義から全6種類を�
   assert.match(html, /getSkillEffectForLevel\(skillId, level, evolved\)/);
   assert.deepEqual(Object.keys(SKILL_DEFINITIONS), [
     "quick-strike", "power-strike", "ultimate-strike",
+    "fireball", "thunder-bolt", "water-shot", "wind-cutter", "earth-spike",
     "healing-light", "iron-guard", "battle-cry",
   ]);
   assert.doesNotMatch(html, /getSkillLevelDifficultyRange\(level\)/);
