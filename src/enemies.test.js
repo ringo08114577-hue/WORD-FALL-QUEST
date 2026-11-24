@@ -148,11 +148,11 @@ test("敵の能力一覧は個別生成され、呼び出し元の変更が定�
 
 test("階層補正はHPと攻撃力を階層ごとの倍率で大きく強化する", () => {
   const expected = [
-    [800, 50],
-    [1080, 63],
-    [1458, 78],
-    [1968, 98],
-    [2657, 122],
+    [820, 46],
+    [1107, 58],
+    [1494, 72],
+    [2018, 90],
+    [2724, 112],
   ];
   for (let floor = 1; floor <= 5; floor += 1) {
     const dragon = createEnemy("forest-dragon", { floor });
@@ -164,6 +164,43 @@ test("階層補正はHPと攻撃力を階層ごとの倍率で大きく強化す
   assert.throws(() => createEnemy("unknown"), RangeError);
 });
 
+
+
+test("森の敵は役割に合わせたHP・攻撃力を持つ", () => {
+  const expectedStats = {
+    "plain-slime": [130, 15],
+    slime: [165, 18],
+    bat: [150, 18],
+    goblin: [220, 18],
+    "poison-mushroom": [205, 24],
+    "forest-spider": [240, 22],
+    orc: [310, 32],
+    "moss-golem": [400, 28],
+    grandvel: [620, 30],
+    morgal: [520, 40],
+    loggar: [760, 30],
+    volgrif: [470, 46],
+    "forest-dragon": [820, 46],
+  };
+  for (const [enemyId, [hp, attack]] of Object.entries(expectedStats)) {
+    assert.equal(ENEMY_DEFINITIONS[enemyId].maxHp, hp, enemyId + " HP");
+    assert.equal(ENEMY_DEFINITIONS[enemyId].attackPower, attack, enemyId + " 攻撃力");
+  }
+
+  assert.ok(ENEMY_DEFINITIONS["plain-slime"].maxHp < ENEMY_DEFINITIONS.slime.maxHp);
+  assert.ok(ENEMY_DEFINITIONS["moss-golem"].maxHp > ENEMY_DEFINITIONS.orc.maxHp);
+  assert.ok(ENEMY_DEFINITIONS.loggar.maxHp > ENEMY_DEFINITIONS.grandvel.maxHp);
+  assert.ok(ENEMY_DEFINITIONS.volgrif.attackPower > ENEMY_DEFINITIONS.loggar.attackPower);
+  assert.deepEqual(getEnemyAbilityEffects(createEnemy("bat")), {
+    counterAttackBonus: 10, damageReduction: 0, defensePiercing: 0,
+  });
+  assert.deepEqual(getEnemyAbilityEffects(createEnemy("moss-golem")), {
+    counterAttackBonus: 10, damageReduction: 10, defensePiercing: 0,
+  });
+  assert.deepEqual(getEnemyAbilityEffects(createEnemy("volgrif")), {
+    counterAttackBonus: 10, damageReduction: 0, defensePiercing: 10,
+  });
+});
 
 test("敵ごとの経験値は強さと役割に合わせて設定され、階層ごとの加算は5EXP", () => {
   const expectedBaseExperience = {

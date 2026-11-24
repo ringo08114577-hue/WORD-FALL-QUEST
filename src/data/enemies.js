@@ -35,16 +35,18 @@ export const ENEMY_ABILITY_DEFINITIONS = Object.freeze({
   }),
 });
 
+// Forest stat roles are intentionally distinct: beginner slimes, agile counterattacks,
+// defensive guards, heavy attackers, then specialized mini-bosses and a balanced final boss.
 export const ENEMY_DEFINITIONS = Object.freeze({
   slime: Object.freeze({
     id: "slime", name: "グリーンスライム", rank: "normal",
-    maxHp: 160, attackPower: 20, experienceReward: 30, abilities: ids(),
+    maxHp: 165, attackPower: 18, experienceReward: 30, abilities: ids(),
     description: "森の浅い場所に現れる、緑色の小さなスライム。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 1, maxFloor: 2, weight: 12 }),
   }),
   "plain-slime": Object.freeze({
     id: "plain-slime", name: "スライム", rank: "normal",
-    maxHp: 140, attackPower: 18, experienceReward: 25, abilities: ids(),
+    maxHp: 130, attackPower: 15, experienceReward: 25, abilities: ids(),
     description: "森の浅い場所に現れる、最も一般的なスライム。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 1, maxFloor: 2, weight: 10 }),
   }),
@@ -56,47 +58,47 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   bat: Object.freeze({
     id: "bat", name: "お化けコウモリ", rank: "normal",
-    maxHp: 180, attackPower: 25, experienceReward: 30, attackElement: "wind",
+    maxHp: 150, attackPower: 18, experienceReward: 30, attackElement: "wind",
     abilities: ids("swift"),
     description: "暗い木々の間を飛び回る、すばやいコウモリ。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 1, maxFloor: 5, weight: 8 }),
   }),
   goblin: Object.freeze({
     id: "goblin", name: "ゴブリン", rank: "normal",
-    maxHp: 230, attackPower: 25, experienceReward: 35, abilities: ids("guard"),
+    maxHp: 220, attackPower: 18, experienceReward: 35, abilities: ids("guard"),
     description: "森に住みついた小柄な魔物。身を守るのが得意。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 1, maxFloor: 5, weight: 8 }),
   }),
   "poison-mushroom": Object.freeze({
     id: "poison-mushroom", name: "毒キノコ", rank: "normal",
-    maxHp: 220, attackPower: 27, experienceReward: 35, attackElement: "earth",
+    maxHp: 205, attackPower: 24, experienceReward: 35, attackElement: "earth",
     abilities: ids(),
     description: "胞子を飛ばして攻撃する、毒を持ったキノコ。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 1, maxFloor: 5, weight: 5 }),
   }),
   "forest-spider": Object.freeze({
     id: "forest-spider", name: "森の大グモ", rank: "normal",
-    maxHp: 260, attackPower: 30, experienceReward: 40, attackElement: "wind",
+    maxHp: 240, attackPower: 22, experienceReward: 40, attackElement: "wind",
     abilities: ids("swift"),
     description: "木々の間に巣を張る、大型の森グモ。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 1, maxFloor: 5, weight: 4 }),
   }),
   orc: Object.freeze({
     id: "orc", name: "オーク", rank: "normal",
-    maxHp: 300, attackPower: 35, experienceReward: 45, abilities: ids("piercing"),
+    maxHp: 310, attackPower: 32, experienceReward: 45, abilities: ids("piercing"),
     description: "森の奥に住む、力の強い戦士。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 3, maxFloor: 5, weight: 6 }),
   }),
   "moss-golem": Object.freeze({
     id: "moss-golem", name: "苔ゴーレム", rank: "normal",
-    maxHp: 420, attackPower: 40, experienceReward: 60, attackElement: "earth",
+    maxHp: 400, attackPower: 28, experienceReward: 60, attackElement: "earth",
     abilities: ids("guard", "crushing"),
     description: "苔むした岩でできた、森の奥の大型魔物。",
     encounter: encounter("normal", ["forest-ruins"], { minFloor: 3, maxFloor: 5, weight: 4 }),
   }),
   grandvel: Object.freeze({
     id: "grandvel", name: "深緑の守護獣 グランヴェル", rank: "miniBoss",
-    maxHp: 520, attackPower: 38, experienceReward: 80,
+    maxHp: 620, attackPower: 30, experienceReward: 80,
     isMiniBoss: true, attackElement: "earth",
     elementalWeakness: "fire", elementalResistance: "earth",
     abilities: ids("guard", "crushing"),
@@ -105,7 +107,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   morgal: Object.freeze({
     id: "morgal", name: "毒牙の大蛇 モルガル", rank: "miniBoss",
-    maxHp: 500, attackPower: 40, experienceReward: 80,
+    maxHp: 520, attackPower: 40, experienceReward: 80,
     isMiniBoss: true, attackElement: "water",
     elementalWeakness: "thunder", elementalResistance: "water",
     abilities: ids("piercing"),
@@ -114,7 +116,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   loggar: Object.freeze({
     id: "loggar", name: "朽木の巨人 ログガル", rank: "miniBoss",
-    maxHp: 620, attackPower: 36, experienceReward: 90,
+    maxHp: 760, attackPower: 30, experienceReward: 90,
     isMiniBoss: true, attackElement: "earth",
     elementalWeakness: "fire", elementalResistance: "earth",
     abilities: ids("guard", "crushing"),
@@ -123,7 +125,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   volgrif: Object.freeze({
     id: "volgrif", name: "雷鳴の大梟 ヴォルグリフ", rank: "miniBoss",
-    maxHp: 470, attackPower: 44, experienceReward: 85,
+    maxHp: 470, attackPower: 46, experienceReward: 85,
     isMiniBoss: true, attackElement: "thunder",
     elementalWeakness: "earth", elementalResistance: "wind",
     abilities: ids("swift", "piercing"),
@@ -132,7 +134,7 @@ export const ENEMY_DEFINITIONS = Object.freeze({
   }),
   "forest-dragon": Object.freeze({
     id: "forest-dragon", name: "森のドラゴン", rank: "boss",
-    maxHp: 800, attackPower: 50, experienceReward: 120,
+    maxHp: 820, attackPower: 46, experienceReward: 120,
     isBoss: true, attackElement: "wind",
     elementalWeakness: "fire", elementalResistance: "wind",
     abilities: ids("swift", "guard", "piercing"),
