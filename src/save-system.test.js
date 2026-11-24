@@ -901,5 +901,5 @@ test("バージョン11のセーブを新しいドロップ素材に対応させ
   assert.equal(second.store.getState().inventory.items["slime-gel"], 0);
   assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 13);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 14);
 });

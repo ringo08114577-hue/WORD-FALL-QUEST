@@ -128,7 +128,7 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
   if (result.type === "heal") return {
     ...result,
     amount: result.amount + 20,
-    hpRatio: Math.min(0.9, (result.hpRatio ?? 0) + 0.1),
+    hpRatio: Math.min(0.9, Number(((result.hpRatio ?? 0) + 0.1).toFixed(1))),
   };
   if (result.type === "defense") return { ...result, bonus: result.bonus + 10 };
   if (result.type === "attack-buff") return { ...result, multiplier: Number((result.multiplier + 0.2).toFixed(1)) };

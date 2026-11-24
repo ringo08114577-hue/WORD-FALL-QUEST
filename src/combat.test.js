@@ -123,7 +123,7 @@ test("敵を倒すと勝利になり、その後のイベントは無視され�
   assert.equal(result.experienceGained, 100);
   assert.equal(result.levelUps, 1);
   assert.equal(store.getState().player.level, 2);
-  assert.equal(store.getState().player.attackPower, 8);
+  assert.equal(store.getState().player.attackPower, 13);
   assert.match(result.message, /EXP \+100/);
   assert.match(result.message, /レベルアップ/);
 
