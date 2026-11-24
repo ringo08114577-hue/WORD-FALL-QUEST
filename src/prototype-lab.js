@@ -8,7 +8,7 @@ import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
 import { ELEMENT_IDS, ELEMENT_LABELS, getElementLabel } from "./elements.js";
 import {
   createEmptyPrototypeEquipment, getPrototypePlayerBaseStats,
-  simulatePrototypeAttack, simulatePrototypeIncomingAttack,
+  simulatePrototypeAttack, simulatePrototypeIncomingAttack, comparePrototypeEnemies,
 } from "./prototype-lab-simulator.js";
 
 const $ = (id) => document.getElementById(id);
@@ -194,6 +194,73 @@ function updatePreview() {
     " / HP " + (baseEnemy?.maxHp ?? "—") +
     " / 攻撃力 " + (Number($("enemyAttackPower").value) || 0) +
     " / 攻撃属性 " + (getElementLabel($("enemyAttackElement").value) || "なし");
+  updateEnemyComparison();
+}
+
+ 
+function updateEnemyComparison() {
+  const grid = $("enemyComparison");
+  if (!grid) return;
+  try {
+    const comparisons = comparePrototypeEnemies({
+      floor: Number($("floorSelect").value),
+      equipment: readEquipment(),
+      playerLevel: Number($("playerLevel").value),
+      baseDefensePower: Number($("baseDefensePower").value),
+      skillId: $("skillSelect").value,
+      wordDifficulty: Number($("difficultySelect").value),
+    });
+    const rankFilter = $("comparisonRankFilter").value;
+    const visible = comparisons.filter((enemy) =>
+      rankFilter === "all" || enemy.rank === rankFilter);
+    grid.replaceChildren();
+    $("comparisonCount").textContent =
+      visible.length + " / " + comparisons.length + "体を表示 · " +
+      $("floorSelect").value + "階補正 · Lv." + $("playerLevel").value;
+
+    if (visible.length === 0) {
+      grid.append(node("div", "comparison-empty", "この種類の敵は登録されていないよ。"));
+      return;
+    }
+
+    const rankLabels = { normal: "通常敵", miniBoss: "中ボス", boss: "大ボス" };
+    const elementName = (element) => element ? (ELEMENT_LABELS[element] ?? element) : "なし";
+    for (const enemy of visible) {
+      const card = node("article", "comparison-card");
+      const heading = node("div", "comparison-card-head");
+      heading.append(node("h3", "comparison-name", enemy.name));
+      heading.append(node("span", "comparison-rank comparison-rank--" + enemy.rank,
+        rankLabels[enemy.rank] ?? "敵"));
+      card.append(heading);
+      card.append(node("p", "comparison-basic",
+        "HP " + enemy.maxHp.toLocaleString("ja-JP") +
+        "　攻撃力 " + enemy.attackPower.toLocaleString("ja-JP")));
+      const metrics = node("div", "comparison-metrics");
+      const addMetric = (label, value) => {
+        const metric = node("div", "comparison-metric");
+        metric.append(node("span", "comparison-metric-label", label));
+        metric.append(node("strong", "comparison-metric-value", value));
+        metrics.append(metric);
+      };
+      addMetric("こちらの一撃", enemy.playerAttackDamage.toLocaleString("ja-JP") + " ダメージ");
+      addMetric("撃破に必要な攻撃", enemy.attacksToDefeat.toLocaleString("ja-JP") + " 回");
+      addMetric("敵からの一撃", enemy.enemyAttackDamage.toLocaleString("ja-JP") + " ダメージ");
+      addMetric("戦闘不能まで", enemy.hitsToPlayerDefeat === null
+        ? "ダメージなし" : enemy.hitsToPlayerDefeat.toLocaleString("ja-JP") + " 回");
+      card.append(metrics);
+      const attributes = [];
+      if (enemy.attackElement) attributes.push("攻撃 " + elementName(enemy.attackElement));
+      if (enemy.elementalWeakness) attributes.push("弱点 " + elementName(enemy.elementalWeakness));
+      if (enemy.elementalResistance) attributes.push("耐性 " + elementName(enemy.elementalResistance));
+      if (attributes.length) {
+        card.append(node("p", "comparison-element", attributes.join(" ・ ")));
+      }
+      grid.append(card);
+    }
+  } catch (error) {
+    grid.replaceChildren(node("div", "comparison-error", error.message));
+    $("comparisonCount").textContent = "条件を確認してね";
+  }
 }
 
 function showResult(prefix, result, baseline, incoming = false) {
@@ -308,3 +375,5 @@ for (const control of controls) {
     resetResults();
   });
 }
+
+$("comparisonRankFilter").addEventListener("change", updateEnemyComparison);

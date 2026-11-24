@@ -64,6 +64,26 @@ button.ghost{border-color:#465a74;background:transparent;color:#a9bad0}
 .result-card button{width:100%;margin-top:7px}
 .warning{margin:9px 0 0;color:#7f93ad;font-size:.66rem;line-height:1.5}
 .footer{margin:18px 0 0;text-align:center;color:#667b96;font-size:.65rem}
+
+.comparison-toolbar{display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);align-items:end;gap:10px;margin-bottom:10px}
+.comparison-count{color:#91a4be;font-size:.68rem;line-height:1.5;text-align:right}
+.comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.comparison-card{min-width:0;padding:11px;border:1px solid #354c68;border-radius:12px;background:linear-gradient(145deg,#172941,#111d30)}
+.comparison-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.comparison-name{margin:0;color:#f1f5f9;font-size:.82rem;line-height:1.4;overflow-wrap:anywhere}
+.comparison-rank{flex:none;padding:3px 7px;border:1px solid #405873;border-radius:999px;color:#c5d5e8;font-size:.6rem;font-weight:900}
+.comparison-rank--miniBoss{border-color:#7c6540;color:#f6d68a;background:rgba(105,75,30,.2)}
+.comparison-rank--boss{border-color:#895054;color:#ffb9b9;background:rgba(110,42,48,.2)}
+.comparison-basic{margin:0 0 8px;color:#9eacc2;font-size:.67rem;line-height:1.45}
+.comparison-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.comparison-metric{min-width:0;padding:7px 8px;border-radius:8px;background:#0e1a2b}
+.comparison-metric-label{display:block;color:#8197b1;font-size:.59rem;line-height:1.35}
+.comparison-metric-value{display:block;margin-top:3px;color:#f8fafc;font-size:.91rem;font-weight:950;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.comparison-element{margin:8px 0 0;padding-top:7px;border-top:1px solid #2d415b;color:#90a5be;font-size:.61rem;line-height:1.5}
+.comparison-empty{padding:14px;border:1px dashed #405873;border-radius:10px;color:#9eacc2;text-align:center;font-size:.74rem}
+.comparison-error{padding:12px;border:1px solid #8b5353;border-radius:10px;background:rgba(95,35,40,.22);color:#ffc3c3;font-size:.72rem;line-height:1.5}
+@media(max-width:620px){.comparison-toolbar{grid-template-columns:1fr;gap:6px}.comparison-count{text-align:left}.comparison-grid{grid-template-columns:1fr}}
+
 @media(max-width:620px){body{padding:12px 8px 24px}.panel{padding:11px;margin:8px 0}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.elemental-summary{grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}.element-chip{padding:7px 2px}.element-detail{font-size:.53rem}}
 @media(max-width:390px){.field-grid,.gear-grid,.results{grid-template-columns:1fr}.selected-gear{grid-template-columns:1fr 1fr}.section-head h2{font-size:.9rem}}
 </style>
@@ -145,6 +165,17 @@ button.ghost{border-color:#465a74;background:transparent;color:#a9bad0}
     </div>
     <p class="warning">結果には、選んだ装備をすべて外した場合との差も表示するよ。試験用の設定はページを閉じるとリセットされるよ。</p>
     <div class="button-row"><button class="ghost" id="resetAll" type="button">設定を初期状態に戻す</button></div>
+  </section>
+
+
+  <section class="panel">
+    <div class="section-head"><span class="section-number">06</span><div><h2>敵全体のバランス比較</h2><p>現在のプレイヤー設定と装備で、登録済みの敵を一括シミュレーション</p></div></div>
+    <div class="comparison-toolbar">
+      <div class="field"><label for="comparisonRankFilter">敵の種類</label><select id="comparisonRankFilter"><option value="all">すべての敵</option><option value="normal">通常敵</option><option value="miniBoss">中ボス</option><option value="boss">大ボス</option></select></div>
+      <div class="comparison-count" id="comparisonCount">敵データを計算中…</div>
+    </div>
+    <div class="comparison-grid" id="enemyComparison" aria-live="polite"></div>
+    <p class="warning">比較では各敵の登録データを使用し、選択中の階層補正を適用するよ。こちらの攻撃は選択中のスキル・単語難易度・装備・属性相性を反映。敵の攻撃は敵固有の能力・属性とプレイヤーの防御・装備を反映するよ。敵の個別ステータス欄で行った手動上書きは比較には反映しないよ。</p>
   </section>
 
   <p class="footer">WORD FALL QUEST · PROTOTYPE LAB · NO MAIN SAVE ACCESS</p>

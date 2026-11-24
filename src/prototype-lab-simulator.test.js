@@ -2,8 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { simulatePrototypeAttack, simulatePrototypeIncomingAttack,
   normalizePrototypeEquipment, createEmptyPrototypeEquipment,
-  getPrototypePlayerBaseStats } from "./prototype-lab-simulator.js";
-import { createEnemy } from "./enemies.js";
+  getPrototypePlayerBaseStats, comparePrototypeEnemies } from "./prototype-lab-simulator.js";
+import { createEnemy, ENEMY_DEFINITIONS } from "./enemies.js";
 
 const forestEnemy = {
   id: "test-forest-boss", name: "試験用の森竜", maxHp: 1000, attackPower: 100,
@@ -89,4 +89,43 @@ test("指定階層で作成した敵にHP・攻撃力倍率が適用される", 
   const fifthFloor = createEnemy("forest-dragon", { floor: 5 });
   assert.deepEqual([firstFloor.maxHp, firstFloor.attackPower], [820, 46]);
   assert.deepEqual([fifthFloor.maxHp, fifthFloor.attackPower], [2724, 112]);
+});
+
+
+test("登録済みの全敵を指定階層で一括比較し、撃破回数と被ダメージを計算する", () => {
+  const results = comparePrototypeEnemies({
+    floor: 1,
+    playerLevel: 1,
+    skillId: "quick-strike",
+    wordDifficulty: 1,
+  });
+  assert.equal(results.length, Object.keys(ENEMY_DEFINITIONS).length);
+  assert.ok(results.every((enemy) =>
+    Number.isSafeInteger(enemy.attacksToDefeat) && enemy.attacksToDefeat >= 1 &&
+    Number.isSafeInteger(enemy.playerAttackDamage) && enemy.playerAttackDamage >= 1 &&
+    Number.isSafeInteger(enemy.enemyAttackDamage) && enemy.enemyAttackDamage >= 0 &&
+    (enemy.hitsToPlayerDefeat === null || enemy.hitsToPlayerDefeat >= 1)));
+  const dragon = results.find((enemy) => enemy.id === "forest-dragon");
+  assert.equal(dragon.maxHp, 820);
+  assert.equal(dragon.attackPower, 46);
+  assert.equal(dragon.rank, "boss");
+  assert.equal(dragon.elementalWeakness, "fire");
+  assert.ok(dragon.attacksToDefeat > 1);
+});
+
+test("敵一括比較は階層補正と指定した敵の絞り込みを反映する", () => {
+  const results = comparePrototypeEnemies({
+    floor: 5,
+    enemyIds: ["slime", "forest-dragon"],
+    playerLevel: 2,
+    skillId: "power-strike",
+    wordDifficulty: 2,
+  });
+  assert.equal(results.length, 2);
+  assert.equal(results[0].maxHp, Math.round(165 * 1.35 ** 4));
+  assert.equal(results[1].maxHp, 2724);
+  assert.ok(results.every((enemy) => enemy.attacksToDefeat >= 1));
+  assert.throws(() => comparePrototypeEnemies({ floor: 0 }), RangeError);
+  assert.throws(() => comparePrototypeEnemies({ enemyIds: ["unknown"] }), RangeError);
+  assert.throws(() => comparePrototypeEnemies({ enemyIds: ["slime", "slime"] }), RangeError);
 });

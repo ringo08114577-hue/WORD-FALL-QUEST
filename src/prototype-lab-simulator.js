@@ -6,7 +6,7 @@ import { GAME_PHASE } from "./game-state.js";
 import { GAME_CONFIG } from "./game-config.js";
 import { COMBAT_EVENT, resolveCombatEvent } from "./combat.js";
 import { EQUIPMENT_SLOTS, ITEM_DEFINITIONS, getEquipmentBonuses } from "./items.js";
-import { ENEMY_DEFINITIONS } from "./enemies.js";
+import { createEnemy, ENEMY_DEFINITIONS } from "./enemies.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
 
@@ -141,4 +141,54 @@ export function simulatePrototypeIncomingAttack(options = {}) {
     effectiveStats: Object.freeze({ ...state.player }),
     equipment: state.inventory.equipment,
   });
+}
+
+
+/**
+ * Compare every registered enemy using the same player configuration and the
+ * real combat resolver. The selected floor applies the game's normal scaling.
+ */
+export function comparePrototypeEnemies(options = {}) {
+  const floor = options.floor ?? 1;
+  requirePositiveInteger(floor, "敵の階層");
+  const enemyIds = options.enemyIds ?? Object.keys(ENEMY_DEFINITIONS);
+  if (!Array.isArray(enemyIds) || enemyIds.length === 0 ||
+      enemyIds.some((id) => typeof id !== "string" || !Object.hasOwn(ENEMY_DEFINITIONS, id)) ||
+      new Set(enemyIds).size !== enemyIds.length) {
+    throw new RangeError("比較する敵IDは登録済みの重複しない一覧にしてください。");
+  }
+
+  return Object.freeze(enemyIds.map((enemyId) => {
+    const enemy = createEnemy(enemyId, { floor });
+    const simulationOptions = {
+      ...options,
+      enemy,
+    };
+    const outgoing = simulatePrototypeAttack(simulationOptions);
+    const incoming = simulatePrototypeIncomingAttack(simulationOptions);
+    const outgoingDamage = outgoing.damage;
+    const incomingDamage = incoming.damage;
+    if (!Number.isSafeInteger(outgoingDamage) || outgoingDamage < 1 ||
+        !Number.isSafeInteger(incomingDamage) || incomingDamage < 0) {
+      throw new Error("敵の比較計算に失敗しました: " + enemy.name);
+    }
+
+    return Object.freeze({
+      id: enemy.id,
+      name: enemy.name,
+      rank: ENEMY_DEFINITIONS[enemyId].rank,
+      maxHp: enemy.maxHp,
+      attackPower: enemy.attackPower,
+      attackElement: enemy.attackElement ?? null,
+      elementalWeakness: enemy.elementalWeakness ?? null,
+      elementalResistance: enemy.elementalResistance ?? null,
+      playerAttackDamage: outgoingDamage,
+      attacksToDefeat: Math.ceil(enemy.maxHp / outgoingDamage),
+      enemyAttackDamage: incomingDamage,
+      hitsToPlayerDefeat: incomingDamage > 0
+        ? Math.ceil(incoming.effectiveStats.hp / incomingDamage)
+        : null,
+      playerMaxHp: incoming.effectiveStats.hp,
+    });
+  }));
 }
