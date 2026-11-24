@@ -9,7 +9,7 @@ import { GAME_CONFIG } from "./game-config.js";
 import { createEnemy } from "./enemies.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -26,7 +26,7 @@ function createInitialDungeonProgress() {
 }
 
 function migrateSnapshot(snapshot) {
-  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, SAVE_VERSION].includes(snapshot.version)) return null;
   let migrated = snapshot;
 
   if (migrated.version === 1) {
@@ -402,6 +402,32 @@ function migrateSnapshot(snapshot) {
           defensePower: baseDefensePower + equipmentBonuses.defenseBonus,
           experience,
           nextLevelXp,
+        },
+      },
+    };
+  }
+
+  if (migrated.version === 14) {
+    const gameState = migrated.gameState;
+    if (!isRecord(gameState) || !isRecord(gameState.player) ||
+        !isRecord(gameState.inventory) || !isRecord(gameState.inventory.equipment)) return null;
+    const oldPlayer = gameState.player;
+    const level = Number.isSafeInteger(oldPlayer.level) && oldPlayer.level > 0
+      ? oldPlayer.level : 1;
+    const startingMagicPower = GAME_CONFIG.player.startingMagicPower;
+    const baseMagicPower = startingMagicPower +
+      (level - 1) * GAME_CONFIG.progression.magicPowerPerLevel;
+    const equipmentBonuses = getEquipmentBonuses(gameState.inventory.equipment);
+    migrated = {
+      ...migrated,
+      version: 15,
+      gameState: {
+        ...gameState,
+        player: {
+          ...oldPlayer,
+          startingMagicPower,
+          baseMagicPower,
+          magicPower: baseMagicPower + equipmentBonuses.magicBonus,
         },
       },
     };

@@ -544,6 +544,7 @@
     import { setCharacterImage, clearCharacterImage } from "./src/character-images.js";
     import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
+    import { getElementLabel } from "./src/elements.js";
 
     const $ = (id) => document.getElementById(id);
 
@@ -695,8 +696,8 @@
       const canUseConsumables = active || canUseBetweenEnemies;
 
       $("equipmentSummary").textContent =
-        "ATK " + state.player.attackPower + " · DEF " + state.player.defensePower +
-        " · G " + state.inventory.gold;
+        "ATK " + state.player.attackPower + " · MAG " + state.player.magicPower +
+        " · DEF " + state.player.defensePower + " · G " + state.inventory.gold;
 
       for (const [itemId, item] of Object.entries(ITEM_DEFINITIONS)) {
         const quantity = state.inventory.items[itemId] ?? 0;
@@ -714,6 +715,7 @@
         const details = [];
         if (slot) details.push(EQUIPMENT_SLOT_LABELS[slot] ?? "装備");
         if (item.attackBonus) details.push("ATK +" + item.attackBonus);
+        if (item.magicBonus) details.push("MAG +" + item.magicBonus);
         if (item.defenseBonus) details.push("DEF +" + item.defenseBonus);
         if (item.healPercent) {
           details.push("HP +" + Math.round(item.healPercent * 100) + "%（最低" + item.healAmount + "）");
@@ -821,6 +823,7 @@
       $("playerProgression").textContent =
         "LV." + state.player.level + " · EXP " +
         state.player.experience + " / " + state.player.nextLevelXp +
+        " · MAG " + state.player.magicPower +
         " · DEF " + state.player.defensePower +
         (activeBuffs.length > 0 ? " · " + activeBuffs.join(" / ") : "");
 
@@ -895,7 +898,9 @@
         const effect = getSkillEffectForLevel(skillId, level, evolved);
         const effectLabel = effect.type === "attack"
           ? "攻撃 ×" + effect.damageMultiplier
-          : effect.type === "heal"
+          : effect.type === "magic"
+            ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element)
+            : effect.type === "heal"
             ? "HP +" + Math.round((effect.hpRatio ?? 0) * 100) + "%（最低" + effect.amount + "）"
             : effect.type === "defense"
               ? "防御 +" + effect.bonus
@@ -908,7 +913,7 @@
       }
       const skillNote = $("skillPanel").querySelector(".shop-note");
       skillNote.textContent = visibleSkillCount > 0
-        ? "長い単語ほど強力。ただし完成まで敵の攻撃を受ける可能性があるよ。"
+        ? "技ごとに必要な単語や効果が違うよ。完成まで敵の攻撃に注意！"
         : "装備中のスキルがないよ。いったん街に戻ってステータス画面でスキルを装備してね。";
       $("arenaCover").hidden =
         active && !awaitingSkill && wordState.phase === "active";

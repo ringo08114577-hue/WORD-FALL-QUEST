@@ -1,6 +1,7 @@
 import { createAppSession } from "./app-session.js";
 import { setCharacterImage } from "./character-images.js";
 import { GAME_ACTION } from "./game-state.js";
+import { getElementLabel } from "./elements.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillWordDifficultyRange,
   getSkillEffectForLevel, getSkillDisplayName,
@@ -62,7 +63,9 @@ function renderSkills(state) {
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
     const effectText = effect.type === "attack"
       ? "威力倍率 ×" + effect.damageMultiplier
-      : effect.type === "heal"
+      : effect.type === "magic"
+        ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element) + "属性"
+        : effect.type === "heal"
         ? "回復量 " + effect.amount + " HP"
         : effect.type === "defense"
           ? "防御力 +" + effect.bonus + " · 次の" + effect.hits + "回"
@@ -81,6 +84,7 @@ function render(state = store.getState()) {
   $("hpValue").textContent = "HP " + player.hp + " / " + player.maxHp;
   $("expValue").textContent = "EXP " + player.experience + " / " + player.nextLevelXp;
   $("attackValue").textContent = String(player.attackPower);
+  $("magicValue").textContent = String(player.magicPower);
   $("defenseValue").textContent = String(player.defensePower);
   $("goldValue").textContent = state.inventory.gold + " G";
   $("defeatedValue").textContent = String(state.stats.enemiesDefeated);

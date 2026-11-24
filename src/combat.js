@@ -162,13 +162,18 @@ export function resolveCombatEvent(gameState, event) {
   const activeAttackMultiplier = gameState.battleEffects?.attackUsesRemaining > 0
     ? gameState.battleEffects.attackMultiplier : 1;
   const equipmentElements = getEquipmentElementalBonuses(gameState.inventory?.equipment);
-  const attackElement = skillEffect?.element ?? skill?.element ?? equipmentElements.attackElement;
+  const isMagicAttack = skillEffect?.type === "magic";
+  const attackElement = skillEffect?.element ?? skill?.element ??
+    (isMagicAttack ? null : equipmentElements.attackElement);
+  const offensivePower = isMagicAttack
+    ? positivePower(gameState.player.magicPower)
+    : positivePower(gameState.player.attackPower);
   const elementalMatchup = getElementalMatchup(attackElement, gameState.enemy);
   const elementalAttackBonus = attackElement ? equipmentElements.attackBonus[attackElement] ?? 0 : 0;
   const elementalAttackMultiplier = attackElement
     ? (1 + elementalAttackBonus) * elementalMatchup.multiplier : 1;
   const baseDamage = Math.ceil(
-    positivePower(gameState.player.attackPower) *
+    offensivePower *
     (skillEffect?.damageMultiplier ?? skill?.damageMultiplier ?? 1) *
     difficultyMultiplier *
     activeAttackMultiplier *

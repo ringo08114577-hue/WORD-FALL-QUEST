@@ -27,6 +27,8 @@ test("新しい冒険者の初期能力はHP100・攻撃力20", () => {
   assert.equal(state.player.hp, 100);
   assert.equal(state.player.maxHp, 100);
   assert.equal(state.player.attackPower, 20);
+  assert.equal(state.player.magicPower, 20);
+  assert.equal(state.player.startingMagicPower, 20);
   assert.equal(state.player.startingMaxHp, 100);
   assert.equal(state.enemy, null);
 });
@@ -151,6 +153,15 @@ test("storeは状態変更時に通知し、状態を直接変更できない", 
   assert.equal(notifications, 2);
 });
 
+test("見習いの杖は攻撃力を変えずに魔力を15上げる", () => {
+  const store = createGameStore({ playerMaxHp: 5, playerAttackPower: 2, playerMagicPower: 7 });
+  store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "apprentice-staff" });
+  store.dispatch({ type: GAME_ACTION.PREPARE_EQUIPMENT, itemId: "apprentice-staff" });
+  assert.equal(store.getState().player.attackPower, 2);
+  assert.equal(store.getState().player.magicPower, 22);
+  assert.equal(isValidSavedGameState(store.getState()), true);
+});
+
 test("プレイヤーと敵の攻撃力は正の整数で管理され、リセット後も維持される", () => {
   const store = createGameStore({ playerMaxHp: 5, playerAttackPower: 2 });
   store.dispatch({
@@ -212,6 +223,8 @@ test("敵を倒したときだけEXPを獲得し、レベルアップで能力�
   assert.equal(state.player.maxHp, 83);
   assert.equal(state.player.hp, 82);
   assert.equal(state.player.attackPower, 11);
+  assert.equal(state.player.magicPower, 30);
+  assert.equal(state.player.baseMagicPower, 30);
   assert.equal(state.stats.totalExperienceEarned, 100);
 
   const afterVictory = gameReducer(state, {
@@ -235,6 +248,7 @@ test("余ったEXPを次のレベルに持ち越し、複数レベルも正し�
   assert.equal(state.player.maxHp, 163);
   assert.equal(state.player.hp, 163);
   assert.equal(state.player.attackPower, 21);
+  assert.equal(state.player.magicPower, 40);
 });
 
 test("経験値報酬は0以上の整数で、リセットすると成長状態も初期化される", () => {

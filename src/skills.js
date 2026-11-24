@@ -90,6 +90,7 @@ export function normalizeEvolvedSkillIds(skillIds, skillLevels) {
 
 export const SKILL_CATEGORY_LABELS = Object.freeze({
   attack: "攻撃",
+  magic: "魔法",
   heal: "回復",
   defense: "防御",
   support: "補助",
@@ -114,7 +115,10 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
   const index = level - 1;
   const effect = skill.effect;
   let result;
-  if (!effect) result = { type: "attack", damageMultiplier: skill.damageMultiplier ?? 1 };
+  if (!effect && skill.category === "magic") result = {
+    type: "magic", damageMultiplier: skill.damageMultiplier ?? 1, element: skill.element,
+  };
+  else if (!effect) result = { type: "attack", damageMultiplier: skill.damageMultiplier ?? 1 };
   else if (effect.type === "heal") result = {
     type: "heal",
     amount: effect.amountByLevel[index],
@@ -124,7 +128,9 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
   else if (effect.type === "attack-buff") result = { type: "attack-buff", multiplier: effect.multiplierByLevel[index], uses: effect.uses };
   else return null;
   if (!evolved) return result;
-  if (result.type === "attack") return { ...result, damageMultiplier: Number((result.damageMultiplier * 1.2).toFixed(1)) };
+  if (result.type === "attack" || result.type === "magic") return {
+    ...result, damageMultiplier: Number((result.damageMultiplier * 1.2).toFixed(1)),
+  };
   if (result.type === "heal") return {
     ...result,
     amount: result.amount + 20,

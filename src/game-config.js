@@ -10,11 +10,13 @@ export const GAME_CONFIG = Object.freeze({
   player: Object.freeze({
     startingMaxHp: 100,
     startingAttackPower: 20,
+    startingMagicPower: 20,
   }),
   progression: Object.freeze({
     experiencePerLevel: 100,
     hpPerLevel: 80,
     attackPowerPerLevel: 10,
+    magicPowerPerLevel: 10,
   }),
   enemyScaling: Object.freeze({
     // Floor 1 is the baseline. Each deeper floor compounds both stats.

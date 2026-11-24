@@ -19,6 +19,11 @@ export const ITEM_DEFINITIONS = Object.freeze({
     id: "wooden-sword", name: "木の剣", type: "weapon", slot: "weapon",
     attackBonus: 10, startingQuantity: 1, description: "攻撃力が10上がる。",
   }),
+  "apprentice-staff": Object.freeze({
+    id: "apprentice-staff", name: "見習いの杖", type: "weapon", slot: "weapon",
+    magicBonus: 15, shopPrice: 70,
+    description: "魔力が15上がる。魔法スキルの威力を高める杖。",
+  }),
   "wooden-shield": Object.freeze({
     id: "wooden-shield", name: "木の盾", type: "shield", slot: "shield",
     defenseBonus: 10, shopPrice: 30, description: "防御力が10上がる。",

@@ -202,10 +202,23 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 14,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 15,
   );
 });
 
+
+test("魔力と杖の装備補正をセーブ・ロードで引き継ぐ", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "apprentice-staff" });
+  first.store.dispatch({ type: GAME_ACTION.PREPARE_EQUIPMENT, itemId: "apprentice-staff" });
+  assert.equal(first.store.getState().player.magicPower, 35);
+  assert.equal(first.controller.save().saved, true);
+  const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  assert.equal(second.controller.load().loaded, true);
+  assert.equal(second.store.getState().player.magicPower, 35);
+  assert.equal(second.store.getState().player.baseMagicPower, 20);
+});
 
 test("装備中の盾と防御力をセーブ・ロードで引き継ぐ", () => {
   const storage = memoryStorage();

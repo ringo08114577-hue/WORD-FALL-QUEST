@@ -1,5 +1,6 @@
 import { createAppSession } from "./app-session.js";
 import { GAME_ACTION, GAME_PHASE } from "./game-state.js";
+import { getElementLabel } from "./elements.js";
 import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
 import { createShopController, SHOP_CATALOG } from "./shop.js";
 import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
@@ -23,7 +24,7 @@ const CRAFTING_CATEGORY_LABELS = Object.freeze({
   accessory: "アクセサリー",
 });
 const SHOP_CATEGORY_OPTIONS = Object.freeze([
-  { id: "weapon", label: "武器", icon: "⚔️", description: "攻撃力を高める武器" },
+  { id: "weapon", label: "武器", icon: "⚔️", description: "攻撃力や魔力を高める武器" },
   { id: "shield", label: "盾", icon: "🛡️", description: "敵の攻撃を防ぐ盾" },
   { id: "armor", label: "鎧", icon: "🥋", description: "防御力や最大HPを高める鎧" },
   { id: "accessory", label: "アクセサリー", icon: "💎", description: "能力を補強する装飾品" },
@@ -34,7 +35,7 @@ let selectedShopCategory = null;
 const titleByPage = {
   shop: ["ショップ", "武器・防具・アクセサリー・道具をまとめて購入できるよ。"],
   crafting: ["鍛冶屋", "モンスターから集めた素材とゴールドで、自分だけの装備を作ろう。"],
-  skills: ["スキル工房", "ゴールドを使って攻撃・回復・防御・補助スキルを強化しよう。"],
+  skills: ["スキル工房", "ゴールドを使って物理攻撃・魔法・回復・防御スキルを強化しよう。"],
 };
 const [title, subtitle] = titleByPage[page] ?? titleByPage.shop;
 $("pageTitle").textContent = title;
@@ -59,6 +60,7 @@ function addCard(root, heading, description, footer, button) {
 function getEquipmentEffectText(item) {
   const effects = [];
   if (item.attackBonus) effects.push("攻撃力 +" + item.attackBonus);
+  if (item.magicBonus) effects.push("魔力 +" + item.magicBonus);
   if (item.defenseBonus) effects.push("防御力 +" + item.defenseBonus);
   if (item.maxHpBonus) effects.push("最大HP +" + item.maxHpBonus);
   return effects.join(" · ");
@@ -259,7 +261,9 @@ function renderSkills(state) {
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
     const effectText = effect.type === "attack"
       ? "攻撃威力 ×" + effect.damageMultiplier
-      : effect.type === "heal"
+      : effect.type === "magic"
+        ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element) + "属性"
+        : effect.type === "heal"
         ? "最大HPの " + Math.round((effect.hpRatio ?? 0) * 100) +
           "%を回復（最低 " + effect.amount + " HP）"
         : effect.type === "defense"
@@ -446,7 +450,9 @@ $("facilityContent").addEventListener("click", (event) => {
     const saved = saves.save();
     const effectText = effect.type === "attack"
       ? "攻撃威力 ×" + effect.damageMultiplier
-      : effect.type === "heal"
+      : effect.type === "magic"
+        ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element) + "属性"
+        : effect.type === "heal"
         ? "回復量 最大HPの" + Math.round((effect.hpRatio ?? 0) * 100) +
           "%（最低" + effect.amount + " HP）"
         : effect.type === "defense"

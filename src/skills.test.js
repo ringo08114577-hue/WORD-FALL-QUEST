@@ -26,6 +26,21 @@ test("攻撃スキルは単語が長いほど火力が高い", () => {
   );
 });
 
+test("5属性の基本魔法はシンプルな魔法攻撃として定義される", () => {
+  const magicIds = ["fireball", "thunder-bolt", "water-shot", "wind-cutter", "earth-spike"];
+  assert.deepEqual(magicIds.map((id) => SKILL_DEFINITIONS[id].element),
+    ["fire", "thunder", "water", "wind", "earth"]);
+  for (const id of magicIds) {
+    assert.equal(SKILL_DEFINITIONS[id].category, "magic");
+    assert.deepEqual(getSkillEffectForLevel(id, 1), {
+      type: "magic", damageMultiplier: 1, element: SKILL_DEFINITIONS[id].element,
+    });
+    assert.deepEqual(getSkillEffectForLevel(id, 5, true), {
+      type: "magic", damageMultiplier: 1.2, element: SKILL_DEFINITIONS[id].element,
+    });
+  }
+});
+
 test("回復・防御・補助スキルは簡単な単語で発動し、レベルで効果が成長する", () => {
   for (const skillId of ["healing-light", "iron-guard", "battle-cry"]) {
     assert.deepEqual(getSkillWordDifficultyRange(skillId, 1), { min: 1, max: 2 });
@@ -69,6 +84,11 @@ test("スキルレベルの初期化・検証・旧セーブ補完が正しく�
     "quick-strike": 3,
     "power-strike": 1,
     "ultimate-strike": 1,
+    "fireball": 1,
+    "thunder-bolt": 1,
+    "water-shot": 1,
+    "wind-cutter": 1,
+    "earth-spike": 1,
     "healing-light": 1,
     "iron-guard": 1,
     "battle-cry": 1,

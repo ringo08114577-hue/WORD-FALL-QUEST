@@ -204,6 +204,7 @@ function equipItem(state, action, requiredSlot = null) {
         ? Math.max(0, Math.min(maxHp, maxHp - missingHp))
         : Math.max(1, Math.min(maxHp, maxHp - missingHp)),
       attackPower: state.player.baseAttackPower + bonuses.attackBonus,
+      magicPower: state.player.baseMagicPower + bonuses.magicBonus,
       defensePower: (state.player.baseDefensePower ?? 0) + bonuses.defenseBonus,
     },
     inventory: {
@@ -222,6 +223,7 @@ function addPlayerExperience(player, amount, inventory) {
   let nextLevelXp = player.nextLevelXp;
   let baseMaxHp = player.baseMaxHp ?? player.maxHp;
   let baseAttackPower = player.baseAttackPower ?? player.attackPower;
+  let baseMagicPower = player.baseMagicPower ?? player.magicPower ?? GAME_CONFIG.player.startingMagicPower;
   const equipmentBonuses = getEquipmentBonuses(inventory?.equipment);
   let maxHp = baseMaxHp + equipmentBonuses.maxHpBonus;
   let hp = player.hp;
@@ -233,6 +235,7 @@ function addPlayerExperience(player, amount, inventory) {
     maxHp += GAME_CONFIG.progression.hpPerLevel;
     hp = Math.min(maxHp, hp + GAME_CONFIG.progression.hpPerLevel);
     baseAttackPower += GAME_CONFIG.progression.attackPowerPerLevel;
+    baseMagicPower += GAME_CONFIG.progression.magicPowerPerLevel;
     nextLevelXp = experienceRequiredForNextLevel(level);
   }
 
@@ -246,6 +249,8 @@ function addPlayerExperience(player, amount, inventory) {
     hp,
     baseAttackPower,
     attackPower: baseAttackPower + equipmentBonuses.attackBonus,
+    baseMagicPower,
+    magicPower: baseMagicPower + equipmentBonuses.magicBonus,
     defensePower: (player.baseDefensePower ?? 0) + equipmentBonuses.defenseBonus,
   };
 }
@@ -257,9 +262,11 @@ function addPlayerExperience(player, amount, inventory) {
 export function createInitialGameState({
   playerMaxHp = GAME_CONFIG.player.startingMaxHp,
   playerAttackPower = GAME_CONFIG.player.startingAttackPower,
+  playerMagicPower = GAME_CONFIG.player.startingMagicPower,
 } = {}) {
-  if (!isPositiveInteger(playerMaxHp) || !isPositiveInteger(playerAttackPower)) {
-    throw new TypeError("playerMaxHpとplayerAttackPowerは正の整数にしてください。");
+  if (!isPositiveInteger(playerMaxHp) || !isPositiveInteger(playerAttackPower) ||
+      !isPositiveInteger(playerMagicPower)) {
+    throw new TypeError("playerMaxHp・playerAttackPower・playerMagicPowerは正の整数にしてください。");
   }
 
   return {
@@ -269,12 +276,15 @@ export function createInitialGameState({
       hp: playerMaxHp,
       maxHp: playerMaxHp,
       attackPower: playerAttackPower,
+      magicPower: playerMagicPower,
       baseMaxHp: playerMaxHp,
       startingMaxHp: playerMaxHp,
       baseAttackPower: playerAttackPower,
+      baseMagicPower: playerMagicPower,
       baseDefensePower: 0,
       defensePower: 0,
       startingAttackPower: playerAttackPower,
+      startingMagicPower: playerMagicPower,
       level: 1,
       experience: 0,
       nextLevelXp: experienceRequiredForNextLevel(1),
@@ -717,6 +727,7 @@ export function gameReducer(state, action) {
       return createInitialGameState({
         playerMaxHp: state.player.startingMaxHp ?? state.player.baseMaxHp ?? state.player.maxHp,
         playerAttackPower: state.player.startingAttackPower ?? state.player.baseAttackPower ?? state.player.attackPower,
+        playerMagicPower: state.player.startingMagicPower ?? state.player.baseMagicPower ?? state.player.magicPower,
       });
 
     default:
@@ -967,13 +978,17 @@ export function isValidSavedGameState(saved) {
     !isPositiveInteger(p.startingMaxHp) ||
     !isPositiveInteger(p.baseMaxHp) ||
     !isPositiveInteger(p.baseAttackPower) ||
+    !isPositiveInteger(p.baseMagicPower) ||
     !isNonNegativeInteger(p.baseDefensePower) ||
     !isPositiveInteger(p.startingAttackPower) ||
+    !isPositiveInteger(p.startingMagicPower) ||
     p.baseMaxHp !== p.startingMaxHp + (p.level - 1) * GAME_CONFIG.progression.hpPerLevel ||
     p.baseAttackPower !== p.startingAttackPower + (p.level - 1) * GAME_CONFIG.progression.attackPowerPerLevel ||
+    p.baseMagicPower !== p.startingMagicPower + (p.level - 1) * GAME_CONFIG.progression.magicPowerPerLevel ||
     p.maxHp !== p.baseMaxHp + equipmentBonuses.maxHpBonus ||
     !isNonNegativeInteger(p.hp) || p.hp > p.maxHp ||
     p.attackPower !== p.baseAttackPower + equipmentBonuses.attackBonus ||
+    p.magicPower !== p.baseMagicPower + equipmentBonuses.magicBonus ||
     p.defensePower !== p.baseDefensePower + equipmentBonuses.defenseBonus ||
     !items || typeof items !== "object" || Array.isArray(items) ||
     !isValidSkillLevels(saved.skillLevels) ||
@@ -1045,6 +1060,9 @@ function copySavedGameState(saved) {
       hp: saved.player.hp,
       maxHp: saved.player.maxHp,
       attackPower: saved.player.attackPower,
+      magicPower: saved.player.magicPower,
+      baseMagicPower: saved.player.baseMagicPower,
+      startingMagicPower: saved.player.startingMagicPower,
       baseMaxHp: saved.player.baseMaxHp,
       startingMaxHp: saved.player.startingMaxHp,
       baseAttackPower: saved.player.baseAttackPower,
