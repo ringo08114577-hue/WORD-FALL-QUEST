@@ -22,10 +22,12 @@ test("フロアクリア後は宝箱報酬で得たゴールドをショップ�
 
   assert.equal(shop.buy("small-potion").reason, "not-enough-gold");
   dungeon.claimFloorReward();
+  assert.equal(shop.buy("small-potion").reason, "not-enough-gold");
+  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 15 });
   const before = store.getState().inventory.items["small-potion"];
   const result = shop.buy("small-potion");
   assert.equal(result.purchased, true);
-  assert.equal(result.cost, 15);
+  assert.equal(result.cost, 30);
   assert.equal(result.gold, 0);
   assert.equal(store.getState().inventory.items["small-potion"], before + 1);
 });
@@ -48,7 +50,7 @@ test("ショップで購入したアイテムとゴールドが正しく更新�
   const shop = createShopController(store, dungeon);
   clearFloor(store, dungeon);
   dungeon.claimFloorReward();
-  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 20 });
+  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 40 });
   const result = shop.buy("large-potion");
   assert.equal(result.purchased, true);
   assert.equal(result.gold, 5);
@@ -92,11 +94,12 @@ test("街のショップは出発前と一時停止中に利用でき、戦闘�
   const store = createGameStore();
   const dungeon = createDungeonController(store);
   const shop = createShopController(store, dungeon);
-  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 60 });
+  store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 80 });
 
   const beforeStart = shop.buy("small-potion");
   assert.equal(beforeStart.purchased, true);
-  assert.equal(beforeStart.gold, 45);
+  assert.equal(beforeStart.cost, 30);
+  assert.equal(beforeStart.gold, 50);
 
   dungeon.start();
   assert.equal(shop.buy("large-potion").reason, "not-at-shop");
@@ -104,7 +107,8 @@ test("街のショップは出発前と一時停止中に利用でき、戦闘�
   store.dispatch({ type: GAME_ACTION.PAUSE_BATTLE });
   const whilePaused = shop.buy("large-potion");
   assert.equal(whilePaused.purchased, true);
-  assert.equal(whilePaused.gold, 15);
+  assert.equal(whilePaused.cost, 50);
+  assert.equal(whilePaused.gold, 0);
   assert.equal(store.getState().inventory.items["large-potion"], 1);
 });
 

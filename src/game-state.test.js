@@ -504,7 +504,7 @@ test("大きな回復薬は定義された回復量だけHPを回復する", () 
 
 test("ショップ価格はゲーム状態側でも固定され、不正な商品キーを追加できない", () => {
   let state = createTestGameState();
-  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 30 });
+  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 50 });
   state = gameReducer(state, {
     type: GAME_ACTION.START_BATTLE,
     enemy: { ...slime, maxHp: 1 },
@@ -522,7 +522,7 @@ test("ショップ価格はゲーム状態側でも固定され、不正な商�
   state = gameReducer(state, {
     type: GAME_ACTION.BUY_ITEM,
     itemId: "large-potion",
-    cost: 30,
+    cost: 50,
   });
   assert.equal(state.inventory.gold, 0);
   assert.equal(state.inventory.items["large-potion"], 1);
