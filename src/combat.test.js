@@ -35,14 +35,14 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
   assert.deepEqual(slime, {
     id: "slime",
     name: "グリーンスライム",
-    maxHp: 160,
-    attackPower: 20,
+    maxHp: 165,
+    attackPower: 18,
     experienceReward: 30,
     abilities: [],
     isBoss: false,
   });
   slime.maxHp = 99;
-  assert.equal(createEnemy("slime").maxHp, 160);
+  assert.equal(createEnemy("slime").maxHp, 165);
   assert.throws(() => createEnemy("dragon"), RangeError);
 });
 

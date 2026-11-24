@@ -435,9 +435,9 @@ test("バージョン9のセーブは新しい成長バランスへHP割合と�
   assert.equal(player.attackPower, 20);
   assert.equal(player.experience, 50);
   assert.equal(player.nextLevelXp, 100);
-  assert.equal(second.store.getState().enemy.maxHp, 160);
-  assert.equal(second.store.getState().enemy.hp, 107);
-  assert.equal(second.store.getState().enemy.attackPower, 20);
+  assert.equal(second.store.getState().enemy.maxHp, 165);
+  assert.equal(second.store.getState().enemy.hp, 110);
+  assert.equal(second.store.getState().enemy.attackPower, 18);
   assert.equal(second.store.getState().battleEffects.defenseBonus, 20);
   assert.equal(second.store.getState().stats.totalExperienceEarned, 100);
 });

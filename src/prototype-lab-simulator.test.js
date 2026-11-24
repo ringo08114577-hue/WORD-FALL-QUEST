@@ -87,6 +87,6 @@ test("試作ラボはプレイヤーレベルから本編と同じ攻撃力・�
 test("指定階層で作成した敵にHP・攻撃力倍率が適用される", () => {
   const firstFloor = createEnemy("forest-dragon", { floor: 1 });
   const fifthFloor = createEnemy("forest-dragon", { floor: 5 });
-  assert.deepEqual([firstFloor.maxHp, firstFloor.attackPower], [800, 50]);
-  assert.deepEqual([fifthFloor.maxHp, fifthFloor.attackPower], [2657, 122]);
+  assert.deepEqual([firstFloor.maxHp, firstFloor.attackPower], [820, 46]);
+  assert.deepEqual([fifthFloor.maxHp, fifthFloor.attackPower], [2724, 112]);
 });
