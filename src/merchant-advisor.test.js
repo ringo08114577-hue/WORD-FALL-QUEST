@@ -21,7 +21,7 @@ test("回復薬がなくなったら回復薬をおすすめする", () => {
   assert.equal(advice.status, "recovery");
   assert.equal(advice.itemName, "回復薬");
   assert.match(advice.greeting, /回復薬が切れている/);
-  assert.match(advice.meta, /15G/);
+  assert.match(advice.meta, /30G/);
 });
 
 test("HPが少なく大きな回復薬もないときは大きな回復薬をすすめる", () => {
@@ -31,7 +31,7 @@ test("HPが少なく大きな回復薬もないときは大きな回復薬をす
   }));
   assert.equal(advice.status, "short-gold");
   assert.equal(advice.itemName, "大きな回復薬");
-  assert.match(advice.detail, /あと20G/);
+  assert.match(advice.detail, /あと40G/);
 });
 
 test("現在の装備より強く、購入可能な装備を紹介する", () => {
