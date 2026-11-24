@@ -13,8 +13,8 @@ export const GAME_CONFIG = Object.freeze({
   }),
   progression: Object.freeze({
     experiencePerLevel: 100,
-    hpPerLevel: 40,
-    attackPowerPerLevel: 5,
+    hpPerLevel: 80,
+    attackPowerPerLevel: 10,
   }),
   enemyScaling: Object.freeze({
     // Floor 1 is the baseline. Each deeper floor compounds both stats.

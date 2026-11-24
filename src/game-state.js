@@ -451,20 +451,28 @@ export function gameReducer(state, action) {
     }
 
     case GAME_ACTION.USE_ITEM: {
-      if (state.phase !== GAME_PHASE.BATTLE) return state;
+      const canUseDuringBattle = state.phase === GAME_PHASE.BATTLE;
+      const canUseBetweenEnemies = state.phase === GAME_PHASE.VICTORY &&
+        action.allowBetweenBattles === true;
+      if (!canUseDuringBattle && !canUseBetweenEnemies) return state;
       const item = Object.hasOwn(ITEM_DEFINITIONS, action.itemId)
         ? ITEM_DEFINITIONS[action.itemId]
         : null;
-      if (!item || item.type !== "consumable" || item.effect !== "heal" || !isPositiveInteger(item.healAmount)) return state;
+      if (!item || item.type !== "consumable" || item.effect !== "heal" ||
+          !isPositiveInteger(item.healAmount)) return state;
 
       const quantity = state.inventory.items[action.itemId] ?? 0;
       if (!isPositiveInteger(quantity) || state.player.hp >= state.player.maxHp) {
         return state;
       }
+      const percentageHeal = Number.isFinite(item.healPercent) && item.healPercent > 0
+        ? Math.ceil(state.player.maxHp * item.healPercent)
+        : 0;
+      const healAmount = Math.max(item.healAmount, percentageHeal);
 
       const healedHp = Math.min(
         state.player.maxHp,
-        state.player.hp + item.healAmount,
+        state.player.hp + healAmount,
       );
       return {
         ...state,

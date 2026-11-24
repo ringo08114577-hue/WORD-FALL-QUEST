@@ -223,7 +223,8 @@ function renderSkills(state) {
     const effectText = effect.type === "attack"
       ? "攻撃威力 ×" + effect.damageMultiplier
       : effect.type === "heal"
-        ? "HPを " + effect.amount + " 回復"
+        ? "最大HPの " + Math.round((effect.hpRatio ?? 0) * 100) +
+          "%を回復（最低 " + effect.amount + " HP）"
         : effect.type === "defense"
           ? "防御力 +" + effect.bonus + "（次の" + effect.hits + "回）"
           : "攻撃倍率 ×" + effect.multiplier + "（次の攻撃" + effect.uses + "回）";
@@ -385,7 +386,8 @@ $("facilityContent").addEventListener("click", (event) => {
     const effectText = effect.type === "attack"
       ? "攻撃威力 ×" + effect.damageMultiplier
       : effect.type === "heal"
-        ? "回復量 " + effect.amount + " HP"
+        ? "回復量 最大HPの" + Math.round((effect.hpRatio ?? 0) * 100) +
+          "%（最低" + effect.amount + " HP）"
         : effect.type === "defense"
           ? "防御力 +" + effect.bonus
           : "攻撃倍率 ×" + effect.multiplier;

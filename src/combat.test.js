@@ -308,6 +308,24 @@ test("いやしの光は簡単な単語の完成でHPを回復し、敵にはダ
   assert.match(result.message, /回復/);
 });
 
+
+test("いやしの光はプレイヤー最大HPに応じて回復量が増える", () => {
+  const store = createTestStore({ playerMaxHp: 300 });
+  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "healing-light" });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: testSlime });
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 150 });
+  const result = createCombatController(store).handle({
+    eventId: "healing-light-scaled-word",
+    type: "word-complete",
+    skillId: "healing-light",
+    wordDifficulty: 2,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(result.action.amount, 90);
+  assert.equal(store.getState().player.hp, 240);
+  assert.equal(store.getState().enemy.hp, testSlime.maxHp);
+});
+
 test("鉄壁の構えは次の2回の敵攻撃を軽減する", () => {
   const store = createTestStore({ playerMaxHp: 100 });
   store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "iron-guard" });

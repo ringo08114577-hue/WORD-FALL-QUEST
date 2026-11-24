@@ -23,8 +23,12 @@ test("回復・防御・補助スキルは簡単な単語で発動し、レベ�
     assert.deepEqual(getSkillWordDifficultyRange(skillId, 1), { min: 1, max: 2 });
     assert.deepEqual(getSkillWordDifficultyRange(skillId, 5), { min: 1, max: 2 });
   }
-  assert.deepEqual(getSkillEffectForLevel("healing-light", 1), { type: "heal", amount: 30 });
-  assert.deepEqual(getSkillEffectForLevel("healing-light", 5), { type: "heal", amount: 70 });
+  assert.deepEqual(getSkillEffectForLevel("healing-light", 1), {
+    type: "heal", amount: 30, hpRatio: 0.3,
+  });
+  assert.deepEqual(getSkillEffectForLevel("healing-light", 5), {
+    type: "heal", amount: 70, hpRatio: 0.7,
+  });
   assert.deepEqual(getSkillEffectForLevel("iron-guard", 1), { type: "defense", bonus: 20, hits: 2 });
   assert.deepEqual(getSkillEffectForLevel("iron-guard", 5), { type: "defense", bonus: 40, hits: 2 });
   assert.deepEqual(getSkillEffectForLevel("battle-cry", 1), { type: "attack-buff", multiplier: 1.2, uses: 2 });
@@ -75,7 +79,9 @@ test("スキル進化の素材・効果・表示名が定義どおり", () => {
   assert.deepEqual(getSkillEffectForLevel("quick-strike", 5, true), { type: "attack", damageMultiplier: 1.2 });
   assert.deepEqual(getSkillEffectForLevel("power-strike", 5, true), { type: "attack", damageMultiplier: 2.4 });
   assert.deepEqual(getSkillEffectForLevel("ultimate-strike", 5, true), { type: "attack", damageMultiplier: 3.6 });
-  assert.deepEqual(getSkillEffectForLevel("healing-light", 5, true), { type: "heal", amount: 90 });
+  assert.deepEqual(getSkillEffectForLevel("healing-light", 5, true), {
+    type: "heal", amount: 90, hpRatio: 0.8,
+  });
   assert.deepEqual(getSkillEffectForLevel("iron-guard", 5, true), { type: "defense", bonus: 50, hits: 2 });
   assert.deepEqual(getSkillEffectForLevel("battle-cry", 5, true), { type: "attack-buff", multiplier: 1.8, uses: 2 });
   assert.equal(getSkillDisplayName("quick-strike", true), "疾風の斬撃");

@@ -26,7 +26,11 @@ export const SKILL_DEFINITIONS = Object.freeze({
     description: "3〜4文字の単語 · HPを回復する",
     minWordLength: 3, maxWordLength: 4,
     wordDifficultyRange: Object.freeze({ min: 1, max: 2 }),
-    effect: Object.freeze({ type: "heal", amountByLevel: Object.freeze([30, 40, 50, 60, 70]) }),
+    effect: Object.freeze({
+      type: "heal",
+      amountByLevel: Object.freeze([30, 40, 50, 60, 70]),
+      hpRatioByLevel: Object.freeze([0.3, 0.4, 0.5, 0.6, 0.7]),
+    }),
     startingLevel: 1, maxLevel: 5,
     upgradeCosts: Object.freeze([50, 100, 200, 400]),
   }),

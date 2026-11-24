@@ -209,9 +209,9 @@ test("敵を倒したときだけEXPを獲得し、レベルアップで能力�
   assert.equal(state.player.level, 2);
   assert.equal(state.player.experience, 0);
   assert.equal(state.player.nextLevelXp, 200);
-  assert.equal(state.player.maxHp, 43);
-  assert.equal(state.player.hp, 42);
-  assert.equal(state.player.attackPower, 6);
+  assert.equal(state.player.maxHp, 83);
+  assert.equal(state.player.hp, 82);
+  assert.equal(state.player.attackPower, 11);
   assert.equal(state.stats.totalExperienceEarned, 100);
 
   const afterVictory = gameReducer(state, {
@@ -232,9 +232,9 @@ test("余ったEXPを次のレベルに持ち越し、複数レベルも正し�
   assert.equal(state.player.level, 3);
   assert.equal(state.player.experience, 50);
   assert.equal(state.player.nextLevelXp, 300);
-  assert.equal(state.player.maxHp, 83);
-  assert.equal(state.player.hp, 83);
-  assert.equal(state.player.attackPower, 11);
+  assert.equal(state.player.maxHp, 163);
+  assert.equal(state.player.hp, 163);
+  assert.equal(state.player.attackPower, 21);
 });
 
 test("経験値報酬は0以上の整数で、リセットすると成長状態も初期化される", () => {
@@ -283,8 +283,8 @@ test("勝利後に次の戦闘へ進んでもレベルと能力値を引き継�
 
   assert.equal(state.phase, GAME_PHASE.BATTLE);
   assert.equal(state.player.level, 2);
-  assert.equal(state.player.maxHp, 43);
-  assert.equal(state.player.attackPower, 6);
+  assert.equal(state.player.maxHp, 83);
+  assert.equal(state.player.attackPower, 11);
   assert.equal(state.player.experience, 0);
 });
 
@@ -359,8 +359,8 @@ test("武器装備は攻撃力を上げ、レベルアップ分と別々に計�
 
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 3 });
   assert.equal(state.player.level, 2);
-  assert.equal(state.player.baseAttackPower, 7);
-  assert.equal(state.player.attackPower, 17);
+  assert.equal(state.player.baseAttackPower, 12);
+  assert.equal(state.player.attackPower, 22);
 });
 
 test("アイテムはバトル中以外には使えず、敗北時のリセットで所持品と装備も戻る", () => {
@@ -441,6 +441,46 @@ test("宝箱報酬で登録済みアイテムとゴールドを追加できる",
   assert.equal(invalidItem, state);
   assert.equal(invalidQuantity, state);
   assert.equal(invalidGold, state);
+});
+
+
+test("回復薬は最大HPに応じて回復量が増え、最低回復量も保証する", () => {
+  let state = createInitialGameState({ playerMaxHp: 500, playerAttackPower: 20 });
+  state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 100 });
+  state = gameReducer(state, { type: GAME_ACTION.USE_ITEM, itemId: "small-potion" });
+  assert.equal(state.player.hp, 500);
+
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 250 });
+  state = gameReducer(state, { type: GAME_ACTION.USE_ITEM, itemId: "small-potion" });
+  assert.equal(state.player.hp, 350);
+  assert.equal(state.inventory.items["small-potion"], 0);
+});
+
+test("敵を倒した直後の次戦準備中は回復薬を使え、許可なしでは使えない", () => {
+  let state = createInitialGameState({ playerMaxHp: 100, playerAttackPower: 20 });
+  state = gameReducer(state, {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...slime, maxHp: 1 },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 80 });
+  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
+  assert.equal(state.phase, GAME_PHASE.VICTORY);
+  assert.equal(state.player.hp, 20);
+
+  const denied = gameReducer(state, {
+    type: GAME_ACTION.USE_ITEM, itemId: "small-potion",
+  });
+  assert.equal(denied, state);
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.USE_ITEM,
+    itemId: "small-potion",
+    allowBetweenBattles: true,
+  });
+  assert.equal(state.phase, GAME_PHASE.VICTORY);
+  assert.equal(state.player.hp, 40);
+  assert.equal(state.inventory.items["small-potion"], 1);
 });
 
 test("大きな回復薬は定義された回復量だけHPを回復する", () => {
@@ -559,7 +599,7 @@ test("盾を装備したままレベルアップしても防御力を維持す�
   });
   state = gameReducer(state, { type: GAME_ACTION.DAMAGE_ENEMY, amount: 1 });
   assert.equal(state.player.level, 2);
-  assert.equal(state.player.attackPower, 6);
+  assert.equal(state.player.attackPower, 11);
   assert.equal(state.player.defensePower, 10);
 });
 

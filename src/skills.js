@@ -115,13 +115,21 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
   const effect = skill.effect;
   let result;
   if (!effect) result = { type: "attack", damageMultiplier: skill.damageMultiplier ?? 1 };
-  else if (effect.type === "heal") result = { type: "heal", amount: effect.amountByLevel[index] };
+  else if (effect.type === "heal") result = {
+    type: "heal",
+    amount: effect.amountByLevel[index],
+    hpRatio: effect.hpRatioByLevel?.[index] ?? 0,
+  };
   else if (effect.type === "defense") result = { type: "defense", bonus: effect.bonusByLevel[index], hits: effect.hits };
   else if (effect.type === "attack-buff") result = { type: "attack-buff", multiplier: effect.multiplierByLevel[index], uses: effect.uses };
   else return null;
   if (!evolved) return result;
   if (result.type === "attack") return { ...result, damageMultiplier: Number((result.damageMultiplier * 1.2).toFixed(1)) };
-  if (result.type === "heal") return { ...result, amount: result.amount + 20 };
+  if (result.type === "heal") return {
+    ...result,
+    amount: result.amount + 20,
+    hpRatio: Math.min(0.9, (result.hpRatio ?? 0) + 0.1),
+  };
   if (result.type === "defense") return { ...result, bonus: result.bonus + 10 };
   if (result.type === "attack-buff") return { ...result, multiplier: Number((result.multiplier + 0.2).toFixed(1)) };
   return result;

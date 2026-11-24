@@ -111,10 +111,12 @@ export function resolveCombatEvent(gameState, event) {
   const skillNote = "「" + getSkillDisplayName(skillId, isEvolved) + "」！";
 
   if (skillEffect?.type === "heal") {
-    const actualHeal = Math.min(skillEffect.amount, gameState.player.maxHp - gameState.player.hp);
+    const scaledHeal = Math.ceil(gameState.player.maxHp * (skillEffect.hpRatio ?? 0));
+    const healAmount = Math.max(skillEffect.amount ?? 0, scaledHeal);
+    const actualHeal = Math.min(healAmount, gameState.player.maxHp - gameState.player.hp);
     return {
       ignored: false,
-      action: { type: GAME_ACTION.HEAL_PLAYER, amount: skillEffect.amount, skillId },
+      action: { type: GAME_ACTION.HEAL_PLAYER, amount: healAmount, skillId },
       damageTarget: null,
       message: actualHeal > 0
         ? skillNote + "HPを " + actualHeal + " 回復！"

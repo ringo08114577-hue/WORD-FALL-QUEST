@@ -689,6 +689,10 @@
       const root = $("inventoryItems");
       root.replaceChildren();
       const active = activeBattle(state);
+      const dungeonProgress = dungeon.getProgress();
+      const canUseBetweenEnemies = state.phase === GAME_PHASE.VICTORY &&
+        !dungeonProgress.floorCleared;
+      const canUseConsumables = active || canUseBetweenEnemies;
 
       $("equipmentSummary").textContent =
         "ATK " + state.player.attackPower + " · DEF " + state.player.defensePower +
@@ -711,7 +715,11 @@
         if (slot) details.push(EQUIPMENT_SLOT_LABELS[slot] ?? "装備");
         if (item.attackBonus) details.push("ATK +" + item.attackBonus);
         if (item.defenseBonus) details.push("DEF +" + item.defenseBonus);
-        if (item.healAmount) details.push("HP +" + item.healAmount);
+        if (item.healPercent) {
+          details.push("HP +" + Math.round(item.healPercent * 100) + "%（最低" + item.healAmount + "）");
+        } else if (item.healAmount) {
+          details.push("HP +" + item.healAmount);
+        }
         label.textContent = details.join(" · ") || "アイテム";
 
         const value = document.createElement("strong");
@@ -724,7 +732,7 @@
         if (item.type === "consumable") {
           button.dataset.itemAction = "use";
           button.textContent = "使う";
-          button.disabled = !active || quantity <= 0 || state.player.hp >= state.player.maxHp;
+          button.disabled = !canUseConsumables || quantity <= 0 || state.player.hp >= state.player.maxHp;
         } else if (slot) {
           button.textContent = equipped ? "装備中" : "アイテム欄で変更";
           button.disabled = true;
@@ -888,7 +896,7 @@
         const effectLabel = effect.type === "attack"
           ? "攻撃 ×" + effect.damageMultiplier
           : effect.type === "heal"
-            ? "HP +" + effect.amount
+            ? "HP +" + Math.round((effect.hpRatio ?? 0) * 100) + "%（最低" + effect.amount + "）"
             : effect.type === "defense"
               ? "防御 +" + effect.bonus
               : "次の攻撃 ×" + effect.multiplier;
@@ -936,7 +944,7 @@
           ? (dungeonProgress.rewardClaimed
               ? "報酬を獲得したよ！「次の階へ」進むか「ホームへ戻る」を選ぼう。"
               : "この階の敵をすべて倒したよ！宝箱を開けるか、ホームへ戻ろう。")
-          : "次の敵が待っている。準備ができたら進もう。";
+          : "次の敵へ進む前に、所持品から回復薬を使ってHPを整えられるよ。";
         // A cleared floor always offers both progression and a safe return home.
         $("startButton").hidden = dungeonProgress.dungeonCleared;
         $("homeButton").hidden = !floorCleared;
@@ -1238,7 +1246,12 @@
       const { itemId } = button.dataset;
       const item = ITEM_DEFINITIONS[itemId];
       const before = store.getState();
-      const after = store.dispatch({ type: GAME_ACTION.USE_ITEM, itemId });
+      const progress = dungeon.getProgress();
+      const after = store.dispatch({
+        type: GAME_ACTION.USE_ITEM,
+        itemId,
+        allowBetweenBattles: before.phase === GAME_PHASE.VICTORY && !progress.floorCleared,
+      });
 
       if (after === before) {
         setStatus("今はそのアイテムを使えないよ。", "bad");
