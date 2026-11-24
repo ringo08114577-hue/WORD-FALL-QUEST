@@ -25,7 +25,16 @@
     .primary-link{display:flex;justify-content:center;align-items:center;width:100%;min-height:48px;margin-top:12px;border-radius:12px;border:1px solid #3b82f6;background:#2563eb;color:#fff;text-decoration:none;font-size:.84rem;font-weight:900}
     @media(max-width:620px){body{padding:10px 8px 20px}.panel,.subpanel{padding:11px;margin:7px 0}.facility-grid{gap:7px}.facility-link{min-height:100px;padding:10px}.offer-grid{gap:7px}.offer-card{padding:10px}.floor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dungeon-grid{grid-template-columns:1fr}.inventory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:360px){.facility-grid,.offer-grid,.equipment-grid{grid-template-columns:1fr}.topline{align-items:flex-start}.back{font-size:.68rem}}
-</style>  <link rel="stylesheet" href="./src/shared-layout.css">
+</style>
+<style>
+  .skill-loadout-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .skill-slot-card{min-width:0;padding:10px;border:1px solid #263a56;border-radius:11px;background:#111d30}
+  .skill-slot-label{display:block;margin-bottom:6px;color:#9eacc2;font-size:.7rem;font-weight:850}
+  .skill-slot-select{width:100%;min-height:42px;padding:8px 9px;border:1px solid #3b506e;border-radius:9px;background:#16263c;color:#eef4ff;font:inherit;font-size:.76rem;font-weight:750}
+  .skill-slot-select:disabled{opacity:.5}
+  @media(max-width:360px){.skill-loadout-grid{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="./src/shared-layout.css">
 </head>
 <body data-facility="skills"><main>
 <div class="topline"><div class="eyebrow">WORD FALL QUEST · TOWN FACILITY</div><a class="back" href="./index.html">← ホームへ戻る</a></div>

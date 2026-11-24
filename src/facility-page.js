@@ -4,7 +4,7 @@ import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
 import { createShopController, SHOP_CATALOG } from "./shop.js";
 import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
 import {
-  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillUpgradeCost,
+  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, SKILL_EQUIP_SLOT_COUNT, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel,
   getSkillEvolutionRecipe, getSkillDisplayName,
 } from "./skills.js";
@@ -212,6 +212,43 @@ function renderShop(state) {
 function renderSkills(state) {
   const root = $("facilityContent");
   root.replaceChildren();
+
+  const equippedSkillIds = state.equippedSkillIds ?? [];
+  const loadoutPanel = node("section", "subpanel");
+  loadoutPanel.append(node("h2", "", "バトルスキルの装備"));
+  loadoutPanel.append(node("p", "muted",
+    "4つの枠に使いたいスキルをセットしよう。装備は街でいつでも変更できるよ。"));
+
+  const loadoutGrid = node("div", "skill-loadout-grid");
+  for (let slotIndex = 0; slotIndex < SKILL_EQUIP_SLOT_COUNT; slotIndex += 1) {
+    const slotCard = node("div", "skill-slot-card");
+    const label = node("label", "skill-slot-label", "スキル枠 " + (slotIndex + 1));
+    const select = node("select", "skill-slot-select");
+    select.dataset.skillSlot = String(slotIndex);
+    select.setAttribute("aria-label", "スキル枠 " + (slotIndex + 1));
+    select.disabled = state.phase !== GAME_PHASE.TITLE;
+
+    const emptyOption = node("option", "", "未装備");
+    emptyOption.value = "";
+    select.append(emptyOption);
+
+    for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+      const option = node("option", "", skill.name + " · " +
+        (SKILL_CATEGORY_LABELS[skill.category] ?? "スキル"));
+      option.value = skillId;
+      option.disabled = equippedSkillIds.some((equippedId, equippedIndex) =>
+        equippedIndex !== slotIndex && equippedId === skillId);
+      select.append(option);
+    }
+    select.value = equippedSkillIds[slotIndex] ?? "";
+    label.htmlFor = "skillSlot-" + slotIndex;
+    select.id = "skillSlot-" + slotIndex;
+    slotCard.append(label, select);
+    loadoutGrid.append(slotCard);
+  }
+  loadoutPanel.append(loadoutGrid);
+  root.append(loadoutPanel);
+
   const grid = node("div", "offer-grid");
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
     const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
@@ -301,6 +338,30 @@ function render() {
   else if (page === "shop") renderShop(state);
 
 }
+
+$("facilityContent").addEventListener("change", (event) => {
+  const slotSelect = event.target.closest("select[data-skill-slot]");
+  if (!slotSelect || page !== "skills") return;
+
+  const slotIndex = Number(slotSelect.dataset.skillSlot);
+  const skillId = slotSelect.value || null;
+  const before = store.getState();
+  const after = store.dispatch({
+    type: GAME_ACTION.EQUIP_SKILL,
+    slotIndex,
+    skillId,
+  });
+  if (after === before) {
+    $("feedback").textContent = "そのスキルは装備できないよ。枠や重複を確認してね。";
+    render();
+    return;
+  }
+  const saved = saves.save();
+  const skillName = skillId ? SKILL_DEFINITIONS[skillId]?.name ?? "スキル" : "未装備";
+  $("feedback").textContent = "スキル枠 " + (slotIndex + 1) + " を" + skillName +
+    "に変更したよ。" + (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
+  render();
+});
 
 $("facilityContent").addEventListener("click", (event) => {
   const shopCategoryButton = event.target.closest("button[data-shop-category]");

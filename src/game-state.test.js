@@ -852,15 +852,32 @@ test("ホームへ戻るとHPと戦闘状態だけを整え、冒険者の成長
 });
 
 
-test("スキルは4枠まで装備でき、重複と最後の1枠の解除はできない", () => {
+test("4枠目には回復スキルが初期装備され、4枠とも街で変更できる", () => {
   let state = createTestGameState();
-  assert.deepEqual(state.equippedSkillIds, ["quick-strike", "power-strike", "ultimate-strike", null]);
-  const duplicate = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike" });
+  assert.deepEqual(state.equippedSkillIds, [
+    "quick-strike", "power-strike", "ultimate-strike", "healing-light",
+  ]);
+
+  const duplicate = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike",
+  });
   assert.equal(duplicate, state);
+
+  state = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "iron-guard",
+  });
+  assert.deepEqual(state.equippedSkillIds, [
+    "quick-strike", "power-strike", "ultimate-strike", "iron-guard",
+  ]);
+
   state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: null });
-  assert.deepEqual(state.equippedSkillIds, ["quick-strike", null, "ultimate-strike", null]);
+  assert.deepEqual(state.equippedSkillIds, [
+    "quick-strike", null, "ultimate-strike", "iron-guard",
+  ]);
   state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: null });
   assert.equal(state.equippedSkillIds[0], null);
+  state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: null });
+  assert.equal(state.equippedSkillIds[3], null);
   const lastSkill = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 2, skillId: null });
   assert.equal(lastSkill, state);
 });

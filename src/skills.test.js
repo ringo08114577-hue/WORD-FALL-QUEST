@@ -3,11 +3,19 @@ import assert from "node:assert/strict";
 
 import {
   SKILL_DEFINITIONS, getSkillDefinition, createInitialSkillLevels,
+  createInitialEquippedSkillIds,
   isValidSkillLevels, normalizeSkillLevels, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel,
   getSkillEvolutionRecipe, getSkillDisplayName,
   isValidEvolvedSkillIds, normalizeEvolvedSkillIds,
 } from "./skills.js";
+
+test("初期装備は攻撃3種と回復スキルで、後から差し替えられる4枠を持つ", () => {
+  assert.deepEqual(createInitialEquippedSkillIds(), [
+    "quick-strike", "power-strike", "ultimate-strike", "healing-light",
+  ]);
+  assert.equal(SKILL_DEFINITIONS["healing-light"].initiallyEquipped, true);
+});
 
 test("攻撃スキルは単語が長いほど火力が高い", () => {
   assert.deepEqual(

@@ -22,7 +22,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
     upgradeCosts: Object.freeze([50, 100, 200, 400]),
   }),
   "healing-light": Object.freeze({
-    id: "healing-light", name: "いやしの光", evolvedName: "聖なるいやし", category: "heal",
+    id: "healing-light", name: "いやしの光", evolvedName: "聖なるいやし", category: "heal", initiallyEquipped: true,
     description: "3〜4文字の単語 · HPを回復する",
     minWordLength: 3, maxWordLength: 4,
     wordDifficultyRange: Object.freeze({ min: 1, max: 2 }),
