@@ -46,6 +46,58 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
   assert.throws(() => createEnemy("dragon"), RangeError);
 });
 
+test("物理攻撃3種と魔法5属性の基礎威力を比較する", () => {
+  function damageFor(skillId, matchup = null) {
+    const store = createTestStore({ playerAttackPower: 20, playerMagicPower: 20 });
+    const currentSlot = store.getState().equippedSkillIds.indexOf(skillId);
+    store.dispatch({
+      type: GAME_ACTION.EQUIP_SKILL,
+      slotIndex: currentSlot >= 0 ? currentSlot : 0,
+      skillId,
+    });
+    store.dispatch({
+      type: GAME_ACTION.START_BATTLE,
+      enemy: {
+        ...testSlime,
+        maxHp: 1000,
+        ...(matchup?.type === "weakness" ? { elementalWeakness: matchup.element } : {}),
+        ...(matchup?.type === "resistance" ? { elementalResistance: matchup.element } : {}),
+      },
+    });
+    return resolveCombatEvent(store.getState(), {
+      type: "word-complete",
+      skillId,
+      wordDifficulty: 1,
+    }).damage;
+  }
+
+  assert.deepEqual({
+    quickStrike: damageFor("quick-strike"),
+    powerStrike: damageFor("power-strike"),
+    ultimateStrike: damageFor("ultimate-strike"),
+    fireball: damageFor("fireball"),
+  }, {
+    quickStrike: 20,
+    powerStrike: 40,
+    ultimateStrike: 60,
+    fireball: 20,
+  });
+
+  const spells = [
+    ["fireball", "fire"],
+    ["thunder-bolt", "thunder"],
+    ["water-shot", "water"],
+    ["wind-cutter", "wind"],
+    ["earth-spike", "earth"],
+  ];
+  for (const [skillId, element] of spells) {
+    assert.equal(damageFor(skillId, { type: "weakness", element }), 26,
+      skillId + " should apply the 1.3x weakness multiplier");
+    assert.equal(damageFor(skillId, { type: "resistance", element }), 16,
+      skillId + " should apply the 0.8x resistance multiplier");
+  }
+});
+
 test("正しい文字ではHPを減らさず、メッセージだけを返す", () => {
   const store = startBattle();
   const result = resolveCombatEvent(store.getState(), {

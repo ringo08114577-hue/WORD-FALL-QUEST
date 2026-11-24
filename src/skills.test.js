@@ -24,6 +24,12 @@ test("攻撃スキルは単語が長いほど火力が高い", () => {
     ]),
     [[3, 4, 1], [5, 6, 2], [7, 8, 3]],
   );
+  assert.deepEqual(
+    Object.values(SKILL_DEFINITIONS).filter((skill) => skill.category === "magic").map((skill) => [
+      skill.minWordLength, skill.maxWordLength, skill.damageMultiplier,
+    ]),
+    Array.from({ length: 5 }, () => [3, 4, 1]),
+  );
 });
 
 test("5属性の基本魔法はシンプルな魔法攻撃として定義される", () => {
