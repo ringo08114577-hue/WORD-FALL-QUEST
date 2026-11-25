@@ -52,7 +52,7 @@ test("森の各階は雑魚4体と固定の中ボスまたは大ボスで構成�
   assert.equal(roster.at(-1), "grandvel");
   assert.equal(store.getState().enemy.isMiniBoss, true);
   assert.equal(store.getState().enemy.isBoss, false);
-  assert.equal(getEnemyImagePath(store.getState().enemy), "assets/characters/placeholder.svg");
+  assert.equal(getEnemyImagePath(store.getState().enemy), "assets/enemies/grandvel.webp");
 });
 
 test("階層を全員倒して報酬を受け取ると次の階が解放される", () => {

@@ -50,13 +50,20 @@ test("キャラクター画像は共通カタログで管理され、未登録�
     "moss-golem": "assets/enemies/moss-golem.svg",
     "forest-dragon": "assets/enemies/forest-dragon.svg",
     "ice-wolf": "assets/enemies/ice-wolf.svg",
+    "poison-mushroom": "assets/enemies/poison-mushroom.webp",
+    "forest-spider": "assets/enemies/forest-spider.webp",
+    grandvel: "assets/enemies/grandvel.webp",
+    morgal: "assets/enemies/morgal.webp",
+    loggar: "assets/enemies/loggar.webp",
+    volgrif: "assets/enemies/volgrif.webp",
+    "ice-golem": "assets/enemies/ice-golem.webp",
+    "ice-dragon": "assets/enemies/ice-dragon.webp",
   };
   for (const [id, image] of Object.entries(addedArtwork)) {
     assert.equal(getCharacterImagePath(id), image);
     if (id !== "hero") assert.equal(getEnemyImagePath(createEnemy(id)), image);
   }
-  for (const id of ["plain-slime", "poison-mushroom", "forest-spider",
-    "grandvel", "morgal", "loggar", "volgrif", "ice-golem", "ice-dragon"]) {
+  for (const id of ["plain-slime"]) {
     assert.equal(getCharacterImagePath(id), DEFAULT_CHARACTER_IMAGE);
   }
 });
@@ -64,7 +71,7 @@ test("キャラクター画像は共通カタログで管理され、未登録�
 test("共通カタログに登録した専用画像がすべて実在し、形式も正しい", () => {
   const imageEntries = Object.entries(CHARACTER_IMAGE_CATALOG)
     .filter(([, definition]) => definition.image);
-  assert.equal(imageEntries.length, 9);
+  assert.equal(imageEntries.length, 17);
   for (const [id, definition] of imageEntries) {
     const path = new URL("../" + definition.image, import.meta.url);
     assert.ok(existsSync(path), id + " の画像ファイルがありません: " + definition.image);
