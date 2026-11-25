@@ -46,10 +46,10 @@ test("キャラクター画像は共通カタログで管理され、未登録�
   }
   const addedArtwork = {
     hero: "assets/characters/hero.webp",
-    goblin: "assets/enemies/goblin.svg",
-    "moss-golem": "assets/enemies/moss-golem.svg",
-    "forest-dragon": "assets/enemies/forest-dragon.svg",
-    "ice-wolf": "assets/enemies/ice-wolf.svg",
+    goblin: "assets/enemies/goblin.webp",
+    "moss-golem": "assets/enemies/moss-golem.webp",
+    "forest-dragon": "assets/enemies/forest-dragon.webp",
+    "ice-wolf": "assets/enemies/ice-wolf.webp",
     "poison-mushroom": "assets/enemies/poison-mushroom.webp",
     "forest-spider": "assets/enemies/forest-spider.webp",
     grandvel: "assets/enemies/grandvel.webp",

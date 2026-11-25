@@ -27,10 +27,10 @@ test("主人公を含む全キャラクターに画像登録枠がある", () =>
 
 test("既存・追加キャラクターの専用画像パスが登録されている", () => {
   assert.equal(getCharacterImagePath("hero"), "assets/characters/hero.webp");
-  assert.equal(getCharacterImagePath("ice-wolf"), "assets/enemies/ice-wolf.svg");
-  assert.equal(getCharacterImagePath("forest-dragon"), "assets/enemies/forest-dragon.svg");
-  assert.equal(getCharacterImagePath("goblin"), "assets/enemies/goblin.svg");
-  assert.equal(getCharacterImagePath("moss-golem"), "assets/enemies/moss-golem.svg");
+  assert.equal(getCharacterImagePath("ice-wolf"), "assets/enemies/ice-wolf.webp");
+  assert.equal(getCharacterImagePath("forest-dragon"), "assets/enemies/forest-dragon.webp");
+  assert.equal(getCharacterImagePath("goblin"), "assets/enemies/goblin.webp");
+  assert.equal(getCharacterImagePath("moss-golem"), "assets/enemies/moss-golem.webp");
   assert.equal(getCharacterImagePath("poison-mushroom"), "assets/enemies/poison-mushroom.webp");
   assert.equal(getCharacterImagePath("forest-spider"), "assets/enemies/forest-spider.webp");
   assert.equal(getCharacterImagePath("grandvel"), "assets/enemies/grandvel.webp");
@@ -44,6 +44,7 @@ test("既存・追加キャラクターの専用画像パスが登録されて�
 test("登録済みのキャラクター画像は存在し、画像形式も正しい", () => {
   for (const [characterId, definition] of Object.entries(CHARACTER_IMAGE_CATALOG)) {
     if (!definition.image) continue;
+    assert.ok(definition.image.endsWith(".webp"), characterId + " は新しい画像セットのWebPを使用する");
     const assetUrl = new URL("../" + definition.image, import.meta.url);
     assert.ok(existsSync(assetUrl), characterId + " の画像ファイルがありません");
 
