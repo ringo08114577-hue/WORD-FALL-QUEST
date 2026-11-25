@@ -25,12 +25,20 @@ test("主人公を含む全キャラクターに画像登録枠がある", () =>
   }
 });
 
-test("今回追加した5体に専用画像が登録されている", () => {
+test("既存・追加キャラクターの専用画像パスが登録されている", () => {
   assert.equal(getCharacterImagePath("hero"), "assets/characters/hero.webp");
   assert.equal(getCharacterImagePath("ice-wolf"), "assets/enemies/ice-wolf.svg");
   assert.equal(getCharacterImagePath("forest-dragon"), "assets/enemies/forest-dragon.svg");
   assert.equal(getCharacterImagePath("goblin"), "assets/enemies/goblin.svg");
   assert.equal(getCharacterImagePath("moss-golem"), "assets/enemies/moss-golem.svg");
+  assert.equal(getCharacterImagePath("poison-mushroom"), "assets/enemies/poison-mushroom.webp");
+  assert.equal(getCharacterImagePath("forest-spider"), "assets/enemies/forest-spider.webp");
+  assert.equal(getCharacterImagePath("grandvel"), "assets/enemies/grandvel.webp");
+  assert.equal(getCharacterImagePath("morgal"), "assets/enemies/morgal.webp");
+  assert.equal(getCharacterImagePath("loggar"), "assets/enemies/loggar.webp");
+  assert.equal(getCharacterImagePath("volgrif"), "assets/enemies/volgrif.webp");
+  assert.equal(getCharacterImagePath("ice-golem"), "assets/enemies/ice-golem.webp");
+  assert.equal(getCharacterImagePath("ice-dragon"), "assets/enemies/ice-dragon.webp");
 });
 
 test("登録済みのキャラクター画像は存在し、画像形式も正しい", () => {
@@ -53,7 +61,7 @@ test("登録済みのキャラクター画像は存在し、画像形式も正�
   }
 });
 test("画像未登録・未知のキャラクターは共通仮画像を返す", () => {
-  assert.equal(getCharacterImagePath("ice-golem"), DEFAULT_CHARACTER_IMAGE);
+  assert.equal(getCharacterImagePath("plain-slime"), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getCharacterImagePath("not-registered"), DEFAULT_CHARACTER_IMAGE);
   assert.equal(getCharacterImagePath(null), DEFAULT_CHARACTER_IMAGE);
 });
@@ -87,7 +95,7 @@ test("専用画像の読み込みに失敗したら共通仮画像へ一度だ�
 
 test("仮画像自体が読み込めない場合は再試行を繰り返さず非表示にする", () => {
   const image = createFakeImage();
-  setCharacterImage(image, "ice-golem", {
+  setCharacterImage(image, "plain-slime", {
     baseUrl: "https://example.com/WORD-FALL-QUEST/battle.html",
   });
   const originalSource = image.src;
