@@ -46,56 +46,35 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
   assert.throws(() => createEnemy("dragon"), RangeError);
 });
 
-test("物理攻撃3種と魔法5属性の基礎威力を比較する", () => {
-  function damageFor(skillId, matchup = null) {
-    const store = createTestStore({ playerAttackPower: 20, playerMagicPower: 20 });
-    const currentSlot = store.getState().equippedSkillIds.indexOf(skillId);
-    store.dispatch({
-      type: GAME_ACTION.EQUIP_SKILL,
-      slotIndex: currentSlot >= 0 ? currentSlot : 0,
-      skillId,
-    });
-    store.dispatch({
-      type: GAME_ACTION.START_BATTLE,
-      enemy: {
-        ...testSlime,
-        maxHp: 1000,
-        ...(matchup?.type === "weakness" ? { elementalWeakness: matchup.element } : {}),
-        ...(matchup?.type === "resistance" ? { elementalResistance: matchup.element } : {}),
-      },
-    });
-    return resolveCombatEvent(store.getState(), {
-      type: "word-complete",
-      skillId,
-      wordDifficulty: 1,
-    }).damage;
-  }
-
-  assert.deepEqual({
-    quickStrike: damageFor("quick-strike"),
-    powerStrike: damageFor("power-strike"),
-    ultimateStrike: damageFor("ultimate-strike"),
-    fireball: damageFor("fireball"),
-  }, {
-    quickStrike: 20,
-    powerStrike: 40,
-    ultimateStrike: 60,
-    fireball: 20,
-  });
-
-  const spells = [
-    ["fireball", "fire"],
-    ["thunder-bolt", "thunder"],
-    ["water-shot", "water"],
-    ["wind-cutter", "wind"],
-    ["earth-spike", "earth"],
+test("各キャラクターの専用技は、そのキャラクターでのみ使用できる", () => {
+  const classes = [
+    ["gou-swordsman", "gou-basic"],
+    ["regen-knight", "regen-basic"],
+    ["shadow-blade", "shadow-basic"],
+    ["elemental-mage", "elemental-basic"],
   ];
-  for (const [skillId, element] of spells) {
-    assert.equal(damageFor(skillId, { type: "weakness", element }), 26,
-      skillId + " should apply the 1.3x weakness multiplier");
-    assert.equal(damageFor(skillId, { type: "resistance", element }), 16,
-      skillId + " should apply the 0.8x resistance multiplier");
+  for (const [characterId, skillId] of classes) {
+    const store = createTestStore();
+    store.dispatch({
+      type: GAME_ACTION.SET_EQUIPPED_SKILLS,
+      skillIds: [skillId, null, null, null],
+      characterId,
+    });
+    store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...testSlime, maxHp: 100 } });
+    const result = resolveCombatEvent(store.getState(), {
+      type: "word-complete", skillId, characterId, wordDifficulty: 1,
+    });
+    assert.equal(result.ignored, false, characterId);
+    assert.equal(result.damage, 1, characterId);
   }
+
+  const store = startBattle({ enemy: { ...testSlime, maxHp: 100 } });
+  const wrongClass = resolveCombatEvent(store.getState(), {
+    type: "word-complete", skillId: "regen-basic",
+    characterId: "gou-swordsman", wordDifficulty: 1,
+  });
+  assert.equal(wrongClass.ignored, true);
+  assert.equal(wrongClass.reason, "skill-not-for-character");
 });
 
 test("正しい文字ではHPを減らさず、メッセージだけを返す", () => {
@@ -361,133 +340,25 @@ test("ボスは複数の能力を組み合わせて持つ", () => {
 });
 
 
-test("技の種類によって単語完成時のダメージが変わる", () => {
-  for (const [skillId, expectedDamage] of [
-    ["quick-strike", 1],
-    ["power-strike", 2],
-    ["ultimate-strike", 3],
-  ]) {
-    const store = startBattle();
-    const result = createCombatController(store).handle({
-      eventId: "skill-" + skillId,
-      type: "word-complete",
-      skillId,
-    });
-    assert.equal(result.damage, expectedDamage);
-    assert.equal(store.getState().enemy.hp, 3 - expectedDamage);
-  }
-});
-test("いやしの光は簡単な単語の完成でHPを回復し、敵にはダメージを与えない", () => {
-  const store = createTestStore();
-  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "healing-light" });
-  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: testSlime });
-  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
-  const result = createCombatController(store).handle({
-    eventId: "healing-light-word", type: "word-complete",
-    skillId: "healing-light", wordDifficulty: 2,
+test("戦闘コントローラーは現在のキャラクター専用技だけを実行する", () => {
+  const store = startBattle();
+  const gouCombat = createCombatController(store, { getCharacterId: () => "gou-swordsman" });
+  const result = gouCombat.handle({
+    eventId: "gou-class-skill", type: "word-complete",
+    skillId: "gou-basic", wordDifficulty: 1,
   });
   assert.equal(result.ignored, false);
-  assert.equal(result.damageTarget, null);
-  assert.equal(store.getState().player.hp, 3);
-  assert.equal(store.getState().enemy.hp, 3);
-  assert.match(result.message, /回復/);
+  assert.equal(result.damage, 1);
+  assert.match(result.message, /「あ」/);
+
+  const otherClassCombat = createCombatController(store, { getCharacterId: () => "regen-knight" });
+  const rejected = otherClassCombat.handle({
+    eventId: "wrong-class-skill", type: "word-complete",
+    skillId: "gou-basic", wordDifficulty: 1,
+  });
+  assert.equal(rejected.ignored, true);
+  assert.equal(rejected.reason, "skill-not-for-character");
 });
-
-
-test("いやしの光はプレイヤー最大HPに応じて回復量が増える", () => {
-  const store = createTestStore({ playerMaxHp: 300 });
-  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "healing-light" });
-  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: testSlime });
-  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 150 });
-  const result = createCombatController(store).handle({
-    eventId: "healing-light-scaled-word",
-    type: "word-complete",
-    skillId: "healing-light",
-    wordDifficulty: 2,
-  });
-  assert.equal(result.ignored, false);
-  assert.equal(result.action.amount, 90);
-  assert.equal(store.getState().player.hp, 240);
-  assert.equal(store.getState().enemy.hp, testSlime.maxHp);
-});
-
-test("鉄壁の構えは次の2回の敵攻撃を軽減する", () => {
-  const store = createTestStore({ playerMaxHp: 100 });
-  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "iron-guard" });
-  store.dispatch({
-    type: GAME_ACTION.START_BATTLE,
-    enemy: { ...testSlime, attackPower: 30 },
-  });
-  const combat = createCombatController(store);
-  const guard = combat.handle({
-    eventId: "iron-guard-word", type: "word-complete",
-    skillId: "iron-guard", wordDifficulty: 1,
-  });
-  assert.equal(guard.ignored, false);
-  assert.equal(store.getState().battleEffects.defenseBonus, 20);
-  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 2);
-
-  const firstHit = combat.handle({ eventId: "iron-guard-hit-1", type: "timed-attack" });
-  assert.equal(firstHit.damage, 10);
-  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 1);
-
-  const secondHit = combat.handle({ eventId: "iron-guard-hit-2", type: "timed-attack" });
-  assert.equal(secondHit.damage, 10);
-  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 0);
-  assert.equal(store.getState().battleEffects.defenseBonus, 0);
-});
-
-test("鉄壁の構えは弱い敵の攻撃を0ダメージにして、使用回数を消費する", () => {
-  const store = createTestStore();
-  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "iron-guard" });
-  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: testSlime });
-  const combat = createCombatController(store);
-  combat.handle({
-    eventId: "iron-guard-block-word", type: "word-complete",
-    skillId: "iron-guard", wordDifficulty: 1,
-  });
-
-  const blocked = combat.handle({
-    eventId: "iron-guard-block-hit", type: "timed-attack",
-  });
-  assert.equal(blocked.damage, 0);
-  assert.match(blocked.message, /完全に防いだ/);
-  assert.equal(store.getState().player.hp, 3);
-  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 1);
-});
-
-test("力の咆哮は次の2回の攻撃を強化し、回数を使い切ると解除される", () => {
-  const store = createTestStore();
-  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "battle-cry" });
-  store.dispatch({
-    type: GAME_ACTION.START_BATTLE,
-    enemy: { ...testSlime, maxHp: 20 },
-  });
-  const combat = createCombatController(store);
-  const buff = combat.handle({
-    eventId: "battle-cry-word", type: "word-complete",
-    skillId: "battle-cry", wordDifficulty: 1,
-  });
-  assert.equal(buff.ignored, false);
-  assert.equal(store.getState().battleEffects.attackMultiplier, 1.2);
-  assert.equal(store.getState().battleEffects.attackUsesRemaining, 2);
-
-  const firstAttack = combat.handle({
-    eventId: "battle-cry-hit-1", type: "word-complete",
-    skillId: "quick-strike", wordDifficulty: 1,
-  });
-  assert.equal(firstAttack.damage, 2);
-  assert.equal(store.getState().battleEffects.attackUsesRemaining, 1);
-
-  const secondAttack = combat.handle({
-    eventId: "battle-cry-hit-2", type: "word-complete",
-    skillId: "quick-strike", wordDifficulty: 1,
-  });
-  assert.equal(secondAttack.damage, 2);
-  assert.equal(store.getState().battleEffects.attackUsesRemaining, 0);
-  assert.equal(store.getState().battleEffects.attackMultiplier, 1);
-});
-
 
 test("単語難易度が高いほど攻撃ダメージが大きくなる", () => {
   const store = startBattle({
@@ -497,11 +368,11 @@ test("単語難易度が高いほど攻撃ダメージが大きくなる", () =>
   const result = createCombatController(store).handle({
     eventId: "difficulty-six",
     type: "word-complete",
-    skillId: "ultimate-strike",
+    skillId: "shadow-basic",
     wordDifficulty: 6,
   });
-  assert.equal(result.damage, 42);
-  assert.equal(store.getState().enemy.hp, 58);
+  assert.equal(result.damage, 14);
+  assert.equal(store.getState().enemy.hp, 86);
   assert.match(result.message, /難易度Lv.6/);
 });
 
@@ -510,7 +381,7 @@ test("難易度が省略された旧形式の戦闘イベントは難易度1と�
   const result = createCombatController(store).handle({
     eventId: "legacy-word-complete",
     type: "word-complete",
-    skillId: "quick-strike",
+    skillId: "gou-basic",
   });
   assert.equal(result.damage, 1);
 });
@@ -543,7 +414,7 @@ test("未装備のスキルや登録外スキルでは攻撃できない", () =>
   const unequipped = combat.handle({
     eventId: "unequipped-skill",
     type: "word-complete",
-    skillId: "power-strike",
+    skillId: "regen-basic",
   });
   assert.equal(unequipped.ignored, true);
   assert.equal(unequipped.reason, "skill-not-equipped");
@@ -564,7 +435,7 @@ test("範囲外の単語難易度では攻撃ダメージを発生させない",
   const result = createCombatController(store).handle({
     eventId: "invalid-difficulty",
     type: "word-complete",
-    skillId: "quick-strike",
+    skillId: "gou-basic",
     wordDifficulty: 7,
   });
   assert.equal(result.ignored, true);
@@ -577,15 +448,15 @@ test("進化した攻撃スキルは実際のバトルダメージが上昇す�
   const store = createTestStore();
   store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 950 });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
-  for (let i = 0; i < 4; i += 1) store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
-  store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" });
+  for (let i = 0; i < 4; i += 1) store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
+  store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" });
   store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...testSlime, maxHp: 10 } });
   const result = createCombatController(store).handle({
     eventId: "evolved-quick-strike", type: "word-complete",
-    skillId: "quick-strike", wordDifficulty: 1,
+    skillId: "gou-basic", wordDifficulty: 1,
   });
   assert.equal(result.damage, 2);
-  assert.match(result.message, /疾風の斬撃/);
+  assert.match(result.message, /あ・改/);
 });
 
 
