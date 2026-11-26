@@ -4,7 +4,7 @@ import { GAME_ACTION } from "./game-state.js";
 import { getElementLabel } from "./elements.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillsForCharacter, getSkillWordDifficultyRange,
-  getSkillEffectForLevel, getSkillDisplayName,
+  getSkillEffectForLevel, getSkillDisplayName, getSkillEffectLabel,
 } from "./skills.js";
 
 const $ = (id) => document.getElementById(id);
@@ -63,18 +63,11 @@ function renderSkills(state) {
     const effect = getSkillEffectForLevel(skillId, level, evolved);
     const displayName = getSkillDisplayName(skillId, evolved);
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
-    const effectText = effect.type === "attack"
-      ? "威力倍率 ×" + effect.damageMultiplier
-      : effect.type === "magic"
-        ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element) + "属性"
-        : effect.type === "heal"
-        ? "回復量 " + effect.amount + " HP"
-        : effect.type === "defense"
-          ? "防御力 +" + effect.bonus + " · 次の" + effect.hits + "回"
-          : "攻撃倍率 ×" + effect.multiplier + " · 次の攻撃" + effect.uses + "回";
+    const effectText = getSkillEffectLabel(effect);
     const card = node("article", "skill-card");
     card.append(node("strong", "", displayName + " · Lv." + level + (evolved ? " · 進化済み" : "")));
     card.append(node("p", "", category + " · " + skill.description));
+    if (skill.passive) card.append(node("p", "skill-meta", "装備中は常に効果が発動"));
     card.append(node("p", "skill-meta", "単語難易度 " + range.min + "〜" + range.max + " · " + effectText));
     root.append(card);
   }

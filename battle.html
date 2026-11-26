@@ -579,9 +579,10 @@
     import { setCharacterImage, clearCharacterImage } from "./src/character-images.js";
     import { DEFAULT_CHARACTER_ID, isValidCharacterId, normalizeCharacterId } from "./src/characters.js";
     import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName,
-      createInitialCharacterSkillLoadouts, isValidCharacterSkillLoadouts,
+      getSkillEffectLabel, createInitialCharacterSkillLoadouts, isValidCharacterSkillLoadouts,
       normalizeCharacterSkillLoadouts, normalizeEquippedSkillIds, isSkillAvailableForCharacter,
     } from "./src/skills.js";
+    import { createInitialGoukiState, isValidGoukiState, normalizeGoukiState, getGoukiAbilityMultiplier } from "./src/gouki.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
     import { getElementLabel } from "./src/elements.js";
     import {
@@ -603,6 +604,7 @@
       const root = $("skillOptions");
       root.replaceChildren();
       for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+        if (skill.passive) continue;
         const button = document.createElement("button");
         button.type = "button";
         button.className = "skill-button";
@@ -617,7 +619,6 @@
     buildSkillButtons();
 
     const store = createGameStore();
-    const combat = createCombatController(store, { getCharacterId: () => selectedCharacterId });
     const dungeon = createDungeonController(store);
     const town = createTownController(store, dungeon);
     const TICK_MS = 100;
@@ -635,6 +636,12 @@
     let weakWords = [];
     let selectedCharacterId = DEFAULT_CHARACTER_ID;
     let characterSkillLoadouts = createInitialCharacterSkillLoadouts();
+    let goukiState = createInitialGoukiState();
+    const combat = createCombatController(store, {
+      getCharacterId: () => selectedCharacterId,
+      getGoukiState: () => goukiState,
+      setGoukiState: (nextState) => { goukiState = normalizeGoukiState(nextState); },
+    });
     const saveController = createSaveController({
       store,
       dungeon,
@@ -645,6 +652,7 @@
           ...characterSkillLoadouts,
           [selectedCharacterId]: normalizeEquippedSkillIds(store.getState().equippedSkillIds, selectedCharacterId),
         },
+        goukiState,
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -660,7 +668,8 @@
         (extra.selectedSkillId === undefined || extra.selectedSkillId === null || typeof extra.selectedSkillId === "string") &&
         (extra.weakWords === undefined || isValidWeakWordEntries(extra.weakWords)) &&
         (extra.characterId === undefined || isValidCharacterId(extra.characterId)) &&
-        (extra.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(extra.characterSkillLoadouts)),
+        (extra.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(extra.characterSkillLoadouts)) &&
+        (extra.goukiState === undefined || isValidGoukiState(extra.goukiState)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
@@ -669,6 +678,7 @@
           (wordState.phase === "word-complete");
         selectedCharacterId = normalizeCharacterId(extra.characterId);
         characterSkillLoadouts = normalizeCharacterSkillLoadouts(extra.characterSkillLoadouts);
+        goukiState = normalizeGoukiState(extra.goukiState);
         const restoredSkillId = extra.selectedSkillId;
         const restoredSkillIsUsable = isSkillAvailableForCharacter(restoredSkillId, selectedCharacterId);
         selectedSkillId = restoredSkillIsUsable ? restoredSkillId : null;
@@ -871,11 +881,15 @@
         activeBuffs.push("防御+" + state.battleEffects.defenseBonus +
           " あと" + state.battleEffects.defenseHitsRemaining + "回");
       }
+      const goukiLabel = selectedCharacterId === "gou-swordsman"
+        ? " · 轟気 " + new Intl.NumberFormat("ja-JP").format(goukiState.stacks) + "個 · 全能力 ×" + getGoukiAbilityMultiplier(goukiState.stacks).toFixed(2) +
+          (goukiState.nextGainMultiplier > 1 ? " · 次の獲得 ×" + goukiState.nextGainMultiplier : "")
+        : "";
       $("playerProgression").textContent =
         "LV." + state.player.level + " · EXP " +
         state.player.experience + " / " + state.player.nextLevelXp +
         " · MAG " + state.player.magicPower +
-        " · DEF " + state.player.defensePower +
+        " · DEF " + state.player.defensePower + goukiLabel +
         (activeBuffs.length > 0 ? " · " + activeBuffs.join(" / ") : "");
 
       renderInventory(state);
@@ -941,10 +955,16 @@
       let visibleSkillCount = 0;
       for (const button of $("skillPanel").querySelectorAll("[data-skill]")) {
         const skillId = button.dataset.skill;
+        const skillDefinition = SKILL_DEFINITIONS[skillId];
+        const skillEffect = getSkillEffectForLevel(skillId, state.skillLevels[skillId] ?? skillDefinition.startingLevel ?? 1,
+          state.evolvedSkillIds?.includes(skillId) === true);
         const isEquipped = equippedSkillIds.includes(skillId) && isSkillAvailableForCharacter(skillId, selectedCharacterId);
+        const requiredGouki = skillEffect?.type === "gouki-consume-attack" || skillEffect?.type === "gouki-defense"
+          ? skillEffect.consumeAmount : skillEffect?.type === "gouki-consume-all" ? 1 : 0;
+        const canAffordGouki = selectedCharacterId !== "gou-swordsman" || goukiState.stacks >= requiredGouki;
         button.hidden = !isEquipped;
         button.style.display = isEquipped ? "" : "none";
-        button.disabled = !(active && awaitingSkill && isEquipped);
+        button.disabled = !(active && awaitingSkill && isEquipped && canAffordGouki);
         if (!isEquipped) continue;
         visibleSkillCount += 1;
         if (visibleSkillCount <= 4) {
@@ -957,15 +977,7 @@
         const evolved = state.evolvedSkillIds?.includes(skillId) === true;
         const range = getSkillWordDifficultyRange(skillId, level);
         const effect = getSkillEffectForLevel(skillId, level, evolved);
-        const effectLabel = effect.type === "attack"
-          ? "攻撃 ×" + effect.damageMultiplier
-          : effect.type === "magic"
-            ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element)
-            : effect.type === "heal"
-            ? "HP +" + Math.round((effect.hpRatio ?? 0) * 100) + "%（最低" + effect.amount + "）"
-            : effect.type === "defense"
-              ? "防御 +" + effect.bonus
-              : "次の攻撃 ×" + effect.multiplier;
+        const effectLabel = getSkillEffectLabel(effect);
         button.querySelector("strong").textContent =
           getSkillDisplayName(skillId, evolved) +
           (visibleSkillCount <= 4 ? " [" + visibleSkillCount + "]" : "");
@@ -1107,6 +1119,7 @@
       const canReturnHome = phase === GAME_PHASE.DEFEAT ||
         (phase === GAME_PHASE.VICTORY && progress.floorCleared);
       if (!canReturnHome) return;
+      goukiState = createInitialGoukiState();
 
       // If the player returns home immediately after clearing a floor,
       // award the chest reward first so it is never lost.
@@ -1132,6 +1145,7 @@
       const previousPhase = store.getState().phase;
       combat.reset();
       if (previousPhase === GAME_PHASE.DEFEAT) {
+        goukiState = createInitialGoukiState();
         // Defeat abandons the current attempt, but keeps level, gold, items,
         // equipment, skill levels, and permanent dungeon unlocks.
         store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
@@ -1164,7 +1178,15 @@
       if (store.getState().phase !== GAME_PHASE.BATTLE || !awaitingSkill) return;
       const currentState = store.getState();
       const skill = SKILL_DEFINITIONS[skillId];
-      if (!skill || skill.characterId !== selectedCharacterId || !currentState.equippedSkillIds.includes(skillId)) return;
+      if (!skill || skill.passive || skill.characterId !== selectedCharacterId || !currentState.equippedSkillIds.includes(skillId)) return;
+      const effect = getSkillEffectForLevel(skillId, currentState.skillLevels[skillId] ?? skill.startingLevel ?? 1,
+        currentState.evolvedSkillIds?.includes(skillId) === true);
+      const requiredGouki = effect?.type === "gouki-consume-attack" || effect?.type === "gouki-defense"
+        ? effect.consumeAmount : effect?.type === "gouki-consume-all" ? 1 : 0;
+      if (selectedCharacterId === "gou-swordsman" && goukiState.stacks < requiredGouki) {
+        setStatus("轟気が足りない！必要：" + requiredGouki + "個 / 現在：" + goukiState.stacks + "個。");
+        return;
+      }
       const skillLevel = store.getState().skillLevels[skillId] ?? skill.startingLevel ?? 1;
       wordState = selectChallengeForSkill(wordState, skillId, { skillLevel });
       wordState = spawnLaneWave(wordState);

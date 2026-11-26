@@ -58,7 +58,14 @@ export function isValidCharacterSkillLoadouts(loadouts) {
   if (!loadouts || typeof loadouts !== "object" || Array.isArray(loadouts)) return false;
   const ids = CHARACTERS.map((character) => character.id);
   if (Object.keys(loadouts).length !== ids.length || !ids.every((id) => Object.hasOwn(loadouts, id))) return false;
-  return CHARACTERS.every((character) => isValidEquippedSkillIds(loadouts[character.id], character.id));
+  // Keep pre-character-skill saves loadable even when they still reference
+  // placeholder skill IDs. normalizeCharacterSkillLoadouts replaces those IDs.
+  return CHARACTERS.every((character) => {
+    const slots = loadouts[character.id];
+    return Array.isArray(slots) && slots.length === SKILL_EQUIP_SLOT_COUNT &&
+      slots.every((id) => id === null || typeof id === "string") &&
+      new Set(slots.filter((id) => id !== null)).size === slots.filter((id) => id !== null).length;
+  });
 }
 export function normalizeCharacterSkillLoadouts(loadouts) {
   const source = loadouts && typeof loadouts === "object" && !Array.isArray(loadouts) ? loadouts : {};

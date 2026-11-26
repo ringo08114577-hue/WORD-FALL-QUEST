@@ -6,7 +6,7 @@ import { createShopController, SHOP_CATALOG } from "./shop.js";
 import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, SKILL_EQUIP_SLOT_COUNT, getSkillsForCharacter, getSkillUpgradeCost,
-  getSkillWordDifficultyRange, getSkillEffectForLevel,
+  getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillEffectLabel,
   getSkillEvolutionRecipe, getSkillDisplayName,
 } from "./skills.js";
 
@@ -268,16 +268,7 @@ function renderSkills(state) {
     const range = getSkillWordDifficultyRange(skillId, level);
     const effect = getSkillEffectForLevel(skillId, level, evolved);
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
-    const effectText = effect.type === "attack"
-      ? "攻撃威力 ×" + effect.damageMultiplier
-      : effect.type === "magic"
-        ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element) + "属性"
-        : effect.type === "heal"
-        ? "最大HPの " + Math.round((effect.hpRatio ?? 0) * 100) +
-          "%を回復（最低 " + effect.amount + " HP）"
-        : effect.type === "defense"
-          ? "防御力 +" + effect.bonus + "（次の" + effect.hits + "回）"
-          : "攻撃倍率 ×" + effect.multiplier + "（次の攻撃" + effect.uses + "回）";
+    const effectText = getSkillEffectLabel(effect);
     const upgradeCost = getSkillUpgradeCost(skillId, level);
     const upgradeButton = node("button", upgradeCost === null ? "secondary-button" : "primary-button",
       upgradeCost === null ? "最大レベル" : "スキルを強化（" + upgradeCost + "G）");
@@ -303,8 +294,10 @@ function renderSkills(state) {
       displayName + " · Lv." + level + " · " + category + (evolved ? " · 進化済み" : "")));
     card.append(node("p", "offer-description",
       "単語難易度 " + range.min + "〜" + range.max + " · " + effectText));
-    card.append(node("p", "offer-meta", evolved
-      ? "進化によって効果が上昇しているよ。"
+    card.append(node("p", "offer-meta", skill.passive
+      ? "パッシブ：装備中は常に効果が発動するよ。"
+      : evolved
+        ? "進化によって効果が上昇しているよ。"
       : "進化素材：" + material.name + " ×" + recipe.materialQuantity +
         "（所持 " + ownedMaterial + "） · " + recipe.gold + "G"));
     card.append(upgradeButton, evolutionButton);
@@ -464,16 +457,7 @@ $("facilityContent").addEventListener("click", (event) => {
     const range = getSkillWordDifficultyRange(skillId, level);
     const effect = getSkillEffectForLevel(skillId, level);
     const saved = saves.save();
-    const effectText = effect.type === "attack"
-      ? "攻撃威力 ×" + effect.damageMultiplier
-      : effect.type === "magic"
-        ? "魔力 ×" + effect.damageMultiplier + " · " + getElementLabel(effect.element) + "属性"
-        : effect.type === "heal"
-        ? "回復量 最大HPの" + Math.round((effect.hpRatio ?? 0) * 100) +
-          "%（最低" + effect.amount + " HP）"
-        : effect.type === "defense"
-          ? "防御力 +" + effect.bonus
-          : "攻撃倍率 ×" + effect.multiplier;
+    const effectText = getSkillEffectLabel(effect);
     $("feedback").textContent = SKILL_DEFINITIONS[skillId].name + "がLv." + level +
       "になったよ。単語難易度 " + range.min + "〜" + range.max + " · " + effectText + "。" +
       (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
