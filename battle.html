@@ -1201,6 +1201,7 @@
     function showJudgementFeedback(type, letter, expected) {
       const isCorrect = type === "correct" || type === "word-complete";
       if (!isCorrect && type !== "wrong") return;
+      $("typingInput").classList.remove("typing-mistake");
       const feedback = $("judgementFeedback");
       feedback.textContent = isCorrect
         ? (type === "word-complete" ? "正解！ 単語完成！" : "正解！")
