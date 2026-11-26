@@ -3,7 +3,7 @@ import { setCharacterImage } from "./character-images.js";
 import { GAME_ACTION } from "./game-state.js";
 import { getElementLabel } from "./elements.js";
 import {
-  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillWordDifficultyRange,
+  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillsForCharacter, getSkillWordDifficultyRange,
   getSkillEffectForLevel, getSkillDisplayName,
 } from "./skills.js";
 
@@ -21,6 +21,7 @@ function node(tag, className, text) {
 }
 
 function renderSlots(state) {
+  const characterSkills = getSkillsForCharacter(session.getSelectedCharacterId());
   const root = $("equippedSkillSlots");
   root.replaceChildren();
   state.equippedSkillIds.forEach((equippedId, slotIndex) => {
@@ -32,7 +33,7 @@ function renderSlots(state) {
     const empty = node("option", "", "未装備");
     empty.value = "";
     select.append(empty);
-    for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+    for (const [skillId, skill] of characterSkills) {
       const usedElsewhere = state.equippedSkillIds.some((id, index) => index !== slotIndex && id === skillId);
       if (usedElsewhere) continue;
       const option = node("option", "", getSkillDisplayName(skillId,
@@ -40,7 +41,7 @@ function renderSlots(state) {
       option.value = skillId;
       select.append(option);
     }
-    select.value = equippedId ?? "";
+    select.value = characterSkills.some(([id]) => id === equippedId) ? equippedId : "";
     const button = node("button", "change-button", "この枠を変更");
     button.type = "button";
     button.dataset.applySkillSlot = String(slotIndex);
@@ -52,9 +53,10 @@ function renderSlots(state) {
 }
 
 function renderSkills(state) {
+  const characterSkills = getSkillsForCharacter(session.getSelectedCharacterId());
   const root = $("skillList");
   root.replaceChildren();
-  for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+  for (const [skillId, skill] of characterSkills) {
     const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
     const range = getSkillWordDifficultyRange(skillId, level);
     const evolved = state.evolvedSkillIds?.includes(skillId) === true;
@@ -105,7 +107,7 @@ $("equippedSkillSlots").addEventListener("click", (event) => {
   const select = $("equippedSkillSlots").querySelector('select[data-skill-slot="' + slotIndex + '"]');
   const skillId = select?.value || null;
   const before = store.getState();
-  const after = store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex, skillId });
+  const after = store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex, skillId, characterId: session.getSelectedCharacterId() });
   if (after === before) {
     $("feedback").textContent = "そのスキルは変更できなかったよ。別の枠と重複していないか確認してね。";
     return;

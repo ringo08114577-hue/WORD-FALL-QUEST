@@ -183,7 +183,7 @@ test("バトルで選べる技はステータス画面で装備したスキル�
   assert.match(html, /currentState\.equippedSkillIds\.includes\(skillId\)/);
 });
 
-test("バトルのスキル選択ボタンはスキル定義から全6種類を自動生成する", () => {
+test("バトルのスキル選択ボタンは4キャラクターの専用技をカタログから生成する", () => {
   assert.match(html, /id="skillOptions"/);
   assert.match(html, /function buildSkillButtons\(\)/);
   assert.match(html, /Object\.entries\(SKILL_DEFINITIONS\)/);
@@ -192,9 +192,10 @@ test("バトルのスキル選択ボタンはスキル定義から全6種類を�
   assert.match(html, /getSkillWordDifficultyRange\(skillId, level\)/);
   assert.match(html, /getSkillEffectForLevel\(skillId, level, evolved\)/);
   assert.deepEqual(Object.keys(SKILL_DEFINITIONS), [
-    "quick-strike", "power-strike", "ultimate-strike",
-    "fireball", "thunder-bolt", "water-shot", "wind-cutter", "earth-spike",
-    "healing-light", "iron-guard", "battle-cry",
+    "gou-basic", "regen-basic", "shadow-basic", "elemental-basic",
+  ]);
+  assert.deepEqual(Object.values(SKILL_DEFINITIONS).map((skill) => skill.characterId), [
+    "gou-swordsman", "regen-knight", "shadow-blade", "elemental-mage",
   ]);
   assert.doesNotMatch(html, /getSkillLevelDifficultyRange\(level\)/);
 });

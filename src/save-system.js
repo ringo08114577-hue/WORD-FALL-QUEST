@@ -444,7 +444,7 @@ function migrateSnapshot(snapshot) {
         ...gameState,
         skillLevels,
         evolvedSkillIds: normalizeEvolvedSkillIds(gameState.evolvedSkillIds, skillLevels),
-        equippedSkillIds: normalizeEquippedSkillIds(gameState.equippedSkillIds),
+        equippedSkillIds: normalizeEquippedSkillIds(gameState.equippedSkillIds, migrated.extra?.characterId),
         inventory: {
           ...gameState.inventory,
           items: Object.fromEntries(Object.keys(ITEM_DEFINITIONS).map((itemId) => [

@@ -578,7 +578,10 @@
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
     import { setCharacterImage, clearCharacterImage } from "./src/character-images.js";
     import { DEFAULT_CHARACTER_ID, isValidCharacterId, normalizeCharacterId } from "./src/characters.js";
-    import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
+    import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName,
+      createInitialCharacterSkillLoadouts, isValidCharacterSkillLoadouts,
+      normalizeCharacterSkillLoadouts, normalizeEquippedSkillIds, isSkillAvailableForCharacter,
+    } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
     import { getElementLabel } from "./src/elements.js";
     import {
@@ -614,7 +617,7 @@
     buildSkillButtons();
 
     const store = createGameStore();
-    const combat = createCombatController(store);
+    const combat = createCombatController(store, { getCharacterId: () => selectedCharacterId });
     const dungeon = createDungeonController(store);
     const town = createTownController(store, dungeon);
     const TICK_MS = 100;
@@ -631,12 +634,17 @@
     let selectedSkillId = null;
     let weakWords = [];
     let selectedCharacterId = DEFAULT_CHARACTER_ID;
+    let characterSkillLoadouts = createInitialCharacterSkillLoadouts();
     const saveController = createSaveController({
       store,
       dungeon,
       getExtraData: () => ({
         wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId, weakWords,
         characterId: selectedCharacterId,
+        characterSkillLoadouts: {
+          ...characterSkillLoadouts,
+          [selectedCharacterId]: normalizeEquippedSkillIds(store.getState().equippedSkillIds, selectedCharacterId),
+        },
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -649,20 +657,27 @@
             extra.attackElapsed >= 0 &&
             extra.attackElapsed < ENEMY_ATTACK_INTERVAL_MS)) &&
         (extra.awaitingSkill === undefined || typeof extra.awaitingSkill === "boolean") &&
-        (extra.selectedSkillId === undefined || extra.selectedSkillId === null ||
-          Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)) &&
+        (extra.selectedSkillId === undefined || extra.selectedSkillId === null || typeof extra.selectedSkillId === "string") &&
         (extra.weakWords === undefined || isValidWeakWordEntries(extra.weakWords)) &&
-        (extra.characterId === undefined || isValidCharacterId(extra.characterId)),
+        (extra.characterId === undefined || isValidCharacterId(extra.characterId)) &&
+        (extra.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(extra.characterSkillLoadouts)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
         attackElapsed = extra.attackElapsed ?? 0;
         awaitingSkill = extra.awaitingSkill ??
           (wordState.phase === "word-complete");
-        selectedSkillId = extra.selectedSkillId ??
-          (awaitingSkill ? null : "quick-strike");
-        weakWords = normalizeWeakWordEntries(extra.weakWords ?? []);
         selectedCharacterId = normalizeCharacterId(extra.characterId);
+        characterSkillLoadouts = normalizeCharacterSkillLoadouts(extra.characterSkillLoadouts);
+        const restoredSkillId = extra.selectedSkillId;
+        const restoredSkillIsUsable = isSkillAvailableForCharacter(restoredSkillId, selectedCharacterId);
+        selectedSkillId = restoredSkillIsUsable ? restoredSkillId : null;
+        if (!restoredSkillIsUsable && !awaitingSkill) {
+          awaitingSkill = true;
+          wordState = createWordBattleState();
+          spawnElapsed = 0;
+        }
+        weakWords = normalizeWeakWordEntries(extra.weakWords ?? []);
         enemyAttackCount = 0;
         if (wordState.phase === "active") {
           const savedLetters = wordState.letters;
@@ -926,7 +941,7 @@
       let visibleSkillCount = 0;
       for (const button of $("skillPanel").querySelectorAll("[data-skill]")) {
         const skillId = button.dataset.skill;
-        const isEquipped = equippedSkillIds.includes(skillId);
+        const isEquipped = equippedSkillIds.includes(skillId) && isSkillAvailableForCharacter(skillId, selectedCharacterId);
         button.hidden = !isEquipped;
         button.style.display = isEquipped ? "" : "none";
         button.disabled = !(active && awaitingSkill && isEquipped);
@@ -960,8 +975,8 @@
       }
       const skillNote = $("skillPanel").querySelector(".shop-note");
       skillNote.textContent = visibleSkillCount > 0
-        ? "技ごとに必要な単語や効果が違うよ。完成まで敵の攻撃に注意！"
-        : "装備中のスキルがないよ。いったん街に戻ってステータス画面でスキルを装備してね。";
+        ? "キャラクター専用の技から選ぼう。完成まで敵の攻撃に注意！"
+        : "このキャラクターの装備中の技がないよ。街のスキル工房で確認してね。";
       $("arenaCover").hidden =
         active && !awaitingSkill && wordState.phase === "active";
 
@@ -1149,7 +1164,7 @@
       if (store.getState().phase !== GAME_PHASE.BATTLE || !awaitingSkill) return;
       const currentState = store.getState();
       const skill = SKILL_DEFINITIONS[skillId];
-      if (!skill || !currentState.equippedSkillIds.includes(skillId)) return;
+      if (!skill || skill.characterId !== selectedCharacterId || !currentState.equippedSkillIds.includes(skillId)) return;
       const skillLevel = store.getState().skillLevels[skillId] ?? skill.startingLevel ?? 1;
       wordState = selectChallengeForSkill(wordState, skillId, { skillLevel });
       wordState = spawnLaneWave(wordState);

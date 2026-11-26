@@ -5,7 +5,7 @@ import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
 import { createShopController, SHOP_CATALOG } from "./shop.js";
 import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
 import {
-  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, SKILL_EQUIP_SLOT_COUNT, getSkillUpgradeCost,
+  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, SKILL_EQUIP_SLOT_COUNT, getSkillsForCharacter, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel,
   getSkillEvolutionRecipe, getSkillDisplayName,
 } from "./skills.js";
@@ -35,7 +35,7 @@ let selectedShopCategory = null;
 const titleByPage = {
   shop: ["ショップ", "武器・防具・アクセサリー・道具をまとめて購入できるよ。"],
   crafting: ["鍛冶屋", "モンスターから集めた素材とゴールドで、自分だけの装備を作ろう。"],
-  skills: ["スキル工房", "ゴールドを使って物理攻撃・魔法・回復・防御スキルを強化しよう。"],
+  skills: ["スキル工房", "選択中のキャラクター専用の技を確認・装備・強化しよう。"],
 };
 const [title, subtitle] = titleByPage[page] ?? titleByPage.shop;
 $("pageTitle").textContent = title;
@@ -215,11 +215,14 @@ function renderSkills(state) {
   const root = $("facilityContent");
   root.replaceChildren();
 
+  const character = session.getSelectedCharacter();
+  const characterId = session.getSelectedCharacterId();
+  const characterSkills = getSkillsForCharacter(characterId);
   const equippedSkillIds = state.equippedSkillIds ?? [];
   const loadoutPanel = node("section", "subpanel");
-  loadoutPanel.append(node("h2", "", "バトルスキルの装備"));
+  loadoutPanel.append(node("h2", "", character.name + "の専用技"));
   loadoutPanel.append(node("p", "muted",
-    "4つの枠に使いたいスキルをセットしよう。装備は街でいつでも変更できるよ。"));
+    "このキャラクター専用の技だけを装備できるよ。新しい技を登録するとここに自動で追加されるよ。"));
 
   const loadoutGrid = node("div", "skill-loadout-grid");
   for (let slotIndex = 0; slotIndex < SKILL_EQUIP_SLOT_COUNT; slotIndex += 1) {
@@ -234,7 +237,7 @@ function renderSkills(state) {
     emptyOption.value = "";
     select.append(emptyOption);
 
-    for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+    for (const [skillId, skill] of characterSkills) {
       const option = node("option", "", skill.name + " · " +
         (SKILL_CATEGORY_LABELS[skill.category] ?? "スキル"));
       option.value = skillId;
@@ -242,7 +245,13 @@ function renderSkills(state) {
         equippedIndex !== slotIndex && equippedId === skillId);
       select.append(option);
     }
-    select.value = equippedSkillIds[slotIndex] ?? "";
+    select.value = characterSkills.some(([id]) => id === equippedSkillIds[slotIndex]) ? equippedSkillIds[slotIndex] : "";
+    const hasAvailableSkill = characterSkills.some(([id]) =>
+      !equippedSkillIds.some((equippedId, equippedIndex) => equippedIndex !== slotIndex && equippedId === id));
+    if (!hasAvailableSkill && !select.value) {
+      select.disabled = true;
+      label.textContent += " · 技が未解放";
+    }
     label.htmlFor = "skillSlot-" + slotIndex;
     select.id = "skillSlot-" + slotIndex;
     slotCard.append(label, select);
@@ -252,7 +261,7 @@ function renderSkills(state) {
   root.append(loadoutPanel);
 
   const grid = node("div", "offer-grid");
-  for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+  for (const [skillId, skill] of characterSkills) {
     const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
     const evolved = state.evolvedSkillIds?.includes(skillId) === true;
     const displayName = getSkillDisplayName(skillId, evolved);
@@ -349,11 +358,17 @@ $("facilityContent").addEventListener("change", (event) => {
 
   const slotIndex = Number(slotSelect.dataset.skillSlot);
   const skillId = slotSelect.value || null;
+  if (skillId && SKILL_DEFINITIONS[skillId]?.characterId !== session.getSelectedCharacterId()) {
+    $("feedback").textContent = "別のキャラクターの技は装備できないよ。";
+    render();
+    return;
+  }
   const before = store.getState();
   const after = store.dispatch({
     type: GAME_ACTION.EQUIP_SKILL,
     slotIndex,
     skillId,
+    characterId: session.getSelectedCharacterId(),
   });
   if (after === before) {
     $("feedback").textContent = "そのスキルは装備できないよ。枠や重複を確認してね。";
@@ -438,6 +453,7 @@ $("facilityContent").addEventListener("click", (event) => {
   const skillButton = event.target.closest("button[data-skill-upgrade]");
   if (skillButton && !skillButton.disabled) {
     const skillId = skillButton.dataset.skillUpgrade;
+    if (SKILL_DEFINITIONS[skillId]?.characterId !== session.getSelectedCharacterId()) return;
     const before = store.getState();
     const after = store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId });
     if (after === before) {
@@ -468,6 +484,7 @@ $("facilityContent").addEventListener("click", (event) => {
   const evolutionButton = event.target.closest("button[data-skill-evolve]");
   if (evolutionButton && !evolutionButton.disabled) {
     const skillId = evolutionButton.dataset.skillEvolve;
+    if (SKILL_DEFINITIONS[skillId]?.characterId !== session.getSelectedCharacterId()) return;
     const before = store.getState();
     const after = store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId });
     if (after === before) {
