@@ -472,7 +472,8 @@
           class="typing-input"
           id="typingInput"
           type="text"
-          inputmode="latin"
+          lang="en"
+          inputmode="text"
           autocomplete="off"
           autocapitalize="characters"
           autocorrect="off"
@@ -1380,6 +1381,7 @@
         return;
       }
 
+      if (event.ctrlKey || event.altKey || event.metaKey) return;
       if (!/^[a-z]$/i.test(event.key)) return;
       event.preventDefault();
       if (event.repeat) return;

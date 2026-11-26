@@ -232,24 +232,19 @@ test("バトル画面は共通の初期能力値HP100・攻撃力20を使う", (
 
 
 
-test("数字キー1〜5を1回押すだけでレーンを選択して決定する", () => {
-  assert.ok(html.includes("function selectLaneAndConfirm(lane)"));
-  assert.ok(html.includes("selectLaneAndConfirm(numberKey - 1);"));
-  assert.ok(html.includes("if (event.repeat) return;"));
-  assert.ok(html.includes("wordState = setPlayerLane(wordState, lane);"));
-  assert.ok(html.includes("confirmLaneLetter();"));
-  assert.ok(html.includes("PCは数字キー1〜5を1回押すだけで移動・決定"));
-  assert.ok(html.includes("target.isContentEditable"));
-});
-
-
-test("スマホはレーンを1回タップするだけで選択・決定する", () => {
-  assert.ok(html.includes('$("arena").addEventListener("click"'));
-  assert.ok(html.includes("selectLaneAndConfirm(lane);"));
-  assert.ok(html.includes("getBoundingClientRect()"));
-  assert.ok(html.includes("Math.floor(relativeX * wordState.laneCount)"));
-  assert.ok(html.includes("スマホもレーンを1回タップするだけで決定"));
-  assert.ok(html.includes("touch-action:manipulation"));
+test("PCとスマホは英字タイピングで選択でき、数字キーやレーンタップ操作は使わない", () => {
+  assert.match(html, /id="typingInput"/);
+  assert.match(html, /lang="en"/);
+  assert.match(html, /inputmode="text"/);
+  assert.match(html, /typingInput\.addEventListener\("input"/);
+  assert.match(html, /typingInput\.addEventListener\("keydown"/);
+  assert.match(html, /window\.addEventListener\("keydown"/);
+  assert.match(html, /typeSpellingLetter\(event\.key\)/);
+  assert.match(html, /typingInput\.disabled = !canType/);
+  assert.match(html, /target === typingInput/);
+  assert.doesNotMatch(html, /数字キー1〜5|レーンを1回タップ/);
+  assert.doesNotMatch(html, /bindLaneMoveButton|selectLaneAndConfirm|numberKey/);
+  assert.doesNotMatch(html, /\$\("arena"\)\.addEventListener\("click"/);
 });
 
 
