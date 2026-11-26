@@ -1,8 +1,8 @@
 /** Skill lookup, progression, and character-specific loadout helpers. */
 import { SKILL_DEFINITIONS } from "./data/skills.js";
 import { CHARACTERS, DEFAULT_CHARACTER_ID, isValidCharacterId } from "./characters.js";
-import { getSkillLevelDifficultyRange } from "./word-difficulty.js";
-export { SKILL_DEFINITIONS, getSkillLevelDifficultyRange };
+import { getWordDifficultyLevelFromLength } from "./word-difficulty.js";
+export { SKILL_DEFINITIONS };
 
 export const SKILL_EQUIP_SLOT_COUNT = 4;
 export function getSkillsForCharacter(characterId) {
@@ -116,12 +116,13 @@ export function normalizeEvolvedSkillIds(skillIds, skillLevels) {
 export const SKILL_CATEGORY_LABELS = Object.freeze({
   attack: "攻撃", magic: "魔法", heal: "回復", defense: "防御", support: "補助", passive: "パッシブ",
 });
-export function getSkillWordDifficultyRange(skillId, currentLevel) {
+export function getSkillWordDifficultyRange(skillId) {
   const skill = getSkillDefinition(skillId);
   if (!skill) return null;
-  const level = currentLevel ?? skill.startingLevel ?? 1;
-  const range = skill.wordDifficultyRange ?? getSkillLevelDifficultyRange(level);
-  return { min: range.min, max: range.max };
+  return {
+    min: getWordDifficultyLevelFromLength(skill.minWordLength ?? 3),
+    max: getWordDifficultyLevelFromLength(skill.maxWordLength ?? 4),
+  };
 }
 function levelValue(values, index, fallback = 0) {
   return Array.isArray(values) && Number.isFinite(values[index]) ? values[index] : fallback;
