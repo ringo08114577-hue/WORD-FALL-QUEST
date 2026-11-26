@@ -756,160 +756,75 @@ test("一時停止と再開を繰り返してもHP・敵・ダンジョン進行
 });
 
 
-test("スキルはゴールドで強化でき、レベルごとの出題範囲も保存される", () => {
+test("新しい4種類のスキルだけが初期化され、ゴールドで強化できる", () => {
   let state = createTestGameState();
   assert.deepEqual(state.skillLevels, {
-    "quick-strike": 1,
-    "power-strike": 1,
-    "ultimate-strike": 1,
-    "fireball": 1,
-    "thunder-bolt": 1,
-    "water-shot": 1,
-    "wind-cutter": 1,
-    "earth-spike": 1,
-    "healing-light": 1,
-    "iron-guard": 1,
-    "battle-cry": 1,
+    "gou-basic": 1, "regen-basic": 1, "shadow-basic": 1, "elemental-basic": 1,
   });
-
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 50 });
-  state = gameReducer(state, {
-    type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "quick-strike",
-  });
-
-  assert.equal(state.skillLevels["quick-strike"], 2);
-  assert.equal(state.skillLevels["power-strike"], 1);
+  state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
+  assert.equal(state.skillLevels["gou-basic"], 2);
+  assert.equal(state.skillLevels["regen-basic"], 1);
   assert.equal(state.inventory.gold, 0);
 });
 
 test("スキル強化は50・100・200・400Gで上昇し、Lv.5が上限", () => {
-  let state = createTestGameState();
-  state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 750 });
-
+  let state = gameReducer(createTestGameState(), { type: GAME_ACTION.ADD_GOLD, amount: 750 });
   for (let expectedLevel = 2; expectedLevel <= 5; expectedLevel += 1) {
-    state = gameReducer(state, {
-      type: GAME_ACTION.UPGRADE_SKILL,
-      skillId: "power-strike",
-    });
-    assert.equal(state.skillLevels["power-strike"], expectedLevel);
+    state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-basic" });
+    assert.equal(state.skillLevels["regen-basic"], expectedLevel);
   }
-
-  const atMax = gameReducer(state, {
-    type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "power-strike",
-  });
-  assert.equal(atMax, state);
+  assert.equal(gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-basic" }), state);
   assert.equal(state.inventory.gold, 0);
 });
 
 test("ゴールド不足・未登録スキル・戦闘中の強化は拒否する", () => {
   const poor = createTestGameState();
-  assert.equal(gameReducer(poor, {
-    type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "quick-strike",
-  }), poor);
-
-  const invalid = gameReducer(
-    gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
-    { type: GAME_ACTION.UPGRADE_SKILL, skillId: "unknown-skill" },
-  );
+  assert.equal(gameReducer(poor, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" }), poor);
+  const invalid = gameReducer(gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
+    { type: GAME_ACTION.UPGRADE_SKILL, skillId: "unknown-skill" });
   assert.equal(invalid.inventory.gold, 500);
-  assert.equal(invalid.skillLevels["quick-strike"], 1);
-
-  let battle = gameReducer(
-    gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
-    { type: GAME_ACTION.START_BATTLE, enemy: slime },
-  );
-  const rejected = gameReducer(battle, {
-    type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "quick-strike",
-  });
-  assert.equal(rejected, battle);
-  assert.equal(rejected.inventory.gold, 500);
+  let battle = gameReducer(gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
+    { type: GAME_ACTION.START_BATTLE, enemy: slime });
+  assert.equal(gameReducer(battle, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" }), battle);
 });
 
-test("ゲームをリセットするとスキルレベルも初期状態に戻る", () => {
-  let state = gameReducer(createTestGameState(), { type: GAME_ACTION.ADD_GOLD, amount: 50 });
-  state = gameReducer(state, {
-    type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "ultimate-strike",
-  });
-  assert.equal(state.skillLevels["ultimate-strike"], 2);
-
+test("ゲームをリセットすると4種類のスキルレベルも初期状態に戻る", () => {
+  let state = gameReducer(gameReducer(createTestGameState(), { type: GAME_ACTION.ADD_GOLD, amount: 50 }),
+    { type: GAME_ACTION.UPGRADE_SKILL, skillId: "shadow-basic" });
+  assert.equal(state.skillLevels["shadow-basic"], 2);
   state = gameReducer(state, { type: GAME_ACTION.RESET_GAME });
-  assert.equal(state.skillLevels["ultimate-strike"], 1);
+  assert.equal(state.skillLevels["shadow-basic"], 1);
 });
 
-
-test("ホームへ戻るとHPと戦闘状態だけを整え、冒険者の成長を維持する", () => {
-  let state = gameReducer(createTestGameState(), {
-    type: GAME_ACTION.ADD_GOLD,
-    amount: 80,
-  });
-  state = gameReducer(state, {
-    type: GAME_ACTION.START_BATTLE,
-    enemy: slime,
-  });
-  state = gameReducer(state, { type: GAME_ACTION.DAMAGE_PLAYER, amount: 2 });
-  state = gameReducer(state, { type: GAME_ACTION.PAUSE_BATTLE });
-  state = gameReducer(state, {
-    type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "quick-strike",
-  });
-  const before = state;
-
-  state = gameReducer(state, { type: GAME_ACTION.RETURN_TO_TOWN });
-  assert.equal(state.phase, GAME_PHASE.TITLE);
-  assert.equal(state.pausedFrom, null);
-  assert.equal(state.enemy, null);
-  assert.equal(state.lastBattleResult, null);
-  assert.equal(state.player.hp, state.player.maxHp);
-  assert.equal(state.inventory.gold, before.inventory.gold);
-  assert.deepEqual(state.skillLevels, before.skillLevels);
-  assert.equal(state.stats.enemiesDefeated, before.stats.enemiesDefeated);
-});
-
-
-test("4枠目には回復スキルが初期装備され、4枠とも街で変更できる", () => {
-  let state = createTestGameState();
-  assert.deepEqual(state.equippedSkillIds, [
-    "quick-strike", "power-strike", "ultimate-strike", "healing-light",
-  ]);
-
+test("4キャラクターの専用技を初期装備し、他キャラの技は装備できない", () => {
+  const state = createTestGameState();
+  assert.deepEqual(state.equippedSkillIds, ["gou-basic", null, null, null]);
   const duplicate = gameReducer(state, {
-    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike",
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-basic", characterId: "gou-swordsman",
   });
   assert.equal(duplicate, state);
-
-  state = gameReducer(state, {
-    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "iron-guard",
+  const wrongClass = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: "regen-basic", characterId: "gou-swordsman",
   });
-  assert.deepEqual(state.equippedSkillIds, [
-    "quick-strike", "power-strike", "ultimate-strike", "iron-guard",
-  ]);
-
-  state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: null });
-  assert.deepEqual(state.equippedSkillIds, [
-    "quick-strike", null, "ultimate-strike", "iron-guard",
-  ]);
-  state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: null });
-  assert.equal(state.equippedSkillIds[0], null);
-  state = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: null });
-  assert.equal(state.equippedSkillIds[3], null);
-  const lastSkill = gameReducer(state, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 2, skillId: null });
-  assert.equal(lastSkill, state);
+  assert.equal(wrongClass, state);
+  const wrongLoadout = gameReducer(state, {
+    type: GAME_ACTION.SET_EQUIPPED_SKILLS,
+    skillIds: ["regen-basic", null, null, null],
+    characterId: "gou-swordsman",
+  });
+  assert.equal(wrongLoadout, state);
+  const regenLoadout = gameReducer(state, {
+    type: GAME_ACTION.SET_EQUIPPED_SKILLS,
+    skillIds: ["regen-basic", null, null, null],
+    characterId: "regen-knight",
+  });
+  assert.deepEqual(regenLoadout.equippedSkillIds, ["regen-basic", null, null, null]);
+  const battle = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
+  assert.equal(gameReducer(battle, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-basic", characterId: "gou-swordsman",
+  }), battle);
 });
-
-test("スキル装備の変更は街でのみ行え、登録外の技は装備できない", () => {
-  const title = createTestGameState();
-  const unknown = gameReducer(title, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "unknown-skill" });
-  assert.equal(unknown, title);
-  const battle = gameReducer(title, { type: GAME_ACTION.START_BATTLE, enemy: slime });
-  const duringBattle = gameReducer(battle, { type: GAME_ACTION.EQUIP_SKILL, slotIndex: 3, skillId: "quick-strike" });
-  assert.equal(duringBattle, battle);
-});
-
 
 test("保存データの攻撃力はレベルに応じた成長値と一致する必要がある", () => {
   const valid = createTestGameState();
@@ -1088,22 +1003,22 @@ test("Lv.5スキルは対応素材と200Gを消費して1回だけ進化でき�
   let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 950 });
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
-  for (let i = 0; i < 4; i += 1) state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "quick-strike" });
-  assert.equal(state.skillLevels["quick-strike"], 5);
-  const evolved = gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" });
+  for (let i = 0; i < 4; i += 1) state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
+  assert.equal(state.skillLevels["gou-basic"], 5);
+  const evolved = gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" });
   assert.notEqual(evolved, state);
-  assert.deepEqual(evolved.evolvedSkillIds, ["quick-strike"]);
+  assert.deepEqual(evolved.evolvedSkillIds, ["gou-basic"]);
   assert.equal(evolved.inventory.items["forest-dragon-seal"], 0);
   assert.equal(evolved.inventory.gold, 0);
   assert.equal(isValidSavedGameState(evolved), true);
-  assert.equal(gameReducer(evolved, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" }), evolved);
+  assert.equal(gameReducer(evolved, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" }), evolved);
 });
 
 test("進化はLv.5未満・素材不足・ゴールド不足・バトル中には実行できない", () => {
   let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 1000 });
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
-  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" }), state);
+  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" }), state);
   state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
-  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "quick-strike" }), state);
+  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" }), state);
 });

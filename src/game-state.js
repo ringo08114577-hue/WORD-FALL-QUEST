@@ -676,7 +676,10 @@ export function gameReducer(state, action) {
     }
 
     case GAME_ACTION.SET_EQUIPPED_SKILLS: {
-      if (state.phase !== GAME_PHASE.TITLE || !isValidEquippedSkillIds(action.skillIds)) return state;
+      if (state.phase !== GAME_PHASE.TITLE ||
+          !(action.characterId
+            ? isValidEquippedSkillIds(action.skillIds, action.characterId)
+            : isValidEquippedSkillIds(action.skillIds))) return state;
       if (state.equippedSkillIds.every((id, index) => id === action.skillIds[index])) return state;
       return { ...state, equippedSkillIds: [...action.skillIds] };
     }

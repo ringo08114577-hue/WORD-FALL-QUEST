@@ -82,7 +82,7 @@ export function createAppSession({ storage } = {}) {
         const activeId = normalizeCharacterId(value.characterId);
         const preferred = normalizeCharacterSkillLoadouts(value.characterSkillLoadouts)[activeId];
         if (store.getState().equippedSkillIds.some((id, index) => id !== preferred[index])) {
-          store.dispatch({ type: GAME_ACTION.SET_EQUIPPED_SKILLS, skillIds: preferred });
+          store.dispatch({ type: GAME_ACTION.SET_EQUIPPED_SKILLS, skillIds: preferred, characterId: activeId });
         }
       }
     },
@@ -126,7 +126,7 @@ export function createAppSession({ storage } = {}) {
       loadouts[currentId] = normalizeEquippedSkillIds(store.getState().equippedSkillIds, currentId);
       const nextLoadout = loadouts[characterId];
       const previousState = store.getState();
-      const nextState = store.dispatch({ type: GAME_ACTION.SET_EQUIPPED_SKILLS, skillIds: nextLoadout });
+      const nextState = store.dispatch({ type: GAME_ACTION.SET_EQUIPPED_SKILLS, skillIds: nextLoadout, characterId });
       if (nextState === previousState && nextLoadout.some((id, index) => id !== previousState.equippedSkillIds[index])) {
         return { selected: false, changed: false, reason: "skill-loadout-switch-failed" };
       }
