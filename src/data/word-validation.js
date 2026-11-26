@@ -3,6 +3,8 @@
  * Keep this module independent from battle and save state.
  */
 
+import { getWordDifficultyLevelFromLength } from "../word-difficulty.js";
+
 export const WORD_PARTS_OF_SPEECH = Object.freeze([
   "noun",
   "verb",
@@ -38,7 +40,7 @@ export function validateWordCatalog(catalog) {
   const errors = [];
   const warnings = [];
   const byDifficulty = Object.fromEntries(
-    [1, 2, 3, 4, 5, 6].map((level) => [level, 0]),
+    [1, 2, 3, 4, 5].map((level) => [level, 0]),
   );
   const byPartOfSpeech = Object.fromEntries(
     WORD_PARTS_OF_SPEECH.map((part) => [part, 0]),
@@ -89,10 +91,14 @@ export function validateWordCatalog(catalog) {
     }
 
     if (!Number.isInteger(entry.difficulty) ||
-        entry.difficulty < 1 || entry.difficulty > 6) {
-      errors.push(`${prefix} 難易度は1〜6の整数で指定してください。`);
+        entry.difficulty < 1 || entry.difficulty > 5) {
+      errors.push(`${prefix} 難易度は1〜5の整数で指定してください。`);
     } else {
       byDifficulty[entry.difficulty] += 1;
+      if (typeof entry.word === "string" && /^[A-Z]+$/.test(entry.word) &&
+          entry.difficulty !== getWordDifficultyLevelFromLength(entry.word.length)) {
+        errors.push(`${prefix} 単語難易度は文字数から自動で決まるレベルと一致させてください。`);
+      }
     }
 
     if (!WORD_PARTS_OF_SPEECH.includes(entry.partOfSpeech)) {
