@@ -390,12 +390,11 @@ test("選択中レーンに文字がない場合は何も消費しない", () =>
   assert.equal(result.event, null);
 });
 
-test("必殺技は7〜14文字の単語を選べる", () => {
-  const state = createWordBattleState();
-  const selected = selectChallengeForSkill(state, "ultimate-strike", {
+test("轟剣士の仮スキルも3〜4文字の単語を選ぶ", () => {
+  const selected = selectChallengeForSkill(createWordBattleState(), "gou-basic", {
     skillLevel: 5,
     random: () => 0,
   });
   const challenge = getCurrentChallenge(selected);
-  assert.ok(challenge.word.length >= 7 && challenge.word.length <= 14);
+  assert.ok(challenge.word.length >= 3 && challenge.word.length <= 4);
 });

@@ -58,7 +58,9 @@ test("キャラクターごとに別々の初期装備4枠を持つ", () => {
 test("技を追加するときはcharacterIdを指定するだけで出題難易度と効果が共通処理される", () => {
   for (const skill of Object.values(SKILL_DEFINITIONS)) {
     assert.equal(skill.category, "attack");
-    assert.deepEqual(getSkillWordDifficultyRange(skill.id, 1), { min: 3, max: 4 });
+    assert.equal(skill.minWordLength, 3);
+    assert.equal(skill.maxWordLength, 4);
+    assert.deepEqual(getSkillWordDifficultyRange(skill.id, 1), { min: 1, max: 2 });
     assert.deepEqual(getSkillEffectForLevel(skill.id, 1), {
       type: "attack", damageMultiplier: 1,
     });
