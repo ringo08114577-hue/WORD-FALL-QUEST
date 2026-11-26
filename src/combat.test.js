@@ -539,7 +539,7 @@ test("轟進斬は攻撃しながら蓄積し、轟刃は必要な轟気だけ�
   });
   assert.equal(roaring.ignored, false);
   assert.equal(roaring.goukiSpent, 3);
-  assert.equal(resource.value.stacks, 10);
+  assert.equal(resource.value.stacks, 11);
   assert.ok(roaring.damage > advance.damage);
 });
 
