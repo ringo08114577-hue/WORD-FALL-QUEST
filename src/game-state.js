@@ -44,6 +44,7 @@ export const GAME_ACTION = Object.freeze({
   UPGRADE_SKILL: "UPGRADE_SKILL",
   EVOLVE_SKILL: "EVOLVE_SKILL",
   EQUIP_SKILL: "EQUIP_SKILL",
+  SET_EQUIPPED_SKILLS: "SET_EQUIPPED_SKILLS",
   RETURN_TO_TOWN: "RETURN_TO_TOWN",
   PAUSE_BATTLE: "PAUSE_BATTLE",
   RESUME_BATTLE: "RESUME_BATTLE",
@@ -674,12 +675,19 @@ export function gameReducer(state, action) {
       };
     }
 
+    case GAME_ACTION.SET_EQUIPPED_SKILLS: {
+      if (state.phase !== GAME_PHASE.TITLE || !isValidEquippedSkillIds(action.skillIds)) return state;
+      if (state.equippedSkillIds.every((id, index) => id === action.skillIds[index])) return state;
+      return { ...state, equippedSkillIds: [...action.skillIds] };
+    }
+
     case GAME_ACTION.EQUIP_SKILL: {
       if (state.phase !== GAME_PHASE.TITLE) return state;
       const slotIndex = action.slotIndex;
       const skillId = action.skillId;
       if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= state.equippedSkillIds.length ||
           (skillId !== null && (typeof skillId !== "string" || !Object.hasOwn(SKILL_DEFINITIONS, skillId)))) return state;
+      if (skillId !== null && action.characterId && SKILL_DEFINITIONS[skillId]?.characterId !== action.characterId) return state;
       if (skillId !== null && state.equippedSkillIds.some((id, index) => index !== slotIndex && id === skillId)) return state;
       if (skillId === null && state.equippedSkillIds[slotIndex] !== null &&
           state.equippedSkillIds.filter((id) => id !== null).length <= 1) return state;

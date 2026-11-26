@@ -21,6 +21,14 @@ export const COMBAT_EVENT = Object.freeze({
 
 const VALID_EVENTS = new Set(Object.values(COMBAT_EVENT));
 
+function getEventSkillId(gameState, event) {
+  if (typeof event?.skillId === "string") return event.skillId;
+  return gameState.equippedSkillIds?.find((id) => {
+    const skill = SKILL_DEFINITIONS[id];
+    return skill && (!event?.characterId || skill.characterId === event.characterId);
+  }) ?? null;
+}
+
 function positivePower(value, fallback = 1) {
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
@@ -89,11 +97,14 @@ export function resolveCombatEvent(gameState, event) {
       tone:"bad",
     };
   }
-  const skillId = event.skillId === undefined ? "quick-strike" : event.skillId;
+  const skillId = getEventSkillId(gameState, event);
   const skill = typeof skillId === "string" &&
     Object.hasOwn(SKILL_DEFINITIONS, skillId)
     ? SKILL_DEFINITIONS[skillId]
     : null;
+  if (skill && event.characterId && skill.characterId !== event.characterId) {
+    return { ignored: true, reason: "skill-not-for-character" };
+  }
   if (!skill || !Array.isArray(gameState.equippedSkillIds) ||
       !gameState.equippedSkillIds.includes(skillId)) {
     return { ignored: true, reason: "skill-not-equipped" };
@@ -206,7 +217,7 @@ export function resolveCombatEvent(gameState, event) {
  * Stateful adapter that applies each word event at most once.
  * Events must carry a stable eventId supplied by the word-battle engine.
  */
-export function createCombatController(store, { random = Math.random } = {}) {
+export function createCombatController(store, { random = Math.random, getCharacterId = null } = {}) {
   if (
     !store ||
     typeof store.getState !== "function" ||
@@ -215,7 +226,7 @@ export function createCombatController(store, { random = Math.random } = {}) {
     throw new TypeError("combat controllerにはgame storeが必要です。");
   }
 
-  if (typeof random !== "function") {
+  if (typeof random !== "function" || (getCharacterId !== null && typeof getCharacterId !== "function")) {
     throw new TypeError("combat controllerには乱数関数が必要です。");
   }
 
@@ -231,7 +242,9 @@ export function createCombatController(store, { random = Math.random } = {}) {
       }
 
       const previousState = store.getState();
-      const resolution = resolveCombatEvent(previousState, event);
+      const activeCharacterId = typeof getCharacterId === "function" ? getCharacterId() : null;
+      const combatEvent = activeCharacterId ? { ...event, characterId: activeCharacterId } : event;
+      const resolution = resolveCombatEvent(previousState, combatEvent);
       if (resolution.ignored) return resolution;
 
       processedEventIds.add(event.eventId);
@@ -247,15 +260,16 @@ export function createCombatController(store, { random = Math.random } = {}) {
           message: "文字選択ミス：" + (event.letter || "?"),
         });
       } else if (event.type === COMBAT_EVENT.WORD_COMPLETE) {
-        const skill = SKILL_DEFINITIONS[event.skillId ?? "quick-strike"];
+        const usedSkillId = getEventSkillId(previousState, combatEvent);
+        const skill = usedSkillId ? SKILL_DEFINITIONS[usedSkillId] : null;
         store.dispatch({
           type: GAME_ACTION.LOG_EVENT,
           category: "skill",
           message: (event.japanese ? "「" + event.japanese + "」" : "単語") +
             (event.word ? "（" + event.word + "）" : "") +
             "を完成：" + getSkillDisplayName(
-              event.skillId ?? "quick-strike",
-              state.evolvedSkillIds?.includes(event.skillId ?? "quick-strike") === true,
+              usedSkillId,
+              state.evolvedSkillIds?.includes(usedSkillId) === true,
             ) +
             "・難易度Lv." + (event.wordDifficulty ?? 1),
         });

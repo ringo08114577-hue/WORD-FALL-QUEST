@@ -2,12 +2,12 @@
  * Shared browser session for home, facility, and dungeon-selection pages.
  * The extra payload intentionally matches battle.html's autosave format.
  */
-import { createGameStore } from "./game-state.js";
+import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createDungeonController } from "./dungeon.js";
 import { createSaveController } from "./save-system.js";
 import { createTownController } from "./town.js";
 import { createWordBattleState, isValidSavedWordBattleState } from "./word-battle.js";
-import { SKILL_DEFINITIONS } from "./skills.js";
+import { SKILL_DEFINITIONS, createInitialCharacterSkillLoadouts, isValidCharacterSkillLoadouts, normalizeCharacterSkillLoadouts, normalizeEquippedSkillIds } from "./skills.js";
 import { DEFAULT_CHARACTER_ID, getCharacterDefinition, isValidCharacterId, normalizeCharacterId } from "./characters.js";
 import {
   isValidWeakWordEntries,
@@ -25,6 +25,7 @@ function createDefaultExtraData() {
     selectedSkillId: null,
     weakWords: [],
     characterId: DEFAULT_CHARACTER_ID,
+    characterSkillLoadouts: createInitialCharacterSkillLoadouts(),
   };
 }
 
@@ -40,10 +41,10 @@ function isValidExtraData(value) {
     (value.attackElapsed === undefined ||
       (Number.isFinite(value.attackElapsed) && value.attackElapsed >= 0 && value.attackElapsed < 9000)) &&
     (value.awaitingSkill === undefined || typeof value.awaitingSkill === "boolean") &&
-    (value.selectedSkillId === undefined || value.selectedSkillId === null ||
-      Object.hasOwn(SKILL_DEFINITIONS, value.selectedSkillId)) &&
+    (value.selectedSkillId === undefined || value.selectedSkillId === null || typeof value.selectedSkillId === "string") &&
     (value.weakWords === undefined || isValidWeakWordEntries(value.weakWords)) &&
-    (value.characterId === undefined || isValidCharacterId(value.characterId))
+    (value.characterId === undefined || isValidCharacterId(value.characterId)) &&
+    (value.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(value.characterSkillLoadouts))
   );
 }
 
@@ -56,12 +57,34 @@ export function createAppSession({ storage } = {}) {
     store,
     storage,
     dungeon,
-    getExtraData: () => extraData,
+    getExtraData: () => {
+      const characterId = normalizeCharacterId(extraData.characterId);
+      return {
+        ...extraData,
+        characterId,
+        characterSkillLoadouts: {
+          ...normalizeCharacterSkillLoadouts(extraData.characterSkillLoadouts),
+          [characterId]: normalizeEquippedSkillIds(store.getState().equippedSkillIds, characterId),
+        },
+      };
+    },
     validateExtraData: isValidExtraData,
     restoreExtraData: (value) => {
       extraData = Object.keys(value).length === 0
         ? createDefaultExtraData()
-        : { ...value, weakWords: normalizeWeakWordEntries(value.weakWords ?? []), characterId: normalizeCharacterId(value.characterId) };
+        : {
+          ...value,
+          weakWords: normalizeWeakWordEntries(value.weakWords ?? []),
+          characterId: normalizeCharacterId(value.characterId),
+          characterSkillLoadouts: normalizeCharacterSkillLoadouts(value.characterSkillLoadouts),
+        };
+      if (store.getState().phase === GAME_PHASE.TITLE) {
+        const activeId = normalizeCharacterId(value.characterId);
+        const preferred = normalizeCharacterSkillLoadouts(value.characterSkillLoadouts)[activeId];
+        if (store.getState().equippedSkillIds.some((id, index) => id !== preferred[index])) {
+          store.dispatch({ type: GAME_ACTION.SET_EQUIPPED_SKILLS, skillIds: preferred });
+        }
+      }
     },
   });
   const initialLoad = saves.load();
@@ -98,7 +121,17 @@ export function createAppSession({ storage } = {}) {
       if (extraData.characterId === characterId) {
         return { selected: true, changed: false, saved: true, character: getCharacterDefinition(characterId) };
       }
-      extraData = { ...extraData, characterId };
+      const currentId = normalizeCharacterId(extraData.characterId);
+      const loadouts = normalizeCharacterSkillLoadouts(extraData.characterSkillLoadouts);
+      loadouts[currentId] = normalizeEquippedSkillIds(store.getState().equippedSkillIds, currentId);
+      const nextLoadout = loadouts[characterId];
+      const previousState = store.getState();
+      const nextState = store.dispatch({ type: GAME_ACTION.SET_EQUIPPED_SKILLS, skillIds: nextLoadout });
+      if (nextState === previousState && nextLoadout.some((id, index) => id !== previousState.equippedSkillIds[index])) {
+        return { selected: false, changed: false, reason: "skill-loadout-switch-failed" };
+      }
+      loadouts[characterId] = [...nextLoadout];
+      extraData = { ...extraData, characterId, characterSkillLoadouts: loadouts };
       return { selected: true, changed: true, character: getCharacterDefinition(characterId), ...saves.save() };
     },
     getWeakWords() {
