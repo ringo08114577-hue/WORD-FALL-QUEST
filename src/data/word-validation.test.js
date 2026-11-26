@@ -61,7 +61,7 @@ test("alternateMeaningsは空欄や重複を許可しない", () => {
     id: "run",
     japanese: "走る",
     word: "RUN",
-    difficulty: 2,
+    difficulty: 1,
     partOfSpeech: "verb",
     alternateMeanings: ["駆ける", "急いで進む"],
   };
