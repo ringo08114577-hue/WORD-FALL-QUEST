@@ -78,3 +78,40 @@ test("苦手単語帳は古いセーブデータに苦手単語の項目がな�
   assert.equal(restored.initialLoad.loaded, true);
   assert.deepEqual(restored.getWeakWords(), []);
 });
+
+
+test("選択したキャラクターは共通セーブに保存され、別ページでも引き継がれる", () => {
+  const storage = memoryStorage();
+  const first = createAppSession({ storage });
+  assert.equal(first.getSelectedCharacterId(), "gou-swordsman");
+  assert.equal(first.getSelectedCharacter().name, "轟剣士");
+  const changed = first.selectCharacter("shadow-blade");
+  assert.equal(changed.selected, true);
+  assert.equal(changed.changed, true);
+  assert.equal(changed.saved, true);
+  const restored = createAppSession({ storage });
+  assert.equal(restored.initialLoad.loaded, true);
+  assert.equal(restored.getSelectedCharacterId(), "shadow-blade");
+  assert.equal(restored.getSelectedCharacter().name, "影刃");
+});
+
+test("キャラクターは町にいるときだけ変更できる", () => {
+  const session = createAppSession({ storage: memoryStorage() });
+  session.dungeon.start();
+  const result = session.selectCharacter("regen-knight");
+  assert.equal(result.selected, false);
+  assert.equal(result.reason, "not-in-town");
+  assert.equal(session.getSelectedCharacterId(), "gou-swordsman");
+});
+
+test("旧セーブにキャラクターIDがなくても初期キャラクターを補完する", () => {
+  const storage = memoryStorage();
+  const first = createAppSession({ storage });
+  first.save();
+  const raw = JSON.parse(storage.getItem("word-fall-quest.save.v1"));
+  delete raw.extra.characterId;
+  storage.setItem("word-fall-quest.save.v1", JSON.stringify(raw));
+  const restored = createAppSession({ storage });
+  assert.equal(restored.initialLoad.loaded, true);
+  assert.equal(restored.getSelectedCharacterId(), "gou-swordsman");
+});

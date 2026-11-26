@@ -87,12 +87,14 @@ test("ホームは冒険を主役にし、プレイヤー情報と4つの施設�
 test("ホーム中央に冒険・装備・ショップ・鍛冶屋・スキル工房の選択肢を表示する", () => {
   const html = read("index.html");
   assert.match(html, /id="homePage"/);
-  for (const route of ["dungeons.html", "inventory.html", "shop.html", "crafting.html", "skills.html"]) {
+  for (const route of ["dungeons.html", "inventory.html", "shop.html", "crafting.html", "skills.html", "characters.html"]) {
     assert.ok(html.includes('href="./' + route + '"'), route + " home destination");
   }
   assert.match(html, /冒険に出る/);
   assert.match(html, /装備を整える/);
   assert.match(html, /スキル工房/);
+  assert.match(html, /キャラクター/);
+  assert.match(html, /id="currentCharacterLabel"/);
   assert.match(html, /id="heroAvatar"/);
   assert.match(html, /id="hpValue"/);
   assert.match(html, /id="goldValue"/);
@@ -350,7 +352,7 @@ test("共通UIにカードへ重なる円形の装飾ラインを表示しない
 });
 
 test("通常ページは共通レイアウトとダークファンタジーのデザインを読み込む", () => {
-  const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html","weak-words.html"];
+  const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html","weak-words.html","characters.html"];
   for (const page of pages) {
     const html = read(page);
     assert.ok(html.includes("shared-layout.css"), page + " stylesheet");
@@ -482,4 +484,13 @@ test("苦手単語帳ページはその他メニューから開けて、答え�
   assert.ok(script.includes("markWeakWordMastered(wordId)"));
   assert.ok(shared.includes('file: "weak-words.html"'));
   assert.ok(shared.includes('label: "苦手単語帳"'));
+});
+
+
+test("キャラクター選択は施設メニューから開ける", () => {
+  const script = read("src/shared-layout.js");
+  assert.match(script, /href: "\.\/characters\.html", file: "characters\.html"/);
+  assert.match(script, /label: "キャラクター", note: "戦闘スタイルを選択"/);
+  assert.match(script, /"characters\.html": \{/);
+  assert.match(read("characters.html"), /キャラクターを選ぶ/);
 });

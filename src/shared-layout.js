@@ -13,6 +13,7 @@ const NAV_ITEMS = Object.freeze([
 ]);
 const MOBILE_NAV_ITEMS = Object.freeze(NAV_ITEMS.slice(0, 4));
 const FACILITY_ITEMS = Object.freeze([
+  { href: "./characters.html", file: "characters.html", icon: "⚔️", label: "キャラクター", note: "戦闘スタイルを選択" },
   { href: "./skills.html", file: "skills.html", icon: "✨", label: "スキル工房", note: "スキルを強化" },
   { href: "./shop.html", file: "shop.html", icon: "🛒", label: "ショップ", note: "武器や道具を購入" },
   { href: "./crafting.html", file: "crafting.html", icon: "⚒️", label: "鍛冶屋", note: "素材から装備を作成" },
@@ -63,6 +64,11 @@ const NPC_PAGES = Object.freeze({
     name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.webp",
     line: "冒険の記録は大切に保管しましょう。セーブの設定はこちらです。",
     lines: ["冒険の記録は大切に保管しましょう。セーブの設定はこちらです。", "アカウントを連携すると、冒険の記録を引き継ぎやすくなります。", "困ったときは、ここでセーブの状態を確認してくださいね。"]
+  },
+  "characters.html": {
+    name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.webp",
+    line: "戦い方を選んで、自分に合ったスタイルで冒険しましょう！",
+    lines: ["戦い方を選んで、自分に合ったスタイルで冒険しましょう！", "4つのスタイルは、それぞれ得意な戦い方が違います。", "気分や相手に合わせて、町で自由に切り替えられますよ。"]
   },
   "weak-words.html": {
     name: "リリア", role: "英単語の復習案内", portrait: "./assets/npcs/guild-receptionist.webp",

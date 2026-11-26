@@ -8,6 +8,7 @@ import { createSaveController } from "./save-system.js";
 import { createTownController } from "./town.js";
 import { createWordBattleState, isValidSavedWordBattleState } from "./word-battle.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
+import { DEFAULT_CHARACTER_ID, getCharacterDefinition, isValidCharacterId, normalizeCharacterId } from "./characters.js";
 import {
   isValidWeakWordEntries,
   normalizeWeakWordEntries,
@@ -23,6 +24,7 @@ function createDefaultExtraData() {
     awaitingSkill: false,
     selectedSkillId: null,
     weakWords: [],
+    characterId: DEFAULT_CHARACTER_ID,
   };
 }
 
@@ -40,7 +42,8 @@ function isValidExtraData(value) {
     (value.awaitingSkill === undefined || typeof value.awaitingSkill === "boolean") &&
     (value.selectedSkillId === undefined || value.selectedSkillId === null ||
       Object.hasOwn(SKILL_DEFINITIONS, value.selectedSkillId)) &&
-    (value.weakWords === undefined || isValidWeakWordEntries(value.weakWords))
+    (value.weakWords === undefined || isValidWeakWordEntries(value.weakWords)) &&
+    (value.characterId === undefined || isValidCharacterId(value.characterId))
   );
 }
 
@@ -58,7 +61,7 @@ export function createAppSession({ storage } = {}) {
     restoreExtraData: (value) => {
       extraData = Object.keys(value).length === 0
         ? createDefaultExtraData()
-        : { ...value, weakWords: normalizeWeakWordEntries(value.weakWords ?? []) };
+        : { ...value, weakWords: normalizeWeakWordEntries(value.weakWords ?? []), characterId: normalizeCharacterId(value.characterId) };
     },
   });
   const initialLoad = saves.load();
@@ -83,6 +86,21 @@ export function createAppSession({ storage } = {}) {
       return result;
     },
     save() { return saves.save(); },
+    getSelectedCharacterId() {
+      return normalizeCharacterId(extraData.characterId);
+    },
+    getSelectedCharacter() {
+      return getCharacterDefinition(extraData.characterId);
+    },
+    selectCharacter(characterId) {
+      if (!isValidCharacterId(characterId)) return { selected: false, changed: false, reason: "invalid-character" };
+      if (store.getState().phase !== "title") return { selected: false, changed: false, reason: "not-in-town" };
+      if (extraData.characterId === characterId) {
+        return { selected: true, changed: false, saved: true, character: getCharacterDefinition(characterId) };
+      }
+      extraData = { ...extraData, characterId };
+      return { selected: true, changed: true, character: getCharacterDefinition(characterId), ...saves.save() };
+    },
     getWeakWords() {
       return normalizeWeakWordEntries(extraData.weakWords ?? []);
     },

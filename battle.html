@@ -577,6 +577,7 @@
     import { createCombatController } from "./src/combat.js";
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
     import { setCharacterImage, clearCharacterImage } from "./src/character-images.js";
+    import { DEFAULT_CHARACTER_ID, isValidCharacterId, normalizeCharacterId } from "./src/characters.js";
     import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
     import { getElementLabel } from "./src/elements.js";
@@ -629,11 +630,13 @@
     let awaitingSkill = false;
     let selectedSkillId = null;
     let weakWords = [];
+    let selectedCharacterId = DEFAULT_CHARACTER_ID;
     const saveController = createSaveController({
       store,
       dungeon,
       getExtraData: () => ({
         wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId, weakWords,
+        characterId: selectedCharacterId,
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -648,7 +651,8 @@
         (extra.awaitingSkill === undefined || typeof extra.awaitingSkill === "boolean") &&
         (extra.selectedSkillId === undefined || extra.selectedSkillId === null ||
           Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)) &&
-        (extra.weakWords === undefined || isValidWeakWordEntries(extra.weakWords)),
+        (extra.weakWords === undefined || isValidWeakWordEntries(extra.weakWords)) &&
+        (extra.characterId === undefined || isValidCharacterId(extra.characterId)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
@@ -658,6 +662,7 @@
         selectedSkillId = extra.selectedSkillId ??
           (awaitingSkill ? null : "quick-strike");
         weakWords = normalizeWeakWordEntries(extra.weakWords ?? []);
+        selectedCharacterId = normalizeCharacterId(extra.characterId);
         enemyAttackCount = 0;
         if (wordState.phase === "active") {
           const savedLetters = wordState.letters;
