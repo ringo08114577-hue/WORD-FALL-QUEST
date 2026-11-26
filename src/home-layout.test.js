@@ -468,3 +468,17 @@ test("ショップのロウの画像・会話・おすすめ・操作ボタン�
   assert.match(css, /\.wfq-npc-stage--merchant \.wfq-npc-dialogue[\s\S]*background:transparent/);
   assert.match(css, /@media\(max-width:480px\)[\s\S]*\.wfq-npc-stage--merchant/);
 });
+
+
+test("苦手単語帳ページはその他メニューから開けて、答えの確認と覚えた単語の卒業ができる", () => {
+  const html = read("weak-words.html");
+  const script = read("src/weak-words-page.js");
+  const shared = read("src/shared-layout.js");
+  assert.match(html, /<h1>📖 苦手単語帳<\\/h1>/);
+  assert.match(html, /id="weakWordList"/);
+  assert.match(script, /session\.getWeakWords\(\)/);
+  assert.match(script, /data-action = "reveal"/);
+  assert.match(script, /data-action = "mastered"/);
+  assert.match(script, /markWeakWordMastered\(wordId\)/);
+  assert.match(shared, /weak-words\.html[\\s\\S]*?苦手単語帳/);
+});

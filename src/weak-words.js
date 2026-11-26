@@ -63,7 +63,7 @@ export function recordWeakWordMistake(entries, challenge, timestamp = Date.now()
   const existing = current.find((entry) => entry.wordId === challenge.id);
   if (existing) {
     return current.map((entry) => entry.wordId === challenge.id
-      ? { ...entry, mistakes: entry.mistakes + 1, lastMissedAt: timestamp }
+      ? { ...entry, mistakes: entry.mistakes + 1, lastMissedAt: Math.max(entry.lastMissedAt, timestamp) }
       : entry);
   }
   return [
