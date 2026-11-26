@@ -82,7 +82,7 @@ test("battle arena is compact at short-phone, phone, tablet, and desktop sizes",
 
 test("word battle accepts letters by typing and removes the old number/lane controls", () => {
   assert.match(html, /id="typingInput"/);
-  assert.match(html, /inputmode="latin"/);
+  assert.match(html, /inputmode="text"/);
   assert.match(html, /typingInput\.addEventListener\("input"/);
   assert.match(html, /window\.addEventListener\("keydown"/);
   assert.match(html, /function typeSpellingLetter\(rawLetter\)/);
@@ -240,7 +240,7 @@ test("PCとスマホは英字タイピングで選択でき、数字キーやレ
   assert.match(html, /typingInput\.addEventListener\("keydown"/);
   assert.match(html, /window\.addEventListener\("keydown"/);
   assert.match(html, /typeSpellingLetter\(event\.key\)/);
-  assert.match(html, /typingInput\.disabled = !canType/);
+  assert.match(html, /\$\("typingInput"\)\.disabled = !canType/);
   assert.match(html, /target === typingInput/);
   assert.doesNotMatch(html, /数字キー1〜5|レーンを1回タップ/);
   assert.doesNotMatch(html, /bindLaneMoveButton|selectLaneAndConfirm|numberKey/);
