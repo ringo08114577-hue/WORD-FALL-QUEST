@@ -1405,7 +1405,11 @@
     window.addEventListener("keydown", (event) => {
       const target = event.target;
       if (event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
-      if (target instanceof HTMLElement && target.isContentEditable) return;
+      if (target instanceof HTMLElement &&
+          (target.isContentEditable || target === typingInput ||
+            ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
+        return;
+      }
 
       // Enter works only while its matching action button is actually shown.
       if (event.key === "Enter") {
@@ -1422,14 +1426,14 @@
         }
       }
 
-      // Backspace returns home only when the Home button and its hint are visible.
+      // Never let Backspace leave the game page; it acts only when Home is shown.
       if (event.key === "Backspace") {
+        event.preventDefault();
         const homeButton = $("homeButton");
         if (!homeButton.hidden && homeButton.dataset.keyboardShortcut === "Backspace") {
-          event.preventDefault();
           homeButton.click();
-          return;
         }
+        return;
       }
 
       // Number keys choose only among the first four currently displayed skills.
@@ -1444,12 +1448,6 @@
           skillButton.click();
           return;
         }
-      }
-
-      // Do not treat keys typed into the mobile keyboard field as global shortcuts.
-      if (target instanceof HTMLElement &&
-          (target === typingInput || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
-        return;
       }
 
       if (!/^[a-z]$/i.test(event.key)) return;
