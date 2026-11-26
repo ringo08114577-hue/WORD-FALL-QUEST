@@ -1149,8 +1149,8 @@
         // equipment, skill levels, and permanent dungeon unlocks.
         store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
         dungeon.reset();
-        goukiState = createInitialGoukiState();
       }
+      if (previousPhase === GAME_PHASE.DEFEAT) goukiState = createInitialGoukiState();
       const result = previousPhase === GAME_PHASE.VICTORY
         ? dungeon.advance()
         : dungeon.start();

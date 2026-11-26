@@ -119,7 +119,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
     }),
   "gou-overlord": defineSkill("gou-overlord", "覇王斬", GOU,
     "轟気を50個消費して放つ、規格外の一撃。", {
-      category: "attack", minWordLength: 9, maxWordLength: 14, wordDifficultyRange: { min: 3, max: 6 }, wordDifficultyRange: { min: 3, max: 6 },
+      category: "attack", minWordLength: 7, maxWordLength: 14, wordDifficultyRange: { min: 1, max: 6 }, wordDifficultyRange: { min: 3, max: 6 },
       effect: {
         type: "gouki-consume-attack", consumeAmount: 50, breakGuard: true,
         bonusPerStackByLevel: LEVELS([0.35, 0.38, 0.42, 0.46, 0.5]),
@@ -127,7 +127,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
     }),
   "gou-heaven-one-flash": defineSkill("gou-heaven-one-flash", "天轟一閃", GOU,
     "所持する轟気をすべて消費。蓄積数に比例して威力が爆発的に上昇する究極技。", {
-      category: "attack", minWordLength: 9, maxWordLength: 14,
+      category: "attack", minWordLength: 7, maxWordLength: 14, wordDifficultyRange: { min: 1, max: 6 },
       effect: {
         type: "gouki-consume-all", breakGuard: true,
         bonusPerStackByLevel: LEVELS([0.4, 0.45, 0.5, 0.55, 0.6]),

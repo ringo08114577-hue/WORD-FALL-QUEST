@@ -20,7 +20,7 @@ test("属性武器は属性を付与し、装備固有の強化と敵の弱点�
       attackPower: 1, elementalWeakness: "wind" },
   });
   const result = createCombatController(store).handle({
-    eventId: "elemental-weapon-test", type: "word-complete",
+    eventId: "elemental-weapon-test", type: "word-complete", skillId: "gou-slash",
   });
   assert.equal(result.damage, 251);
   assert.match(result.message, /風属性・弱点/);
