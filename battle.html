@@ -255,6 +255,7 @@
     .shop-panel button { width:100%; }
     .shop-note { grid-column:1 / -1; color:#9eacc2; font-size:.72rem; margin:0; }
     .inventory-items { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:8px; }
+    .inventory-empty { padding:8px 6px; color:#9eacc2; font-size:.78rem; }
     .inventory-row { display:flex; align-items:center; justify-content:space-between; gap:7px; min-width:0; padding:7px; border-radius:10px; background:#111d30; }
     .inventory-copy { min-width:0; }
     .inventory-label { display:block; color:#9eacc2; font-size:.63rem; }
@@ -527,9 +528,9 @@
         </div>
       </div>
     </section>
-    <section class="panel" aria-label="アイテムと装備">
+    <section class="panel" aria-label="回復アイテム">
       <div class="panel-title">
-        <h2>🎒 所持品・装備</h2>
+        <h2>🧪 回復アイテム</h2>
         <strong class="inventory-value" id="equipmentSummary">ATK 20 · DEF 0</strong>
       </div>
       <div class="inventory-items" id="inventoryItems"></div>
@@ -571,7 +572,8 @@
     import { createTownController } from "./src/town.js";
     import { createSaveController } from "./src/save-system.js";
     import { attachAutoCloudSync } from "./src/auto-cloud-sync.js";
-    import { ITEM_DEFINITIONS, EQUIPMENT_SLOT_LABELS } from "./src/items.js";
+    import { ITEM_DEFINITIONS } from "./src/items.js";
+    import { getBattleRecoveryItems } from "./src/battle-inventory.js";
     import { createCombatController } from "./src/combat.js";
     import { ENEMY_ABILITY_DEFINITIONS } from "./src/enemies.js";
     import { setCharacterImage, clearCharacterImage } from "./src/character-images.js";
@@ -726,17 +728,22 @@
       const dungeonProgress = dungeon.getProgress();
       const canUseBetweenEnemies = state.phase === GAME_PHASE.VICTORY &&
         !dungeonProgress.floorCleared;
-      const canUseConsumables = active || canUseBetweenEnemies;
+      const canUseRecoveryItems = active || canUseBetweenEnemies;
 
       $("equipmentSummary").textContent =
         "ATK " + state.player.attackPower + " · MAG " + state.player.magicPower +
         " · DEF " + state.player.defensePower + " · G " + state.inventory.gold;
 
-      for (const [itemId, item] of Object.entries(ITEM_DEFINITIONS)) {
-        const quantity = state.inventory.items[itemId] ?? 0;
-        const slot = item.slot ?? null;
-        const equipped = slot !== null && state.inventory.equipment[slot] === itemId;
-        if (quantity <= 0 && !equipped) continue;
+      const recoveryItems = getBattleRecoveryItems(state.inventory);
+      if (recoveryItems.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "inventory-empty";
+        empty.textContent = "回復アイテムを持っていないよ。";
+        root.append(empty);
+        return;
+      }
+
+      for (const { itemId, item, quantity } of recoveryItems) {
         const row = document.createElement("div");
         row.className = "inventory-row";
         row.title = item.description ?? "";
@@ -745,37 +752,20 @@
         copy.className = "inventory-copy";
         const label = document.createElement("span");
         label.className = "inventory-label";
-        const details = [];
-        if (slot) details.push(EQUIPMENT_SLOT_LABELS[slot] ?? "装備");
-        if (item.attackBonus) details.push("ATK +" + item.attackBonus);
-        if (item.magicBonus) details.push("MAG +" + item.magicBonus);
-        if (item.defenseBonus) details.push("DEF +" + item.defenseBonus);
-        if (item.healPercent) {
-          details.push("HP +" + Math.round(item.healPercent * 100) + "%（最低" + item.healAmount + "）");
-        } else if (item.healAmount) {
-          details.push("HP +" + item.healAmount);
-        }
-        label.textContent = details.join(" · ") || "アイテム";
+        label.textContent = item.healPercent
+          ? "HP +" + Math.round(item.healPercent * 100) + "%（最低" + item.healAmount + "）"
+          : "HP +" + item.healAmount;
 
         const value = document.createElement("strong");
         value.className = "inventory-value";
-        value.textContent = item.name + (equipped ? " · 装備中" : " ×" + quantity);
+        value.textContent = item.name + " ×" + quantity;
         copy.append(label, value);
 
         const button = document.createElement("button");
         button.dataset.itemId = itemId;
-        if (item.type === "consumable") {
-          button.dataset.itemAction = "use";
-          button.textContent = "使う";
-          button.disabled = !canUseConsumables || quantity <= 0 || state.player.hp >= state.player.maxHp;
-        } else if (slot) {
-          button.textContent = equipped ? "装備中" : "アイテム欄で変更";
-          button.disabled = true;
-          button.title = "装備の変更はアイテム欄で行ってね。";
-        } else {
-          button.textContent = "使用不可";
-          button.disabled = true;
-        }
+        button.dataset.itemAction = "use";
+        button.textContent = "使う";
+        button.disabled = !canUseRecoveryItems || state.player.hp >= state.player.maxHp;
 
         row.append(copy, button);
         root.append(row);

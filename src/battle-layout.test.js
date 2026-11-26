@@ -165,11 +165,14 @@ test("旧セーブが一時停止状態ならロード時に自動でバトル�
 });
 
 
-test("バトル中の装備変更はできず、アイテム欄から行う案内を表示する", () => {
-  assert.match(html, /アイテム欄で変更/);
-  assert.match(html, /装備の変更はアイテム欄で行ってね/);
-  assert.doesNotMatch(html, /button\.dataset\.itemAction = "equip"/);
-  assert.doesNotMatch(html, /GAME_ACTION\.EQUIP_ITEM/);
+test("英語バトルの所持品欄には所持している回復アイテムだけを表示する", () => {
+  assert.match(html, /aria-label="回復アイテム"/);
+  assert.match(html, /<h2>🧪 回復アイテム<\/h2>/);
+  assert.match(html, /import \{ getBattleRecoveryItems \} from "\.\/src\/battle-inventory\.js"/);
+  assert.match(html, /const recoveryItems = getBattleRecoveryItems\(state\.inventory\)/);
+  assert.match(html, /回復アイテムを持っていないよ。/);
+  assert.match(html, /button\.dataset\.itemAction = "use"/);
+  assert.doesNotMatch(html, /EQUIPMENT_SLOT_LABELS|アイテム欄で変更|使用不可/);
 });
 
 test("バトルで選べる技はステータス画面で装備したスキルだけ", () => {
