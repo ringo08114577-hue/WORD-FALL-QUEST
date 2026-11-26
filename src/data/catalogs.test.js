@@ -112,14 +112,20 @@ test("全スキル・全レベルに文字数と難易度が合う単語候補�
     }
   }
 });
-test("補助スキルは全レベルで難易度1〜2の単語だけを出題する", () => {
-  for (const skillId of ["healing-light", "iron-guard", "battle-cry"]) {
-    for (let level = 1; level <= 5; level += 1) {
-      assert.deepEqual(getSkillWordDifficultyRange(skillId, level), { min: 1, max: 2 });
-    }
+test("4キャラクターの初期スキルはすべて専用の攻撃技として登録される", () => {
+  const expected = {
+    "gou-basic": "gou-swordsman",
+    "regen-basic": "regen-knight",
+    "shadow-basic": "shadow-blade",
+    "elemental-basic": "elemental-mage",
+  };
+  assert.deepEqual(Object.fromEntries(Object.entries(SKILL_DEFINITIONS)
+    .map(([id, skill]) => [id, skill.characterId])), expected);
+  for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+    assert.equal(skill.category, "attack");
+    assert.deepEqual(getSkillWordDifficultyRange(skillId, 1), { min: 1, max: 2 });
   }
 });
-
 test("コンテンツ定義は変更できない", () => {
   assert.equal(Object.isFrozen(ENEMY_ABILITY_DEFINITIONS), true);
   assert.equal(Object.isFrozen(ENEMY_DEFINITIONS), true);

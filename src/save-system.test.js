@@ -624,7 +624,7 @@ test("以前のセーブにスキルレベルがなくてもLv.1で補完して�
     "regen-basic": 1,
     "shadow-basic": 1,
     "elemental-basic": 1,
-  });  });
+  });
 });
 
 

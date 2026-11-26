@@ -257,45 +257,39 @@ test("セーブした英単語進行を検証して正しく復元できる", ()
 });
 
 
-test("技を選ぶと対応する文字数の英単語に切り替わる", () => {
-  const state = createWordBattleState();
-  const quick = selectChallengeForSkill(state, "quick-strike", { random: () => 0 });
-  assert.ok(getCurrentChallenge(quick).word.length >= 3);
-  assert.ok(getCurrentChallenge(quick).word.length <= 4);
-  const power = selectChallengeForSkill(state, "power-strike", { random: () => 0 });
-  assert.ok(getCurrentChallenge(power).word.length >= 5);
-  assert.ok(getCurrentChallenge(power).word.length <= 6);
-  const ultimate = selectChallengeForSkill(state, "ultimate-strike", { random: () => 0 });
-  assert.ok(getCurrentChallenge(ultimate).word.length >= 7);
-  assert.ok(getCurrentChallenge(ultimate).word.length <= 14);
-  assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
-});
-
-test("スキルLv.1では対応する文字数と難易度1〜2の単語が選ばれる", () => {
-  for (const skillId of ["quick-strike", "power-strike", "ultimate-strike"]) {
+test("4キャラクターの仮スキルはすべて3〜4文字の英単語を出題する", () => {
+  const skills = [
+    "gou-basic", "regen-basic", "shadow-basic", "elemental-basic",
+  ];
+  for (const skillId of skills) {
     const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
       skillLevel: 1, random: () => 0,
-    });
-    const challenge = getCurrentChallenge(selected);
-    assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 2);
-  }
-});
-test("回復・防御・補助スキルは強化後も簡単な単語を選ぶ", () => {
-  for (const skillId of ["healing-light", "iron-guard", "battle-cry"]) {
-    const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
-      skillLevel: 5, random: () => 0.99,
     });
     const challenge = getCurrentChallenge(selected);
     assert.ok(challenge.word.length >= 3 && challenge.word.length <= 4);
     assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 2);
   }
+  assert.throws(() => selectChallengeForSkill(createWordBattleState(), "unknown-skill"), RangeError);
+});
+
+test("仮スキルのレベルを上げても単語は3〜4文字のまま、難易度範囲だけ成長する", () => {
+  for (const skillId of ["gou-basic", "regen-basic", "shadow-basic", "elemental-basic"]) {
+    for (const skillLevel of [1, 3, 5]) {
+      const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
+        skillLevel, random: () => 0.99,
+      });
+      const challenge = getCurrentChallenge(selected);
+      assert.ok(challenge.word.length >= 3 && challenge.word.length <= 4);
+      assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 6);
+    }
+  }
 });
 
 test("出題候補が複数難易度にまたがる場合、難易度ウェイトに沿って段階を選ぶ", () => {
-  const easy = selectChallengeForSkill(createWordBattleState(), "power-strike", {
+  const easy = selectChallengeForSkill(createWordBattleState(), "gou-basic", {
     skillLevel: 1, random: () => 0,
   });
-  const harder = selectChallengeForSkill(createWordBattleState(), "power-strike", {
+  const harder = selectChallengeForSkill(createWordBattleState(), "gou-basic", {
     skillLevel: 1, random: () => 0.99,
   });
   assert.equal(getCurrentChallenge(easy).difficulty, 1);
@@ -305,7 +299,7 @@ test("出題候補が複数難易度にまたがる場合、難易度ウェイ�
 test("未登録のスキルや無効なスキルレベルを拒否する", () => {
   const state = createWordBattleState();
   assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
-  assert.throws(() => selectChallengeForSkill(state, "power-strike", { skillLevel: 6 }), RangeError);
+  assert.throws(() => selectChallengeForSkill(state, "gou-basic", { skillLevel: 6 }), RangeError);
 });
 
 test("5レーンに固定された文字が出て、必要な文字は1レーンだけに配置される", () => {

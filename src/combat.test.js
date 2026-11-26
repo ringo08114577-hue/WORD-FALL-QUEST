@@ -120,39 +120,6 @@ test("単語完成時はプレイヤーのattackPowerぶん敵にダメージを
   assert.match(result.message, /2ダメージ/);
 });
 
-test("魔法は攻撃力ではなく魔力を参照して弱点1.3倍を適用する", () => {
-  const store = createTestStore({ playerAttackPower: 2, playerMagicPower: 30 });
-  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: "fireball" });
-  store.dispatch({
-    type: GAME_ACTION.START_BATTLE,
-    enemy: { ...testSlime, maxHp: 100, elementalWeakness: "fire" },
-  });
-  const result = createCombatController(store).handle({
-    eventId: "fireball-magic-power-test", type: "word-complete",
-    skillId: "fireball", wordDifficulty: 1,
-  });
-  assert.equal(result.damage, 39);
-  assert.equal(store.getState().enemy.hp, 61);
-  assert.match(result.message, /炎属性/);
-  assert.match(result.message, /弱点/);
-});
-
-test("魔法にも属性耐性0.8倍を適用する", () => {
-  const store = createTestStore({ playerAttackPower: 99, playerMagicPower: 30 });
-  store.dispatch({ type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: "water-shot" });
-  store.dispatch({
-    type: GAME_ACTION.START_BATTLE,
-    enemy: { ...testSlime, maxHp: 100, elementalResistance: "water" },
-  });
-  const result = createCombatController(store).handle({
-    eventId: "water-shot-magic-resistance-test", type: "word-complete",
-    skillId: "water-shot", wordDifficulty: 1,
-  });
-  assert.equal(result.damage, 24);
-  assert.equal(store.getState().enemy.hp, 76);
-  assert.match(result.message, /耐性/);
-});
-
 test("同じ戦闘イベントを2回処理してもダメージは1回だけ", () => {
   const store = startBattle();
   const combat = createCombatController(store);
@@ -368,7 +335,7 @@ test("単語難易度が高いほど攻撃ダメージが大きくなる", () =>
   const result = createCombatController(store).handle({
     eventId: "difficulty-six",
     type: "word-complete",
-    skillId: "shadow-basic",
+    skillId: "gou-basic",
     wordDifficulty: 6,
   });
   assert.equal(result.damage, 14);
