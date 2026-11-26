@@ -33,6 +33,7 @@ body {
 .wfq-sidebar {
   position:sticky; top:0; display:flex; flex-direction:column;
   width:232px; height:100vh; padding:22px 14px 16px;
+  overflow-y:auto; overscroll-behavior:contain;
   border-right:1px solid #263a49;
   background:linear-gradient(180deg,rgba(14,26,37,.98),rgba(9,18,27,.99));
   box-shadow:8px 0 28px rgba(0,0,0,.12);
@@ -188,6 +189,18 @@ body {
 .wfq-drawer-title { margin:0; color:#eef6f0; font-size:1rem; font-weight:900; }
 .wfq-drawer-close { width:34px; height:34px; border:1px solid #405761; border-radius:8px; background:#1d303b; color:#d2e1d9; font-size:1.2rem; }
 .wfq-drawer-description { margin:7px 0 12px; color:#9aadb3; font-size:.73rem; }
+.wfq-drawer-caption {
+  margin:12px 2px 7px;
+  color:#d4b777;
+  font-size:.64rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+.wfq-drawer-caption--other {
+  margin-top:15px;
+  padding-top:11px;
+  border-top:1px solid #304653;
+}
 .wfq-drawer-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
 .wfq-drawer-link { display:flex; align-items:center; gap:9px; min-width:0; padding:11px; border:1px solid #344c58; border-radius:9px; background:#172936; color:#eaf2ed; text-decoration:none; }
 .wfq-drawer-link:hover,.wfq-drawer-link[aria-current="page"] { border-color:#579982; background:#1b423c; }

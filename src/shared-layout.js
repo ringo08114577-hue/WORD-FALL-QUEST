@@ -7,6 +7,15 @@ const NAV_ITEMS = Object.freeze([
   { href: "./dungeons.html", file: "dungeons.html", icon: "🗺️", label: "冒険" },
   { href: "./inventory.html", file: "inventory.html", icon: "🎒", label: "アイテム" },
   { href: "./status.html", file: "status.html", icon: "🧑‍🌾", label: "能力" },
+  { href: "./skills.html", file: "skills.html", icon: "✨", label: "スキル工房" },
+  { href: "./shop.html", file: "shop.html", icon: "🛒", label: "ショップ" },
+  { href: "./crafting.html", file: "crafting.html", icon: "⚒️", label: "鍛冶屋" },
+]);
+const MOBILE_NAV_ITEMS = Object.freeze(NAV_ITEMS.slice(0, 4));
+const FACILITY_ITEMS = Object.freeze([
+  { href: "./skills.html", file: "skills.html", icon: "✨", label: "スキル工房", note: "スキルを強化" },
+  { href: "./shop.html", file: "shop.html", icon: "🛒", label: "ショップ", note: "武器や道具を購入" },
+  { href: "./crafting.html", file: "crafting.html", icon: "⚒️", label: "鍛冶屋", note: "素材から装備を作成" },
 ]);
 
 const NPC_PAGES = Object.freeze({
@@ -205,6 +214,8 @@ function setupSharedLayout() {
 
   const current = pageFile();
   const moreActive = MORE_ITEMS.some(item => item.file === current);
+  const facilityActive = FACILITY_ITEMS.some(item => item.file === current);
+  const mobileMenuActive = moreActive || facilityActive;
   const pageTitle = document.title.split("|")[1]?.trim() || "冒険者の拠点";
   document.body.dataset.wfqPage = current;
 
@@ -222,9 +233,9 @@ function setupSharedLayout() {
   const sideNav = el("nav", "wfq-side-nav");
   sideNav.setAttribute("aria-label", "メインメニュー");
   for (const item of NAV_ITEMS) sideNav.append(navLink(item, current, "wfq-nav-link"));
-  sidebar.append(sideNav, el("div", "wfq-nav-caption wfq-facility-caption", "施設メニュー"));
+  sidebar.append(sideNav, el("div", "wfq-nav-caption wfq-facility-caption", "その他メニュー"));
 
-  const moreSide = el("button", "wfq-more-trigger", "☷　その他の施設");
+  const moreSide = el("button", "wfq-more-trigger", "☷　その他の設定");
   moreSide.type = "button";
   moreSide.setAttribute("aria-expanded", "false");
   moreSide.setAttribute("aria-controls", "wfqFacilityDrawer");
@@ -238,14 +249,14 @@ function setupSharedLayout() {
 
   const mobileNav = el("nav", "wfq-mobile-nav");
   mobileNav.setAttribute("aria-label", "メインメニュー");
-  for (const item of NAV_ITEMS) mobileNav.append(navLink(item, current, "wfq-mobile-link"));
+  for (const item of MOBILE_NAV_ITEMS) mobileNav.append(navLink(item, current, "wfq-mobile-link"));
   const moreMobile = el("button", "wfq-mobile-more");
   moreMobile.type = "button";
-  moreMobile.setAttribute("aria-label", "その他の施設を開く");
+  moreMobile.setAttribute("aria-label", "施設メニューを開く");
   moreMobile.setAttribute("aria-expanded", "false");
   moreMobile.setAttribute("aria-controls", "wfqFacilityDrawer");
-  moreMobile.append(el("span", "wfq-mobile-icon", "☷"), el("span", "wfq-mobile-label", "その他"));
-  if (moreActive) moreMobile.classList.add("is-active");
+  moreMobile.append(el("span", "wfq-mobile-icon", "⚒️"), el("span", "wfq-mobile-label", "施設"));
+  if (mobileMenuActive) moreMobile.classList.add("is-active");
   mobileNav.append(moreMobile);
   document.body.append(mobileNav);
 
@@ -268,21 +279,29 @@ function setupSharedLayout() {
   close.type = "button";
   close.setAttribute("aria-label", "閉じる");
   header.append(title, close);
-  drawer.append(header, el("p", "wfq-drawer-description", "行きたい施設を選んでね。"));
+  drawer.append(header, el("p", "wfq-drawer-description", "施設や設定を選んでね。"));
 
-  const drawerNav = el("nav", "wfq-drawer-grid");
-  drawerNav.setAttribute("aria-label", "街の施設");
-  for (const item of MORE_ITEMS) {
-    const link = el("a", "wfq-drawer-link");
-    link.href = item.href;
-    if (item.file === current) link.setAttribute("aria-current", "page");
-    link.append(el("span", "wfq-drawer-icon", item.icon));
-    const copy = el("span", "wfq-drawer-copy");
-    copy.append(el("strong", "", item.label), el("small", "", item.note));
-    link.append(copy);
-    drawerNav.append(link);
-  }
-  drawer.append(drawerNav);
+  const createDrawerNav = (items, label) => {
+    const nav = el("nav", "wfq-drawer-grid");
+    nav.setAttribute("aria-label", label);
+    for (const item of items) {
+      const link = el("a", "wfq-drawer-link");
+      link.href = item.href;
+      if (item.file === current) link.setAttribute("aria-current", "page");
+      link.append(el("span", "wfq-drawer-icon", item.icon));
+      const copy = el("span", "wfq-drawer-copy");
+      copy.append(el("strong", "", item.label), el("small", "", item.note ?? ""));
+      link.append(copy);
+      nav.append(link);
+    }
+    return nav;
+  };
+  drawer.append(
+    el("div", "wfq-drawer-caption", "施設メニュー"),
+    createDrawerNav(FACILITY_ITEMS, "施設メニュー"),
+    el("div", "wfq-drawer-caption wfq-drawer-caption--other", "その他"),
+    createDrawerNav(MORE_ITEMS, "その他のメニュー"),
+  );
   layer.append(drawer);
   document.body.append(layer);
 
@@ -300,7 +319,9 @@ function setupSharedLayout() {
   moreMobile.addEventListener("click", toggle);
   backdrop.addEventListener("click", () => setOpen(false));
   close.addEventListener("click", () => setOpen(false));
-  drawerNav.addEventListener("click", () => setOpen(false));
+  drawer.addEventListener("click", event => {
+    if (event.target.closest("a")) setOpen(false);
+  });
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && isOpen) {
       setOpen(false);

@@ -364,15 +364,23 @@ test("通常ページは共通レイアウトとダークファンタジーの�
   assert.ok(css.includes("grid-template-columns:232px minmax(0,1fr)"));
 });
 
-test("共通ナビゲーションは主要4項目と施設ドロワーを持つ", () => {
+test("PCメインメニューには7項目、スマホは4項目と施設ドロワーを表示する", () => {
   const script = read("src/shared-layout.js");
-  for (const file of ["index.html","dungeons.html","inventory.html","status.html","shop.html","crafting.html","skills.html","settings.html","account.html"]) {
-    assert.ok(script.includes(file), file + " navigation");
+  const css = read("src/shared-layout.css");
+  for (const file of ["index.html","dungeons.html","inventory.html","status.html","skills.html","shop.html","crafting.html"]) {
+    assert.ok(script.includes(file), file + " main navigation");
   }
+  assert.match(script, /const NAV_ITEMS = Object\.freeze\(\[[\s\S]*?skills\.html[\s\S]*?shop\.html[\s\S]*?crafting\.html[\s\S]*?\]\)/);
+  assert.match(script, /const MOBILE_NAV_ITEMS = Object\.freeze\(NAV_ITEMS\.slice\(0, 4\)\)/);
+  assert.match(script, /const FACILITY_ITEMS = Object\.freeze\(\[/);
+  assert.match(script, /createDrawerNav\(FACILITY_ITEMS, "施設メニュー"\)/);
+  assert.match(script, /createDrawerNav\(MORE_ITEMS, "その他のメニュー"\)/);
   assert.match(script, /aria-current/);
   assert.match(script, /aria-expanded/);
   assert.ok(script.includes('event.key === "Escape"'));
   assert.match(script, /wfqFacilityDrawer/);
+  assert.match(css, /grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/);
+  assert.match(css, /overflow-y:auto; overscroll-behavior:contain/);
 });
 
 test("バトル画面には通常ナビゲーションを追加せず、戦闘操作を優先する", () => {
