@@ -275,7 +275,6 @@ export function resolveCombatEvent(gameState, event) {
   const isSpecialEnemy = gameState.enemy.isBoss || gameState.enemy.isMiniBoss;
   const hasGuardAbility = gameState.enemy.abilities?.includes("guard") === true;
   const breaksBossGuard = isGoukiAttack && breakGuard && isSpecialEnemy && hasGuardAbility;
-  const difficultyMultiplier = WORD_DIFFICULTY_DEFINITIONS[wordDifficulty].damageMultiplier;
   const activeAttackMultiplier = gameState.battleEffects?.attackUsesRemaining > 0
     ? gameState.battleEffects.attackMultiplier : 1;
   const equipmentElements = getEquipmentElementalBonuses(gameState.inventory?.equipment);
@@ -294,7 +293,6 @@ export function resolveCombatEvent(gameState, event) {
   const baseDamage = Math.ceil(
     offensivePower *
     (skillEffect?.damageMultiplier ?? skill?.damageMultiplier ?? 1) *
-    difficultyMultiplier *
     activeAttackMultiplier *
     elementalAttackMultiplier *
     goukiAttackMultiplier,
