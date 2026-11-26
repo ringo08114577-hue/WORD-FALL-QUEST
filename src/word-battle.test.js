@@ -267,12 +267,12 @@ test("各キャラクターの基本技は3〜4文字の英単語を出題する
     });
     const challenge = getCurrentChallenge(selected);
     assert.ok(challenge.word.length >= 3 && challenge.word.length <= 4);
-    assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 2);
+    assert.equal(challenge.difficulty, 1);
   }
   assert.throws(() => selectChallengeForSkill(createWordBattleState(), "unknown-skill"), RangeError);
 });
 
-test("基本スキルのレベルを上げても単語は3〜4文字のまま、難易度範囲だけ成長する", () => {
+test("スキル強化レベルを変えても出題単語の難易度は変わらない", () => {
   for (const skillId of ["gou-slash", "regen-basic", "shadow-basic", "elemental-basic"]) {
     for (const skillLevel of [1, 3, 5]) {
       const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
@@ -280,26 +280,33 @@ test("基本スキルのレベルを上げても単語は3〜4文字のまま、
       });
       const challenge = getCurrentChallenge(selected);
       assert.ok(challenge.word.length >= 3 && challenge.word.length <= 4);
-      assert.ok(challenge.difficulty >= 1 && challenge.difficulty <= 6);
+      assert.equal(challenge.difficulty, 1);
     }
   }
 });
 
-test("出題候補が複数難易度にまたがる場合、難易度ウェイトに沿って段階を選ぶ", () => {
-  const easy = selectChallengeForSkill(createWordBattleState(), "gou-slash", {
-    skillLevel: 1, random: () => 0,
-  });
-  const harder = selectChallengeForSkill(createWordBattleState(), "gou-slash", {
-    skillLevel: 1, random: () => 0.99,
-  });
-  assert.equal(getCurrentChallenge(easy).difficulty, 1);
-  assert.equal(getCurrentChallenge(harder).difficulty, 2);
+test("技の威力に応じて要求する単語レベルが高くなる", () => {
+  const cases = [
+    ["gou-slash", 1],
+    ["gou-heavy-blow", 2],
+    ["gou-break-army", 3],
+    ["gou-collapse", 4],
+    ["gou-overlord", 5],
+    ["gou-heaven-one-flash", 5],
+  ];
+  for (const [skillId, expectedLevel] of cases) {
+    const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
+      skillLevel: 1, random: () => 0,
+    });
+    assert.equal(getCurrentChallenge(selected).difficulty, expectedLevel, skillId);
+  }
 });
 
-test("未登録のスキルや無効なスキルレベルを拒否する", () => {
+test("未登録のスキルは拒否するが、技レベルは出題難易度に影響しない", () => {
   const state = createWordBattleState();
   assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
-  assert.throws(() => selectChallengeForSkill(state, "gou-slash", { skillLevel: 6 }), RangeError);
+  const selected = selectChallengeForSkill(state, "gou-slash", { skillLevel: 6, random: () => 0 });
+  assert.equal(getCurrentChallenge(selected).difficulty, 1);
 });
 
 test("5レーンに固定された文字が出て、必要な文字は1レーンだけに配置される", () => {
