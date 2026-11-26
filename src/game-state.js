@@ -28,6 +28,7 @@ export const GAME_ACTION = Object.freeze({
   START_BATTLE: "START_BATTLE",
   DAMAGE_PLAYER: "DAMAGE_PLAYER",
   DAMAGE_ENEMY: "DAMAGE_ENEMY",
+  BREAK_ENEMY_GUARD: "BREAK_ENEMY_GUARD",
   HEAL_PLAYER: "HEAL_PLAYER",
   APPLY_ATTACK_BUFF: "APPLY_ATTACK_BUFF",
   APPLY_DEFENSE_BUFF: "APPLY_DEFENSE_BUFF",
@@ -370,6 +371,16 @@ export function gameReducer(state, action) {
           endedAt: defeated ? (action.at ?? null) : state.battle.endedAt,
         },
         lastBattleResult: defeated ? "defeat" : null,
+      };
+    }
+
+    case GAME_ACTION.BREAK_ENEMY_GUARD: {
+      if (state.phase !== GAME_PHASE.BATTLE || !state.enemy ||
+          (!state.enemy.isBoss && !state.enemy.isMiniBoss) ||
+          !state.enemy.abilities.includes("guard")) return state;
+      return {
+        ...state,
+        enemy: { ...state.enemy, abilities: state.enemy.abilities.filter((id) => id !== "guard") },
       };
     }
 

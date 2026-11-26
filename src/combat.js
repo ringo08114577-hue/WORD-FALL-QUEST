@@ -11,6 +11,10 @@ import { WORD_DIFFICULTY_DEFINITIONS } from "./word-difficulty.js";
 import { ITEM_DEFINITIONS, getEquipmentElementalBonuses, getElementalResistanceMultiplier } from "./items.js";
 import { getElementLabel, getElementalMatchup } from "./elements.js";
 import { resolveEnemyDrops } from "./enemy-drops.js";
+import {
+  createInitialGoukiState, normalizeGoukiState, getGoukiAbilityMultiplier,
+  gainGouki, setNextGoukiGainMultiplier, spendGouki, spendAllGouki,
+} from "./gouki.js";
 
 export const COMBAT_EVENT = Object.freeze({
   CORRECT: "correct",
@@ -56,8 +60,13 @@ export function resolveCombatEvent(gameState, event) {
 
   if (event.type === COMBAT_EVENT.WRONG || event.type === COMBAT_EVENT.TIMED_ATTACK) {
     const enemyPower = positivePower(gameState.enemy.attackPower);
-    const defensePower = Number.isSafeInteger(gameState.player?.defensePower) && gameState.player.defensePower >= 0
+    const goukiState = event.characterId === "gou-swordsman"
+      ? normalizeGoukiState(event.goukiState) : createInitialGoukiState();
+    const goukiMultiplier = event.characterId === "gou-swordsman"
+      ? getGoukiAbilityMultiplier(goukiState.stacks) : 1;
+    const baseDefensePower = Number.isSafeInteger(gameState.player?.defensePower) && gameState.player.defensePower >= 0
       ? gameState.player.defensePower : 0;
+    const defensePower = Math.floor(baseDefensePower * goukiMultiplier);
     const effects = getEnemyAbilityEffects(gameState.enemy);
     const battleDefenseBonus = gameState.battleEffects?.defenseHitsRemaining > 0
       ? gameState.battleEffects.defenseBonus : 0;
@@ -120,6 +129,46 @@ export function resolveCombatEvent(gameState, event) {
   const isEvolved = gameState.evolvedSkillIds?.includes(skillId) === true;
   const skillEffect = getSkillEffectForLevel(skillId, skillLevel, isEvolved);
   const skillNote = "「" + getSkillDisplayName(skillId, isEvolved) + "」！";
+  const isGouSwordsman = event.characterId === "gou-swordsman";
+  const goukiState = isGouSwordsman ? normalizeGoukiState(event.goukiState) : createInitialGoukiState();
+
+  if (skillEffect?.type === "gouki-charge" || skillEffect?.type === "gouki-low-hp-charge") {
+    const missingHpRatio = gameState.player.maxHp > 0
+      ? Math.max(0, (gameState.player.maxHp - gameState.player.hp) / gameState.player.maxHp) : 0;
+    const baseAmount = skillEffect.type === "gouki-charge"
+      ? skillEffect.amount
+      : skillEffect.baseAmount + Math.floor(skillEffect.missingHpBonus * missingHpRatio);
+    const gained = gainGouki(goukiState, baseAmount);
+    return {
+      ignored: false, action: null, damageTarget: null, goukiState: gained.state,
+      goukiGained: gained.gained,
+      message: skillNote + "ダメージを与えず轟気を " + gained.gained + " 個獲得！現在 " + gained.state.stacks + " 個。",
+      tone: "good",
+    };
+  }
+
+  if (skillEffect?.type === "gouki-limit-break") {
+    const nextState = setNextGoukiGainMultiplier(goukiState, skillEffect.multiplier);
+    return {
+      ignored: false, action: null, damageTarget: null, goukiState: nextState,
+      message: skillNote + "次に獲得する轟気が ×" + skillEffect.multiplier + " になる！",
+      tone: "good",
+    };
+  }
+
+  if (skillEffect?.type === "gouki-defense") {
+    const spent = spendGouki(goukiState, skillEffect.consumeAmount);
+    if (!spent.success) return {
+      ignored: true, reason: "insufficient-gouki", required: skillEffect.consumeAmount, available: goukiState.stacks,
+    };
+    return {
+      ignored: false, action: {
+        type: GAME_ACTION.APPLY_DEFENSE_BUFF, bonus: skillEffect.bonus, hits: skillEffect.hits, skillId,
+      }, damageTarget: null, goukiState: spent.state, goukiSpent: spent.spent,
+      message: skillNote + "轟気を " + spent.spent + " 個防御力に変換！防御 +" + skillEffect.bonus + " が " + skillEffect.hits + " 回続く。",
+      tone: "good",
+    };
+  }
 
   if (skillEffect?.type === "heal") {
     const scaledHeal = Math.ceil(gameState.player.maxHp * (skillEffect.hpRatio ?? 0));
@@ -169,6 +218,58 @@ export function resolveCombatEvent(gameState, event) {
   }
 
   const effects = getEnemyAbilityEffects(gameState.enemy);
+  let goukiAfterAttack = null;
+  let goukiSpent = 0;
+  let goukiGained = 0;
+  let goukiAttackMultiplier = 1;
+  let breakGuard = skillEffect?.breakGuard === true;
+  const isGoukiAttack = isGouSwordsman;
+  if (isGoukiAttack) {
+    const passiveSkills = gameState.equippedSkillIds
+      .filter((id) => SKILL_DEFINITIONS[id]?.passive === true);
+    const breakerId = passiveSkills.find((id) => SKILL_DEFINITIONS[id]?.effect?.type === "gouki-passive-breaker");
+    const resonanceId = passiveSkills.find((id) => SKILL_DEFINITIONS[id]?.effect?.type === "gouki-passive-resonance");
+    if (breakerId) {
+      const passive = getSkillEffectForLevel(breakerId, gameState.skillLevels?.[breakerId] ?? 1,
+        gameState.evolvedSkillIds?.includes(breakerId) === true);
+      if (goukiState.stacks >= passive.threshold && (gameState.enemy.isBoss || gameState.enemy.isMiniBoss)) {
+        breakGuard = true;
+        goukiAttackMultiplier *= passive.damageMultiplier;
+      }
+    }
+    if (resonanceId) {
+      const passive = getSkillEffectForLevel(resonanceId, gameState.skillLevels?.[resonanceId] ?? 1,
+        gameState.evolvedSkillIds?.includes(resonanceId) === true);
+      if (goukiState.stacks >= passive.highThreshold) goukiAttackMultiplier *= passive.highDamageMultiplier;
+      else if (goukiState.stacks >= passive.threshold) goukiAttackMultiplier *= passive.damageMultiplier;
+    }
+    if (skillEffect?.type === "gouki-consume-attack") {
+      const spent = spendGouki(goukiState, skillEffect.consumeAmount);
+      if (!spent.success) return {
+        ignored: true, reason: "insufficient-gouki", required: skillEffect.consumeAmount, available: goukiState.stacks,
+      };
+      goukiSpent = spent.spent;
+      goukiAfterAttack = spent.state;
+      goukiAttackMultiplier *= 1 + goukiSpent * skillEffect.bonusPerStack;
+      breakGuard ||= skillEffect.breakGuard;
+    } else if (skillEffect?.type === "gouki-consume-all") {
+      const spent = spendAllGouki(goukiState);
+      if (!spent.success) return {
+        ignored: true, reason: "insufficient-gouki", required: 1, available: goukiState.stacks,
+      };
+      goukiSpent = spent.spent;
+      goukiAfterAttack = spent.state;
+      goukiAttackMultiplier *= 1 + goukiSpent * skillEffect.bonusPerStack;
+      breakGuard ||= skillEffect.breakGuard;
+    } else if (skillEffect?.type === "gouki-attack") {
+      const gained = gainGouki(goukiState, skillEffect.gainAmount);
+      goukiAfterAttack = gained.state;
+      goukiGained = gained.gained;
+    }
+  }
+  const isSpecialEnemy = gameState.enemy.isBoss || gameState.enemy.isMiniBoss;
+  const hasGuardAbility = gameState.enemy.abilities?.includes("guard") === true;
+  const breaksBossGuard = isGoukiAttack && breakGuard && isSpecialEnemy && hasGuardAbility;
   const difficultyMultiplier = WORD_DIFFICULTY_DEFINITIONS[wordDifficulty].damageMultiplier;
   const activeAttackMultiplier = gameState.battleEffects?.attackUsesRemaining > 0
     ? gameState.battleEffects.attackMultiplier : 1;
@@ -176,9 +277,11 @@ export function resolveCombatEvent(gameState, event) {
   const isMagicAttack = skillEffect?.type === "magic";
   const attackElement = skillEffect?.element ?? skill?.element ??
     (isMagicAttack ? null : equipmentElements.attackElement);
-  const offensivePower = isMagicAttack
+  const goukiMultiplier = isGouSwordsman
+    ? getGoukiAbilityMultiplier(goukiState.stacks) : 1;
+  const offensivePower = (isMagicAttack
     ? positivePower(gameState.player.magicPower)
-    : positivePower(gameState.player.attackPower);
+    : positivePower(gameState.player.attackPower)) * goukiMultiplier;
   const elementalMatchup = getElementalMatchup(attackElement, gameState.enemy);
   const elementalAttackBonus = attackElement ? equipmentElements.attackBonus[attackElement] ?? 0 : 0;
   const elementalAttackMultiplier = attackElement
@@ -188,18 +291,31 @@ export function resolveCombatEvent(gameState, event) {
     (skillEffect?.damageMultiplier ?? skill?.damageMultiplier ?? 1) *
     difficultyMultiplier *
     activeAttackMultiplier *
-    elementalAttackMultiplier,
+    elementalAttackMultiplier *
+    goukiAttackMultiplier,
   );
-  const amount = Math.max(1, baseDamage - effects.damageReduction);
+  const guardReduction = breaksBossGuard
+    ? (ENEMY_ABILITY_DEFINITIONS.guard?.damageReduction ?? 0) : 0;
+  const effectiveDamageReduction = Math.max(0, effects.damageReduction - guardReduction);
+  const amount = Math.max(1, baseDamage - effectiveDamageReduction);
   const outgoingElementNote = attackElement
     ? "（" + getElementLabel(attackElement) + "属性" +
       (elementalMatchup.label ? "・" + elementalMatchup.label : "") +
       (elementalAttackBonus > 0 ? "・装備効果 +" + Math.round(elementalAttackBonus * 100) + "%" : "") + "）"
     : "";
   const guardAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.damageReduction>0);
-  const abilityNote = guardAbility ? "（"+guardAbility.name+"でダメージ軽減）" : "";
+  const abilityNote = guardAbility && !breaksBossGuard ? "（"+guardAbility.name+"でダメージ軽減）" : "";
+  const extraActions = breaksBossGuard ? [{ type: GAME_ACTION.BREAK_ENEMY_GUARD }] : [];
+  const goukiNotes = [
+    goukiSpent > 0 ? "轟気 -" + goukiSpent + " 個" : "",
+    goukiGained > 0 ? "轟気 +" + goukiGained + " 個" : "",
+    goukiAttackMultiplier > 1 ? "轟気技倍率 ×" + goukiAttackMultiplier.toFixed(2) : "",
+    breaksBossGuard ? "ボスの防御ギミックを破壊！" : "",
+  ].filter(Boolean).join(" · ");
   return {
     ignored:false,
+    ...(extraActions.length > 0 ? { extraActions } : {}),
+    ...(goukiAfterAttack ? { goukiState: goukiAfterAttack, goukiSpent, goukiGained } : {}),
     action: {
       type: GAME_ACTION.DAMAGE_ENEMY,
       amount,
@@ -208,7 +324,8 @@ export function resolveCombatEvent(gameState, event) {
     damageTarget:"enemy",
     damage:amount,
     message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+outgoingElementNote+
-      (activeAttackMultiplier > 1 ? " 攻撃強化が発動！" : "") + abilityNote,
+      (activeAttackMultiplier > 1 ? " 攻撃強化が発動！" : "") + abilityNote +
+      (goukiNotes ? " [" + goukiNotes + "]" : ""),
     tone:"good",
   };
 }
@@ -217,7 +334,12 @@ export function resolveCombatEvent(gameState, event) {
  * Stateful adapter that applies each word event at most once.
  * Events must carry a stable eventId supplied by the word-battle engine.
  */
-export function createCombatController(store, { random = Math.random, getCharacterId = null } = {}) {
+export function createCombatController(store, {
+  random = Math.random,
+  getCharacterId = null,
+  getGoukiState = null,
+  setGoukiState = null,
+} = {}) {
   if (
     !store ||
     typeof store.getState !== "function" ||
@@ -226,7 +348,10 @@ export function createCombatController(store, { random = Math.random, getCharact
     throw new TypeError("combat controllerにはgame storeが必要です。");
   }
 
-  if (typeof random !== "function" || (getCharacterId !== null && typeof getCharacterId !== "function")) {
+  if (typeof random !== "function" ||
+      (getCharacterId !== null && typeof getCharacterId !== "function") ||
+      (getGoukiState !== null && typeof getGoukiState !== "function") ||
+      (setGoukiState !== null && typeof setGoukiState !== "function")) {
     throw new TypeError("combat controllerには乱数関数が必要です。");
   }
 
@@ -243,11 +368,22 @@ export function createCombatController(store, { random = Math.random, getCharact
 
       const previousState = store.getState();
       const activeCharacterId = typeof getCharacterId === "function" ? getCharacterId() : null;
-      const combatEvent = activeCharacterId ? { ...event, characterId: activeCharacterId } : event;
+      const combatEvent = {
+        ...event,
+        ...(activeCharacterId ? { characterId: activeCharacterId } : {}),
+        ...(activeCharacterId === "gou-swordsman" && typeof getGoukiState === "function"
+          ? { goukiState: getGoukiState() } : {}),
+      };
       const resolution = resolveCombatEvent(previousState, combatEvent);
       if (resolution.ignored) return resolution;
 
       processedEventIds.add(event.eventId);
+      if (resolution.goukiState && typeof setGoukiState === "function") {
+        setGoukiState(resolution.goukiState);
+      }
+      for (const extraAction of resolution.extraActions ?? []) {
+        store.dispatch(extraAction);
+      }
       if (resolution.action) {
         store.dispatch(resolution.action);
       }
@@ -310,6 +446,9 @@ export function createCombatController(store, { random = Math.random, getCharact
         }
         tone = "good";
       } else if (state.phase === GAME_PHASE.DEFEAT) {
+        if (activeCharacterId === "gou-swordsman" && typeof setGoukiState === "function") {
+          setGoukiState(createInitialGoukiState());
+        }
         message = "HPがなくなった！冒険失敗……";
         tone = "bad";
       }
