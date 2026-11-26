@@ -14,10 +14,9 @@ import {
 
 const GOU_IDS = [
   "gou-focus", "gou-limit-focus", "gou-unyielding", "gou-advance-cut",
-  "gou-heavy-charge", "gou-chain-blade", "gou-slash", "gou-heavy-blow",
-  "gou-whirlwind", "gou-roaring-blade", "gou-break-army", "gou-collapse",
-  "gou-overlord", "gou-heaven-one-flash", "gou-ki-convert", "gou-limit-break",
-  "gou-destruction", "gou-resonance",
+  "gou-heavy-charge", "gou-slash", "gou-heavy-blow", "gou-roaring-blade",
+  "gou-break-army", "gou-collapse", "gou-overlord", "gou-heaven-one-flash",
+  "gou-ki-convert", "gou-limit-break", "gou-destruction", "gou-resonance",
 ];
 
 test("轟剣士に蓄積・攻撃・消費・補助・パッシブ技がまとめて登録されている", () => {
@@ -25,6 +24,12 @@ test("轟剣士に蓄積・攻撃・消費・補助・パッシブ技がまと�
   for (const id of GOU_IDS) assert.equal(SKILL_DEFINITIONS[id].characterId, "gou-swordsman");
   assert.equal(SKILL_DEFINITIONS["gou-focus"].effect.type, "gouki-charge");
   assert.equal(SKILL_DEFINITIONS["gou-advance-cut"].effect.type, "gouki-attack");
+  assert.deepEqual(getSkillWordDifficultyRange("gou-limit-focus"), { min: 3, max: 3 });
+  assert.deepEqual(getSkillWordDifficultyRange("gou-unyielding"), { min: 2, max: 2 });
+  assert.equal(getSkillDefinition("gou-chain-blade"), null);
+  assert.equal(getSkillDefinition("gou-whirlwind"), null);
+  assert.deepEqual(SKILL_DEFINITIONS["gou-advance-cut"].effect.gainAmountByLevel, [4, 5, 6, 7, 9]);
+  assert.deepEqual(SKILL_DEFINITIONS["gou-heavy-charge"].effect.gainAmountByLevel, [2, 3, 3, 4, 5]);
   assert.equal(SKILL_DEFINITIONS["gou-slash"].category, "attack");
   assert.equal(SKILL_DEFINITIONS["gou-roaring-blade"].effect.consumeAmount, 3);
   assert.equal(SKILL_DEFINITIONS["gou-break-army"].effect.consumeAmount, 10);

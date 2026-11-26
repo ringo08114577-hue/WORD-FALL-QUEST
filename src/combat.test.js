@@ -531,7 +531,7 @@ test("轟進斬は攻撃しながら蓄積し、轟刃は必要な轟気だけ�
   });
   assert.equal(advance.ignored, false);
   assert.ok(advance.damage > 0);
-  assert.equal(resource.value.stacks, 13);
+  assert.equal(resource.value.stacks, 14);
 
   const roaring = controller.handle({
     eventId: "gou-roaring-event", type: "word-complete", skillId: "gou-roaring-blade",
@@ -541,6 +541,22 @@ test("轟進斬は攻撃しながら蓄積し、轟刃は必要な轟気だけ�
   assert.equal(roaring.goukiSpent, 3);
   assert.equal(resource.value.stacks, 10);
   assert.ok(roaring.damage > advance.damage);
+});
+
+test("剛撃は攻撃しながら轟気を少し多めに蓄える", () => {
+  const { controller, resource } = createGoukiTestBattle({
+    skillIds: ["gou-heavy-charge"],
+    stacks: 10,
+  });
+  const result = controller.handle({
+    eventId: "gou-heavy-charge-event",
+    type: "word-complete",
+    skillId: "gou-heavy-charge",
+    wordDifficulty: 2,
+  });
+  assert.equal(result.ignored, false);
+  assert.ok(result.damage > 0);
+  assert.equal(resource.value.stacks, 12);
 });
 
 test("轟気不足では消費スキルを発動できず、轟気も敵HPも変わらない", () => {

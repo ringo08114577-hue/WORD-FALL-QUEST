@@ -38,12 +38,12 @@ export const SKILL_DEFINITIONS = Object.freeze({
     }),
   "gou-limit-focus": defineSkill("gou-limit-focus", "極限集中", GOU,
     "攻撃を捨てて、闘気集中よりさらに多くの轟気を蓄える。", {
-      category: "support", minWordLength: 5, maxWordLength: 6,
+      category: "support", minWordLength: 7, maxWordLength: 7,
       effect: { type: "gouki-charge", amountByLevel: LEVELS([20, 24, 28, 34, 40]) },
     }),
   "gou-unyielding": defineSkill("gou-unyielding", "不屈の闘志", GOU,
     "HPが減っているほど多くの轟気を獲得する。", {
-      category: "support", minWordLength: 3, maxWordLength: 4,
+      category: "support", minWordLength: 5, maxWordLength: 6,
       effect: {
         type: "gouki-low-hp-charge",
         baseAmountByLevel: LEVELS([2, 3, 4, 5, 6]),
@@ -56,7 +56,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
       effect: {
         type: "gouki-attack",
         damageMultiplierByLevel: LEVELS([0.8, 0.9, 1, 1.1, 1.2]),
-        gainAmountByLevel: LEVELS([3, 4, 5, 6, 8]),
+        gainAmountByLevel: LEVELS([4, 5, 6, 7, 9]),
       },
     }),
   "gou-heavy-charge": defineSkill("gou-heavy-charge", "剛撃", GOU,
@@ -65,16 +65,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
       effect: {
         type: "gouki-attack",
         damageMultiplierByLevel: LEVELS([1.4, 1.6, 1.8, 2, 2.3]),
-        gainAmountByLevel: LEVELS([1, 2, 2, 3, 4]),
-      },
-    }),
-  "gou-chain-blade": defineSkill("gou-chain-blade", "連環剣", GOU,
-    "連続した剣撃で攻め、少量の轟気を獲得する。", {
-      category: "attack", minWordLength: 3, maxWordLength: 4,
-      effect: {
-        type: "gouki-attack",
-        damageMultiplierByLevel: LEVELS([1, 1.1, 1.2, 1.35, 1.5]),
-        gainAmountByLevel: LEVELS([2, 3, 4, 5, 6]),
+        gainAmountByLevel: LEVELS([2, 3, 3, 4, 5]),
       },
     }),
   "gou-slash": defineSkill("gou-slash", "基本斬撃", GOU,
@@ -86,11 +77,6 @@ export const SKILL_DEFINITIONS = Object.freeze({
     "轟気を温存したまま大きなダメージを与える。", {
       category: "attack", minWordLength: 5, maxWordLength: 6,
       damageMultiplier: 2,
-    }),
-  "gou-whirlwind": defineSkill("gou-whirlwind", "旋風斬", GOU,
-    "広い軌道で斬り払い、安定した範囲火力を出す。", {
-      category: "attack", minWordLength: 5, maxWordLength: 6,
-      damageMultiplier: 1.5,
     }),
   "gou-roaring-blade": defineSkill("gou-roaring-blade", "轟刃", GOU,
     "轟気を3個消費して攻撃する。少ない消費でこまめに火力を出す。", {
