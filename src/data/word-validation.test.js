@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { WORD_CHALLENGES } from "./words.js";
+import { getWordDifficultyLevelFromLength } from "../word-difficulty.js";
 import {
   WORD_PARTS_OF_SPEECH,
   validateWordCatalog,
@@ -21,7 +22,8 @@ test("英単語は品詞・意味・難易度を含む正しい形式で登録�
     assert.equal(typeof entry.id, "string");
     assert.equal(typeof entry.japanese, "string");
     assert.match(entry.word, /^[A-Z]+$/);
-    assert.ok(Number.isInteger(entry.difficulty) && entry.difficulty >= 1 && entry.difficulty <= 6);
+    assert.ok(Number.isInteger(entry.difficulty) && entry.difficulty >= 1 && entry.difficulty <= 5);
+    assert.equal(entry.difficulty, getWordDifficultyLevelFromLength(entry.word.length));
     assert.ok(WORD_PARTS_OF_SPEECH.includes(entry.partOfSpeech));
   }
 });
