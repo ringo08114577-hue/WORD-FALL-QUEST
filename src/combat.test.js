@@ -469,3 +469,142 @@ test("ドロップ抽選に外れた敵は素材を追加しない", () => {
   assert.equal(store.getState().inventory.items["slime-gel"], 0);
   assert.doesNotMatch(result.message, /素材ドロップ/);
 });
+
+
+function createGoukiTestBattle({ skillIds, stacks = 0, nextGainMultiplier = 1, enemy } = {}) {
+  const store = createTestStore({ playerMaxHp: 100, playerAttackPower: 20 });
+  store.dispatch({
+    type: GAME_ACTION.SET_EQUIPPED_SKILLS,
+    skillIds: [...skillIds, ...Array(4 - skillIds.length).fill(null)],
+    characterId: "gou-swordsman",
+  });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: enemy ?? { ...testSlime, maxHp: 100000 },
+  });
+  const resource = { value: { stacks, nextGainMultiplier } };
+  const controller = createCombatController(store, {
+    getCharacterId: () => "gou-swordsman",
+    getGoukiState: () => resource.value,
+    setGoukiState: (next) => { resource.value = next; },
+  });
+  return { store, controller, resource };
+}
+
+test("闘気集中はダメージを与えず轟気を蓄積し、限界突破は次の獲得量を増やす", () => {
+  const { store, controller, resource } = createGoukiTestBattle({
+    skillIds: ["gou-limit-break", "gou-focus"],
+  });
+  const limit = controller.handle({
+    eventId: "gou-limit-break-event", type: "word-complete", skillId: "gou-limit-break",
+    wordDifficulty: 1,
+  });
+  assert.equal(limit.ignored, false);
+  assert.equal(resource.value.nextGainMultiplier, 2);
+  const enemyHp = store.getState().enemy.hp;
+  const charge = controller.handle({
+    eventId: "gou-focus-event", type: "word-complete", skillId: "gou-focus",
+    wordDifficulty: 1,
+  });
+  assert.equal(charge.ignored, false);
+  assert.equal(charge.damageTarget, null);
+  assert.equal(resource.value.stacks, 20);
+  assert.equal(resource.value.nextGainMultiplier, 1);
+  assert.equal(store.getState().enemy.hp, enemyHp);
+});
+
+test("轟進斬は攻撃しながら蓄積し、轟刃は必要な轟気だけを消費する", () => {
+  const { controller, resource } = createGoukiTestBattle({
+    skillIds: ["gou-advance-cut", "gou-roaring-blade"],
+    stacks: 10,
+  });
+  const advance = controller.handle({
+    eventId: "gou-advance-event", type: "word-complete", skillId: "gou-advance-cut",
+    wordDifficulty: 1,
+  });
+  assert.equal(advance.ignored, false);
+  assert.ok(advance.damage > 0);
+  assert.equal(resource.value.stacks, 13);
+
+  const roaring = controller.handle({
+    eventId: "gou-roaring-event", type: "word-complete", skillId: "gou-roaring-blade",
+    wordDifficulty: 1,
+  });
+  assert.equal(roaring.ignored, false);
+  assert.equal(roaring.goukiSpent, 3);
+  assert.equal(resource.value.stacks, 10);
+  assert.ok(roaring.damage > advance.damage);
+});
+
+test("轟気不足では消費スキルを発動できず、轟気も敵HPも変わらない", () => {
+  const { store, controller, resource } = createGoukiTestBattle({
+    skillIds: ["gou-overlord"],
+    stacks: 49,
+  });
+  const beforeHp = store.getState().enemy.hp;
+  const result = controller.handle({
+    eventId: "gou-overlord-short", type: "word-complete", skillId: "gou-overlord",
+    wordDifficulty: 3,
+  });
+  assert.equal(result.ignored, true);
+  assert.equal(result.reason, "insufficient-gouki");
+  assert.equal(resource.value.stacks, 49);
+  assert.equal(store.getState().enemy.hp, beforeHp);
+});
+
+test("天轟一閃は轟気を全消費し、ボスの防御ギミックを破壊する", () => {
+  const boss = {
+    id: "gou-test-boss", name: "試験用ボス", maxHp: 100000, attackPower: 5,
+    isBoss: true, abilities: ["guard"],
+  };
+  const { store, controller, resource } = createGoukiTestBattle({
+    skillIds: ["gou-heaven-one-flash"],
+    stacks: 99,
+    enemy: boss,
+  });
+  const result = controller.handle({
+    eventId: "gou-heaven-event", type: "word-complete",
+    skillId: "gou-heaven-one-flash", wordDifficulty: 5,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(result.goukiSpent, 99);
+  assert.equal(resource.value.stacks, 0);
+  assert.ok(result.damage > 1000);
+  assert.ok(!store.getState().enemy.abilities.includes("guard"));
+  assert.match(result.message, /防御ギミックを破壊/);
+});
+
+test("轟気変換は轟気を防御力へ変換する", () => {
+  const { store, controller, resource } = createGoukiTestBattle({
+    skillIds: ["gou-ki-convert"],
+    stacks: 5,
+  });
+  const result = controller.handle({
+    eventId: "gou-convert-event", type: "word-complete",
+    skillId: "gou-ki-convert", wordDifficulty: 1,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(result.goukiSpent, 5);
+  assert.equal(resource.value.stacks, 0);
+  assert.equal(store.getState().battleEffects.defenseBonus, 35);
+  assert.equal(store.getState().battleEffects.defenseHitsRemaining, 2);
+});
+
+test("破壊の極意は轟気20個以上でボスの防御を自動で破壊する", () => {
+  const boss = {
+    id: "gou-passive-boss", name: "試験用守護ボス", maxHp: 100000, attackPower: 5,
+    isBoss: true, abilities: ["guard"],
+  };
+  const { store, controller } = createGoukiTestBattle({
+    skillIds: ["gou-slash", "gou-destruction"],
+    stacks: 20,
+    enemy: boss,
+  });
+  const result = controller.handle({
+    eventId: "gou-passive-break-event", type: "word-complete",
+    skillId: "gou-slash", wordDifficulty: 1,
+  });
+  assert.equal(result.ignored, false);
+  assert.ok(!store.getState().enemy.abilities.includes("guard"));
+  assert.match(result.message, /防御ギミックを破壊/);
+});

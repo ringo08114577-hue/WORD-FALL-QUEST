@@ -1021,3 +1021,24 @@ test("進化はLv.5未満・素材不足・ゴールド不足・バトル中に�
   state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
   assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-focus" }), state);
 });
+
+
+test("轟剣士が破壊したボスのguard能力はバトル状態から取り除かれる", () => {
+  let state = gameReducer(createTestGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { id: "guard-boss", name: "ガードボス", maxHp: 100, attackPower: 10,
+      isBoss: true, abilities: ["guard"] },
+  });
+  state = gameReducer(state, { type: GAME_ACTION.BREAK_ENEMY_GUARD });
+  assert.deepEqual(state.enemy.abilities, []);
+  assert.equal(isValidSavedGameState(state), true);
+});
+
+test("通常敵にはボス専用のguard破壊を適用できない", () => {
+  const state = gameReducer(createTestGameState(), {
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { id: "guard-slime", name: "ガードスライム", maxHp: 100, attackPower: 5,
+      isBoss: false, abilities: ["guard"] },
+  });
+  assert.equal(gameReducer(state, { type: GAME_ACTION.BREAK_ENEMY_GUARD }), state);
+});

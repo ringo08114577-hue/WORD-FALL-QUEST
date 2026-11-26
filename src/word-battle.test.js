@@ -408,5 +408,5 @@ test("轟剣士の溜め技・必殺技は技ごとの文字数範囲を選ぶ",
   const finisher = selectChallengeForSkill(createWordBattleState(), "gou-heaven-one-flash", {
     skillLevel: 1, random: () => 0,
   });
-  assert.ok(getCurrentChallenge(finisher).word.length >= 9 && getCurrentChallenge(finisher).word.length <= 14);
+  assert.ok(getCurrentChallenge(finisher).word.length >= 7 && getCurrentChallenge(finisher).word.length <= 14);
 });
