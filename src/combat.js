@@ -118,7 +118,7 @@ export function resolveCombatEvent(gameState, event) {
   if (skill && event.characterId && skill.characterId !== event.characterId) {
     return { ignored: true, reason: "skill-not-for-character" };
   }
-  if (!skill || !Array.isArray(gameState.equippedSkillIds) ||
+  if (!skill || skill.passive === true || !Array.isArray(gameState.equippedSkillIds) ||
       !gameState.equippedSkillIds.includes(skillId)) {
     return { ignored: true, reason: "skill-not-equipped" };
   }
@@ -138,11 +138,12 @@ export function resolveCombatEvent(gameState, event) {
   const goukiState = isGouSwordsman ? normalizeGoukiState(event.goukiState) : createInitialGoukiState();
 
   if (skillEffect?.type === "gouki-charge" || skillEffect?.type === "gouki-low-hp-charge") {
-    const missingHpRatio = gameState.player.maxHp > 0
-      ? Math.max(0, (gameState.player.maxHp - gameState.player.hp) / gameState.player.maxHp) : 0;
+    const remainingHpRatio = gameState.player.maxHp > 0
+      ? Math.min(1, Math.max(0, gameState.player.hp / gameState.player.maxHp)) : 1;
+    const lowHpRatio = 1 - remainingHpRatio;
     const baseAmount = skillEffect.type === "gouki-charge"
       ? skillEffect.amount
-      : skillEffect.baseAmount + Math.floor(skillEffect.missingHpBonus * missingHpRatio);
+      : skillEffect.baseAmount + Math.floor(skillEffect.missingHpBonus * lowHpRatio);
     const gained = gainGouki(goukiState, baseAmount);
     return {
       ignored: false, action: null, damageTarget: null, goukiState: gained.state,

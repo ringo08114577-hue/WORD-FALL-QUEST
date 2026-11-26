@@ -9,7 +9,7 @@ import { GAME_CONFIG } from "./game-config.js";
 import { createEnemy } from "./enemies.js";
 
 export const SAVE_STORAGE_KEY = "word-fall-quest.save.v1";
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 
 function isRecord(value) {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -26,7 +26,7 @@ function createInitialDungeonProgress() {
 }
 
 function migrateSnapshot(snapshot) {
-  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, SAVE_VERSION].includes(snapshot.version)) return null;
+  if (!isRecord(snapshot) || ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, SAVE_VERSION].includes(snapshot.version)) return null;
   let migrated = snapshot;
 
   if (migrated.version === 1) {
@@ -431,6 +431,10 @@ function migrateSnapshot(snapshot) {
         },
       },
     };
+  }
+
+  if (migrated.version === 15) {
+    migrated = { ...migrated, version: 16 };
   }
 
   if (migrated.version === SAVE_VERSION) {

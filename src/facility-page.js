@@ -5,7 +5,8 @@ import { ITEM_DEFINITIONS, EQUIPMENT_SLOTS } from "./items.js";
 import { createShopController, SHOP_CATALOG } from "./shop.js";
 import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
 import {
-  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, SKILL_EQUIP_SLOT_COUNT, getSkillsForCharacter, getSkillUpgradeCost,
+  SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, SKILL_EQUIP_SLOT_COUNT,
+  PASSIVE_SKILL_EQUIP_SLOT_COUNT, getSkillsForCharacter, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillEffectLabel,
   getSkillEvolutionRecipe, getSkillDisplayName,
 } from "./skills.js";
@@ -219,46 +220,60 @@ function renderSkills(state) {
   const characterId = session.getSelectedCharacterId();
   const characterSkills = getSkillsForCharacter(characterId);
   const equippedSkillIds = state.equippedSkillIds ?? [];
-  const loadoutPanel = node("section", "subpanel");
-  loadoutPanel.append(node("h2", "", character.name + "の専用技"));
-  loadoutPanel.append(node("p", "muted",
-    "このキャラクター専用の技だけを装備できるよ。新しい技を登録するとここに自動で追加されるよ。"));
+  const activeSkills = characterSkills.filter(([, skill]) => skill.passive !== true);
+  const passiveSkills = characterSkills.filter(([, skill]) => skill.passive === true);
 
-  const loadoutGrid = node("div", "skill-loadout-grid");
-  for (let slotIndex = 0; slotIndex < SKILL_EQUIP_SLOT_COUNT; slotIndex += 1) {
-    const slotCard = node("div", "skill-slot-card");
-    const label = node("label", "skill-slot-label", "スキル枠 " + (slotIndex + 1));
-    const select = node("select", "skill-slot-select");
-    select.dataset.skillSlot = String(slotIndex);
-    select.setAttribute("aria-label", "スキル枠 " + (slotIndex + 1));
-    select.disabled = state.phase !== GAME_PHASE.TITLE;
-
-    const emptyOption = node("option", "", "未装備");
-    emptyOption.value = "";
-    select.append(emptyOption);
-
-    for (const [skillId, skill] of characterSkills) {
-      const option = node("option", "", skill.name + " · " +
-        (SKILL_CATEGORY_LABELS[skill.category] ?? "スキル"));
-      option.value = skillId;
-      option.disabled = equippedSkillIds.some((equippedId, equippedIndex) =>
-        equippedIndex !== slotIndex && equippedId === skillId);
-      select.append(option);
+  function appendSkillSlots(panel, skillList, firstSlotIndex, slotCount, labelPrefix) {
+    const loadoutGrid = node("div", "skill-loadout-grid");
+    for (let localIndex = 0; localIndex < slotCount; localIndex += 1) {
+      const slotIndex = firstSlotIndex + localIndex;
+      const slotCard = node("div", "skill-slot-card");
+      const label = node("label", "skill-slot-label", labelPrefix + " " + (localIndex + 1));
+      const select = node("select", "skill-slot-select");
+      select.dataset.skillSlot = String(slotIndex);
+      select.setAttribute("aria-label", labelPrefix + " " + (localIndex + 1));
+      select.disabled = state.phase !== GAME_PHASE.TITLE;
+      const emptyOption = node("option", "", "未装備");
+      emptyOption.value = "";
+      select.append(emptyOption);
+      for (const [skillId, skill] of skillList) {
+        const option = node("option", "", skill.name);
+        option.value = skillId;
+        option.disabled = equippedSkillIds.some((equippedId, equippedIndex) =>
+          equippedIndex !== slotIndex && equippedId === skillId);
+        select.append(option);
+      }
+      select.value = skillList.some(([id]) => id === equippedSkillIds[slotIndex])
+        ? equippedSkillIds[slotIndex] : "";
+      const hasAvailableSkill = skillList.some(([id]) =>
+        !equippedSkillIds.some((equippedId, equippedIndex) =>
+          equippedIndex !== slotIndex && equippedId === id));
+      if (!hasAvailableSkill && !select.value) {
+        select.disabled = true;
+        label.textContent += skillList.length === 0 ? " · 技なし" : " · 空きなし";
+      }
+      label.htmlFor = "skillSlot-" + slotIndex;
+      select.id = "skillSlot-" + slotIndex;
+      slotCard.append(label, select);
+      loadoutGrid.append(slotCard);
     }
-    select.value = characterSkills.some(([id]) => id === equippedSkillIds[slotIndex]) ? equippedSkillIds[slotIndex] : "";
-    const hasAvailableSkill = characterSkills.some(([id]) =>
-      !equippedSkillIds.some((equippedId, equippedIndex) => equippedIndex !== slotIndex && equippedId === id));
-    if (!hasAvailableSkill && !select.value) {
-      select.disabled = true;
-      label.textContent += " · 技が未解放";
-    }
-    label.htmlFor = "skillSlot-" + slotIndex;
-    select.id = "skillSlot-" + slotIndex;
-    slotCard.append(label, select);
-    loadoutGrid.append(slotCard);
+    panel.append(loadoutGrid);
   }
-  loadoutPanel.append(loadoutGrid);
+
+  const loadoutPanel = node("section", "subpanel");
+  loadoutPanel.append(node("h2", "", character.name + "の通常スキル枠"));
+  loadoutPanel.append(node("p", "muted",
+    "通常の技を4つまで装備できるよ。戦闘中に使う技をここで選ぼう。"));
+  appendSkillSlots(loadoutPanel, activeSkills, 0, SKILL_EQUIP_SLOT_COUNT, "スキル枠");
   root.append(loadoutPanel);
+
+  const passivePanel = node("section", "subpanel");
+  passivePanel.append(node("h2", "", "パッシブ専用枠"));
+  passivePanel.append(node("p", "muted",
+    "通常スキル枠とは別に、パッシブ技を2つまで装備できるよ。装備中は常に効果が発動するよ。"));
+  appendSkillSlots(passivePanel, passiveSkills, SKILL_EQUIP_SLOT_COUNT,
+    PASSIVE_SKILL_EQUIP_SLOT_COUNT, "パッシブ枠");
+  root.append(passivePanel);
 
   const grid = node("div", "offer-grid");
   for (const [skillId, skill] of characterSkills) {
@@ -370,7 +385,10 @@ $("facilityContent").addEventListener("change", (event) => {
   }
   const saved = saves.save();
   const skillName = skillId ? SKILL_DEFINITIONS[skillId]?.name ?? "スキル" : "未装備";
-  $("feedback").textContent = "スキル枠 " + (slotIndex + 1) + " を" + skillName +
+  const slotLabel = slotIndex < SKILL_EQUIP_SLOT_COUNT
+    ? "スキル枠 " + (slotIndex + 1)
+    : "パッシブ枠 " + (slotIndex - SKILL_EQUIP_SLOT_COUNT + 1);
+  $("feedback").textContent = slotLabel + " を" + skillName +
     "に変更したよ。" + (saved.saved ? " 自動保存したよ。" : " 保存に失敗したよ。");
   render();
 });

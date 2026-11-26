@@ -5,6 +5,10 @@ import { getWordDifficultyLevelFromLength } from "./word-difficulty.js";
 export { SKILL_DEFINITIONS };
 
 export const SKILL_EQUIP_SLOT_COUNT = 4;
+export const PASSIVE_SKILL_EQUIP_SLOT_COUNT = 2;
+export const TOTAL_SKILL_EQUIP_SLOT_COUNT =
+  SKILL_EQUIP_SLOT_COUNT + PASSIVE_SKILL_EQUIP_SLOT_COUNT;
+
 export function getSkillsForCharacter(characterId) {
   if (!isValidCharacterId(characterId)) return [];
   return Object.entries(SKILL_DEFINITIONS).filter(([, skill]) => skill.characterId === characterId);
@@ -17,18 +21,26 @@ export function isSkillAvailableForCharacter(skillId, characterId) {
 export function createInitialEquippedSkillIds(characterId = DEFAULT_CHARACTER_ID) {
   const selectedId = isValidCharacterId(characterId) ? characterId : DEFAULT_CHARACTER_ID;
   const equipped = getSkillsForCharacter(selectedId)
-    .filter(([, skill]) => skill.initiallyEquipped === true)
+    .filter(([, skill]) => skill.passive !== true && skill.initiallyEquipped === true)
     .map(([id]) => id).slice(0, SKILL_EQUIP_SLOT_COUNT);
-  return [...equipped, ...Array(SKILL_EQUIP_SLOT_COUNT - equipped.length).fill(null)];
+  return [
+    ...equipped,
+    ...Array(SKILL_EQUIP_SLOT_COUNT - equipped.length).fill(null),
+    ...Array(PASSIVE_SKILL_EQUIP_SLOT_COUNT).fill(null),
+  ];
 }
 export function isValidEquippedSkillIds(skillIds, characterId = null) {
-  if (!Array.isArray(skillIds) || skillIds.length !== SKILL_EQUIP_SLOT_COUNT ||
-      !skillIds.some((id) => id !== null)) return false;
+  if (!Array.isArray(skillIds) || skillIds.length !== TOTAL_SKILL_EQUIP_SLOT_COUNT ||
+      !skillIds.slice(0, SKILL_EQUIP_SLOT_COUNT).some((id) => id !== null)) return false;
   if (characterId !== null && !isValidCharacterId(characterId)) return false;
   const seen = new Set();
-  for (const id of skillIds) {
+  for (let index = 0; index < skillIds.length; index += 1) {
+    const id = skillIds[index];
     if (id === null) continue;
-    if (typeof id !== "string" || !Object.hasOwn(SKILL_DEFINITIONS, id) || seen.has(id)) return false;
+    const skill = typeof id === "string" && Object.hasOwn(SKILL_DEFINITIONS, id)
+      ? SKILL_DEFINITIONS[id] : null;
+    const passiveSlot = index >= SKILL_EQUIP_SLOT_COUNT;
+    if (!skill || seen.has(id) || (skill.passive === true) !== passiveSlot) return false;
     if (characterId !== null && !isSkillAvailableForCharacter(id, characterId)) return false;
     seen.add(id);
   }
@@ -36,18 +48,36 @@ export function isValidEquippedSkillIds(skillIds, characterId = null) {
 }
 export function normalizeEquippedSkillIds(skillIds, characterId = DEFAULT_CHARACTER_ID) {
   const selectedId = isValidCharacterId(characterId) ? characterId : DEFAULT_CHARACTER_ID;
-  const normalized = Array(SKILL_EQUIP_SLOT_COUNT).fill(null);
+  const source = Array.isArray(skillIds) ? skillIds : [];
+  const active = Array(SKILL_EQUIP_SLOT_COUNT).fill(null);
+  const passive = Array(PASSIVE_SKILL_EQUIP_SLOT_COUNT).fill(null);
   const seen = new Set();
-  if (Array.isArray(skillIds)) {
-    for (let index = 0; index < Math.min(skillIds.length, SKILL_EQUIP_SLOT_COUNT); index += 1) {
-      const id = skillIds[index];
-      if (isSkillAvailableForCharacter(id, selectedId) && !seen.has(id)) {
-        normalized[index] = id;
-        seen.add(id);
-      }
+  for (let index = 0; index < SKILL_EQUIP_SLOT_COUNT; index += 1) {
+    const id = source[index];
+    if (isSkillAvailableForCharacter(id, selectedId) &&
+        SKILL_DEFINITIONS[id].passive !== true && !seen.has(id)) {
+      active[index] = id;
+      seen.add(id);
     }
   }
-  return normalized.some((id) => id !== null) ? normalized : createInitialEquippedSkillIds(selectedId);
+  const passiveCandidates = [
+    ...source.slice(SKILL_EQUIP_SLOT_COUNT, TOTAL_SKILL_EQUIP_SLOT_COUNT),
+    ...source.slice(0, SKILL_EQUIP_SLOT_COUNT).filter((id) => SKILL_DEFINITIONS[id]?.passive === true),
+  ];
+  let passiveIndex = 0;
+  for (const id of passiveCandidates) {
+    if (passiveIndex >= PASSIVE_SKILL_EQUIP_SLOT_COUNT) break;
+    if (isSkillAvailableForCharacter(id, selectedId) &&
+        SKILL_DEFINITIONS[id].passive === true && !seen.has(id)) {
+      passive[passiveIndex] = id;
+      seen.add(id);
+      passiveIndex += 1;
+    }
+  }
+  const activeSlots = active.some((id) => id !== null)
+    ? active
+    : createInitialEquippedSkillIds(selectedId).slice(0, SKILL_EQUIP_SLOT_COUNT);
+  return [...activeSlots, ...passive];
 }
 export function createInitialCharacterSkillLoadouts() {
   return Object.fromEntries(CHARACTERS.map((character) => [
@@ -58,11 +88,10 @@ export function isValidCharacterSkillLoadouts(loadouts) {
   if (!loadouts || typeof loadouts !== "object" || Array.isArray(loadouts)) return false;
   const ids = CHARACTERS.map((character) => character.id);
   if (Object.keys(loadouts).length !== ids.length || !ids.every((id) => Object.hasOwn(loadouts, id))) return false;
-  // Keep pre-character-skill saves loadable even when they still reference
-  // placeholder skill IDs. normalizeCharacterSkillLoadouts replaces those IDs.
   return CHARACTERS.every((character) => {
     const slots = loadouts[character.id];
-    return Array.isArray(slots) && slots.length === SKILL_EQUIP_SLOT_COUNT &&
+    return Array.isArray(slots) &&
+      (slots.length === SKILL_EQUIP_SLOT_COUNT || slots.length === TOTAL_SKILL_EQUIP_SLOT_COUNT) &&
       slots.every((id) => id === null || typeof id === "string") &&
       new Set(slots.filter((id) => id !== null)).size === slots.filter((id) => id !== null).length;
   });

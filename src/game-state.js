@@ -5,7 +5,7 @@ import { GAME_CONFIG } from "./game-config.js";
 import { isElementId } from "./elements.js";
 import {
   SKILL_DEFINITIONS, createInitialSkillLevels, isValidSkillLevels, getSkillUpgradeCost,
-  createInitialEquippedSkillIds, isValidEquippedSkillIds,
+  createInitialEquippedSkillIds, isValidEquippedSkillIds, SKILL_EQUIP_SLOT_COUNT,
   getSkillEvolutionRecipe, isValidEvolvedSkillIds, getSkillDisplayName,
 } from "./skills.js";
 
@@ -702,9 +702,13 @@ export function gameReducer(state, action) {
       if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= state.equippedSkillIds.length ||
           (skillId !== null && (typeof skillId !== "string" || !Object.hasOwn(SKILL_DEFINITIONS, skillId)))) return state;
       if (skillId !== null && action.characterId && SKILL_DEFINITIONS[skillId]?.characterId !== action.characterId) return state;
+      const passiveSlot = slotIndex >= SKILL_EQUIP_SLOT_COUNT;
+      if (skillId !== null && (SKILL_DEFINITIONS[skillId]?.passive === true) !== passiveSlot) return state;
       if (skillId !== null && state.equippedSkillIds.some((id, index) => index !== slotIndex && id === skillId)) return state;
-      if (skillId === null && state.equippedSkillIds[slotIndex] !== null &&
-          state.equippedSkillIds.filter((id) => id !== null).length <= 1) return state;
+      const activeSkillCount = state.equippedSkillIds
+        .slice(0, SKILL_EQUIP_SLOT_COUNT).filter((id) => id !== null).length;
+      if (skillId === null && slotIndex < SKILL_EQUIP_SLOT_COUNT &&
+          state.equippedSkillIds[slotIndex] !== null && activeSkillCount <= 1) return state;
       if (state.equippedSkillIds[slotIndex] === skillId) return state;
       const equippedSkillIds = [...state.equippedSkillIds];
       equippedSkillIds[slotIndex] = skillId;

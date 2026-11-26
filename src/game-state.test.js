@@ -798,7 +798,9 @@ test("ゲームをリセットすると4種類のスキルレベルも初期状�
 
 test("4キャラクターの専用技を初期装備し、他キャラの技は装備できない", () => {
   const state = createTestGameState();
-  assert.deepEqual(state.equippedSkillIds, ["gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade"]);
+  assert.deepEqual(state.equippedSkillIds, [
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null, null,
+  ]);
   const duplicate = gameReducer(state, {
     type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-focus", characterId: "gou-swordsman",
   });
@@ -809,16 +811,35 @@ test("4キャラクターの専用技を初期装備し、他キャラの技は�
   assert.equal(wrongClass, state);
   const wrongLoadout = gameReducer(state, {
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-    skillIds: ["regen-basic", null, null, null],
+    skillIds: ["regen-basic", null, null, null, null, null],
     characterId: "gou-swordsman",
   });
   assert.equal(wrongLoadout, state);
   const regenLoadout = gameReducer(state, {
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-    skillIds: ["regen-basic", null, null, null],
+    skillIds: ["regen-basic", null, null, null, null, null],
     characterId: "regen-knight",
   });
-  assert.deepEqual(regenLoadout.equippedSkillIds, ["regen-basic", null, null, null]);
+  assert.deepEqual(regenLoadout.equippedSkillIds, ["regen-basic", null, null, null, null, null]);
+  const withPassive = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 4, skillId: "gou-destruction", characterId: "gou-swordsman",
+  });
+  assert.deepEqual(withPassive.equippedSkillIds, [
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-destruction", null,
+  ]);
+  const passiveInActiveSlot = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: "gou-destruction", characterId: "gou-swordsman",
+  });
+  assert.equal(passiveInActiveSlot, state);
+  const activeInPassiveSlot = gameReducer(state, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 4, skillId: "gou-heavy-blow", characterId: "gou-swordsman",
+  });
+  assert.equal(activeInPassiveSlot, state);
+  const withoutPassive = gameReducer(withPassive, {
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 4, skillId: null, characterId: "gou-swordsman",
+  });
+  assert.deepEqual(withoutPassive.equippedSkillIds, state.equippedSkillIds);
+
   const battle = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
   assert.equal(gameReducer(battle, {
     type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-focus", characterId: "gou-swordsman",

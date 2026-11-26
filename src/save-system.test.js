@@ -202,7 +202,7 @@ test("旧セーブデータを拡張装備対応の新形式へ移行できる",
   );
   assert.equal(data.controller.save().saved, true);
   assert.equal(
-    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 15,
+    JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION,
   );
 });
 
@@ -433,7 +433,7 @@ test("バージョン13のセーブは新しい成長値へ移行し、HP割合�
   assert.equal(player.experience, 120);
   assert.equal(player.nextLevelXp, 500);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 15);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });
 
 test("バージョン9のセーブは新しい成長バランスへHP割合と経験値進捗を引き継ぐ", () => {
@@ -735,6 +735,28 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
 });
 
 
+test("バージョン15のセーブに入ったパッシブ技を専用枠へ移行する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  first.dungeon.start();
+  assert.equal(first.controller.save().saved, true);
+
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 15;
+  legacy.gameState.equippedSkillIds = [
+    "gou-focus", "gou-destruction", "gou-slash", "gou-resonance",
+  ];
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().equippedSkillIds, [
+    "gou-focus", null, "gou-slash", null, "gou-destruction", "gou-resonance",
+  ]);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
+});
+
 test("行動ログもゲームのセーブデータに保存・復元される", () => {
   const storage = memoryStorage();
   const first = setup(storage, {
@@ -865,7 +887,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 15);
+  assert.equal(SAVE_VERSION, 16);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {
@@ -910,5 +932,5 @@ test("バージョン11のセーブを新しいドロップ素材に対応させ
   assert.equal(second.store.getState().inventory.items["slime-gel"], 0);
   assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 1);
   assert.equal(second.controller.save().saved, true);
-  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, 15);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
 });

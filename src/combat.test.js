@@ -5,6 +5,7 @@ import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createCombatController, resolveCombatEvent } from "./combat.js";
 import { createEnemy } from "./enemies.js";
 import { ITEM_DEFINITIONS } from "./items.js";
+import { SKILL_DEFINITIONS } from "./skills.js";
 
 function createTestStore(options = {}) {
   return createGameStore({ playerMaxHp: 3, playerAttackPower: 1, ...options });
@@ -57,7 +58,7 @@ test("各キャラクターの専用技は、そのキャラクターでのみ�
     const store = createTestStore();
     store.dispatch({
       type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-      skillIds: [skillId, null, null, null],
+      skillIds: [skillId, null, null, null, null, null],
       characterId,
     });
     store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...testSlime, maxHp: 100 } });
@@ -480,9 +481,14 @@ test("ドロップ抽選に外れた敵は素材を追加しない", () => {
 
 function createGoukiTestBattle({ skillIds, stacks = 0, nextGainMultiplier = 1, enemy } = {}) {
   const store = createTestStore({ playerMaxHp: 100, playerAttackPower: 20 });
+  const activeSkillIds = skillIds.filter((id) => SKILL_DEFINITIONS[id]?.passive !== true);
+  const passiveSkillIds = skillIds.filter((id) => SKILL_DEFINITIONS[id]?.passive === true);
   store.dispatch({
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-    skillIds: [...skillIds, ...Array(4 - skillIds.length).fill(null)],
+    skillIds: [
+      ...activeSkillIds, ...Array(4 - activeSkillIds.length).fill(null),
+      ...passiveSkillIds, ...Array(2 - passiveSkillIds.length).fill(null),
+    ],
     characterId: "gou-swordsman",
   });
   store.dispatch({
@@ -497,6 +503,53 @@ function createGoukiTestBattle({ skillIds, stacks = 0, nextGainMultiplier = 1, e
   });
   return { store, controller, resource };
 }
+
+test("不屈の闘志は残りHPが少ないほど轟気を多く獲得する", () => {
+  const gainAtHp = (remainingHp) => {
+    const { store, controller } = createGoukiTestBattle({ skillIds: ["gou-unyielding"] });
+    if (remainingHp < 100) {
+      store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 100 - remainingHp });
+    }
+    const result = controller.handle({
+      eventId: "gou-unyielding-hp-" + remainingHp,
+      type: "word-complete",
+      skillId: "gou-unyielding",
+      wordDifficulty: 2,
+    });
+    assert.equal(result.ignored, false);
+    return result.goukiGained;
+  };
+  assert.equal(gainAtHp(100), 2);
+  assert.equal(gainAtHp(50), 6);
+  assert.equal(gainAtHp(1), 9);
+});
+
+test("パッシブ技は専用枠に装備して常時効果を発揮し、直接発動はできない", () => {
+  const { store, controller } = createGoukiTestBattle({
+    skillIds: ["gou-slash", "gou-destruction"],
+    stacks: 20,
+    enemy: {
+      id: "gou-passive-activation-test", name: "試験用敵", maxHp: 100000, attackPower: 5,
+      isBoss: true, abilities: ["guard"],
+    },
+  });
+  const result = controller.handle({
+    eventId: "gou-passive-manual-activation",
+    type: "word-complete",
+    skillId: "gou-destruction",
+    wordDifficulty: 1,
+  });
+  assert.equal(result.ignored, true);
+  assert.equal(result.reason, "skill-not-equipped");
+  const normalAttack = controller.handle({
+    eventId: "gou-passive-auto-trigger",
+    type: "word-complete",
+    skillId: "gou-slash",
+    wordDifficulty: 1,
+  });
+  assert.equal(normalAttack.ignored, false);
+  assert.ok(!store.getState().enemy.abilities.includes("guard"));
+});
 
 test("闘気集中はダメージを与えず轟気を蓄積し、限界突破は次の獲得量を増やす", () => {
   const { store, controller, resource } = createGoukiTestBattle({
