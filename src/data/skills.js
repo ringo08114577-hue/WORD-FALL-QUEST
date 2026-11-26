@@ -16,8 +16,8 @@ export const SKILL_DEFINITIONS = Object.freeze({
   }),
   "ultimate-strike": Object.freeze({
     id: "ultimate-strike", name: "必殺技", evolvedName: "究極の斬撃", category: "attack", initiallyEquipped: true,
-    description: "7〜8文字の単語 · ダメージ3倍",
-    minWordLength: 7, maxWordLength: 8, damageMultiplier: 3,
+    description: "7〜14文字の単語 · ダメージ3倍",
+    minWordLength: 7, maxWordLength: 14, damageMultiplier: 3,
     startingLevel: 1, maxLevel: 5,
     upgradeCosts: Object.freeze([50, 100, 200, 400]),
   }),

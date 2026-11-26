@@ -22,7 +22,7 @@ test("攻撃スキルは単語が長いほど火力が高い", () => {
     Object.values(SKILL_DEFINITIONS).filter((skill) => skill.category === "attack").map((skill) => [
       skill.minWordLength, skill.maxWordLength, skill.damageMultiplier,
     ]),
-    [[3, 4, 1], [5, 6, 2], [7, 8, 3]],
+    [[3, 4, 1], [5, 6, 2], [7, 14, 3]],
   );
   assert.deepEqual(
     Object.values(SKILL_DEFINITIONS).filter((skill) => skill.category === "magic").map((skill) => [

@@ -7,13 +7,13 @@ import {
   validateWordCatalog,
 } from "./word-validation.js";
 
-test("現在の単語一覧162語は新しいデータ形式の検査に合格する", () => {
+test("現在の単語一覧245語は新しいデータ形式の検査に合格する", () => {
   const result = validateWordCatalog(WORD_CHALLENGES);
   assert.equal(result.valid, true, result.errors.join("\n"));
   assert.deepEqual(result.errors, []);
-  assert.equal(result.stats.total, 162);
-  assert.equal(Object.values(result.stats.byDifficulty).reduce((sum, count) => sum + count, 0), 162);
-  assert.equal(Object.values(result.stats.byPartOfSpeech).reduce((sum, count) => sum + count, 0), 162);
+  assert.equal(result.stats.total, 245);
+  assert.equal(Object.values(result.stats.byDifficulty).reduce((sum, count) => sum + count, 0), 245);
+  assert.equal(Object.values(result.stats.byPartOfSpeech).reduce((sum, count) => sum + count, 0), 245);
 });
 
 test("英単語は品詞・意味・難易度を含む正しい形式で登録されている", () => {
@@ -76,4 +76,12 @@ test("配列以外を単語一覧に指定するとエラーにする", () => {
   const result = validateWordCatalog(null);
   assert.equal(result.valid, false);
   assert.equal(result.errors.length, 1);
+});
+
+test("今回の中学発展・高校必須100語がすべて一度ずつ登録されている", () => {
+  const expected = ["achieve","accept","allow","avoid","cause","compare","consider","continue","create","depend","describe","develop","discover","explain","happen","improve","include","increase","invite","provide","realize","receive","reduce","suggest","support","ability","advantage","attention","behavior","community","culture","education","effort","environment","experience","foreign","future","government","information","knowledge","language","local","necessary","opinion","opportunity","population","possible","probably","purpose","reason","relationship","society","solution","technology","tradition","traffic","various","waste","private","public","affect","approach","assume","benefit","challenge","concern","condition","contain","determine","encourage","entire","especially","evidence","exist","express","feature","influence","issue","likely","manage","particular","perform","prevent","process","protect","recognize","remain","require","respond","responsibility","resource","similar","specific","standard","although","however","instead","therefore","unless","whether"];
+  const catalogWords = WORD_CHALLENGES.map((entry) => entry.word.toLowerCase());
+  for (const word of expected) {
+    assert.equal(catalogWords.filter((entry) => entry === word).length, 1, word);
+  }
 });

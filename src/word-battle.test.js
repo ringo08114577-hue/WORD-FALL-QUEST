@@ -267,7 +267,7 @@ test("技を選ぶと対応する文字数の英単語に切り替わる", () =>
   assert.ok(getCurrentChallenge(power).word.length <= 6);
   const ultimate = selectChallengeForSkill(state, "ultimate-strike", { random: () => 0 });
   assert.ok(getCurrentChallenge(ultimate).word.length >= 7);
-  assert.ok(getCurrentChallenge(ultimate).word.length <= 8);
+  assert.ok(getCurrentChallenge(ultimate).word.length <= 14);
   assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
 });
 
@@ -394,4 +394,14 @@ test("選択中レーンに文字がない場合は何も消費しない", () =>
   assert.equal(result.result, "waiting");
   assert.equal(result.state, state);
   assert.equal(result.event, null);
+});
+
+test("必殺技は7〜14文字の単語を選べる", () => {
+  const state = createWordBattleState();
+  const selected = selectChallengeForSkill(state, "ultimate-strike", {
+    skillLevel: 5,
+    random: () => 0,
+  });
+  const challenge = getCurrentChallenge(selected);
+  assert.ok(challenge.word.length >= 7 && challenge.word.length <= 14);
 });
