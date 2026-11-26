@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <title>WORD FALL QUEST | 苦手単語帳</title>
+  <link rel="stylesheet" href="./src/shared-layout.css">
+  <style>
+    body[data-wfq-page="weak-words.html"] .wfq-content { padding-top:16px; }
+    #weakWordsPage { width:min(100%,820px); margin:0 auto; }
+    #weakWordsPage .eyebrow { color:#a78bfa; font-size:.65rem; font-weight:900; letter-spacing:.15em; }
+    #weakWordsPage h1 { margin:7px 0 4px; font-size:clamp(1.55rem,5vw,2.15rem); }
+    #weakWordsPage .subtitle { margin:0 0 15px; color:#9eacc2; font-size:.82rem; line-height:1.55; }
+    #weakWordsPage .weak-summary {
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin:10px 0 14px; padding:13px 15px;
+      border:1px solid #554879; border-radius:13px;
+      background:linear-gradient(120deg,rgba(66,49,103,.65),rgba(20,31,49,.96));
+    }
+    #weakWordsPage .weak-summary-copy { display:grid; gap:3px; }
+    #weakWordsPage .weak-summary-label { color:#c4b5fd; font-size:.68rem; font-weight:850; }
+    #weakWordsPage .weak-summary-count { color:#fff; font-size:1.45rem; font-weight:950; line-height:1.1; }
+    #weakWordsPage .weak-summary-note { color:#a9bad0; font-size:.68rem; }
+    #weakWordsPage .weak-summary-icon {
+      display:grid; place-items:center; flex:0 0 46px; width:46px; height:46px;
+      border:1px solid #7968a7; border-radius:12px;
+      background:rgba(125,91,190,.18); color:#ddd6fe; font-size:1.5rem;
+    }
+    #weakWordsPage .weak-list { display:grid; gap:9px; }
+    #weakWordsPage .weak-card {
+      display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px;
+      min-width:0; padding:12px 13px;
+      border:1px solid #35465b; border-radius:12px;
+      background:linear-gradient(145deg,#1b2b3d,#121f2e);
+    }
+    #weakWordsPage .weak-card-main { display:grid; gap:5px; min-width:0; }
+    #weakWordsPage .weak-meta { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+    #weakWordsPage .weak-tag {
+      display:inline-flex; align-items:center; min-height:22px; padding:3px 7px;
+      border:1px solid #4b5d73; border-radius:999px; background:#172b3a;
+      color:#a9bad0; font-size:.62rem; font-weight:850;
+    }
+    #weakWordsPage .weak-tag--miss { border-color:#78534a; background:#382a2b; color:#fecaca; }
+    #weakWordsPage .weak-japanese { color:#f4f6ff; font-size:1rem; font-weight:900; line-height:1.4; overflow-wrap:anywhere; }
+    #weakWordsPage .weak-answer {
+      display:grid; gap:2px; padding:8px 10px;
+      border-left:3px solid #a78bfa; border-radius:0 8px 8px 0;
+      background:rgba(103,79,151,.18);
+    }
+    #weakWordsPage .weak-answer[hidden] { display:none; }
+    #weakWordsPage .weak-english { color:#ddd6fe; font-size:1.05rem; font-weight:950; letter-spacing:.07em; overflow-wrap:anywhere; }
+    #weakWordsPage .weak-part { color:#a9bad0; font-size:.65rem; }
+    #weakWordsPage .weak-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+    #weakWordsPage button {
+      min-height:38px; padding:7px 10px; border:1px solid #566a86; border-radius:8px;
+      background:#263b55; color:#eef4ff; font:inherit; font-size:.7rem; font-weight:850; cursor:pointer;
+    }
+    #weakWordsPage button.primary { border-color:#7a66b1; background:linear-gradient(145deg,#5b478d,#3f3e68); color:#f4eeff; }
+    #weakWordsPage button.mastered { border-color:#36775f; background:linear-gradient(145deg,#1e6b4e,#194a43); color:#d4fbe5; }
+    #weakWordsPage .weak-empty {
+      padding:28px 16px; border:1px dashed #45586c; border-radius:13px;
+      background:rgba(18,29,47,.72); color:#a9bad0; text-align:center;
+    }
+    #weakWordsPage .weak-empty strong { display:block; margin-bottom:7px; color:#e1e8f4; font-size:.94rem; }
+    #weakWordsPage .weak-empty p { margin:0; font-size:.74rem; line-height:1.55; }
+    #weakWordsPage .weak-feedback { min-height:1.4em; margin:9px 2px 0; color:#86efac; font-size:.72rem; }
+    #weakWordsPage .back-home { display:inline-flex; align-items:center; min-height:40px; margin-top:14px; padding:7px 12px; border:1px solid #3b506e; border-radius:9px; color:#c4d5ed; text-decoration:none; font-size:.72rem; font-weight:850; }
+    @media(max-width:540px) {
+      body[data-wfq-page="weak-words.html"] .wfq-content { padding:9px 8px calc(96px + env(safe-area-inset-bottom)); }
+      #weakWordsPage .weak-card { grid-template-columns:minmax(0,1fr); gap:9px; padding:11px; }
+      #weakWordsPage .weak-actions { justify-content:stretch; }
+      #weakWordsPage .weak-actions button { flex:1 1 0; }
+      #weakWordsPage .weak-summary { padding:11px 12px; }
+    }
+    @media(prefers-reduced-motion:reduce) {
+      #weakWordsPage button { scroll-behavior:auto; }
+    }
+  </style>
+</head>
+<body>
+  <main id="weakWordsPage">
+    <div class="eyebrow">WORD FALL QUEST · VOCABULARY REVIEW</div>
+    <h1>📖 苦手単語帳</h1>
+    <p class="subtitle">バトルで間違えた英単語を自動で記録するよ。答えを確認して、覚えた単語をリストから卒業させよう。</p>
+
+    <section class="weak-summary" aria-label="苦手単語の記録">
+      <div class="weak-summary-copy">
+        <span class="weak-summary-label">復習する単語</span>
+        <strong class="weak-summary-count" id="weakWordCount">0語</strong>
+        <span class="weak-summary-note" id="weakMistakeTotal">バトルでのミスを記録</span>
+      </div>
+      <span class="weak-summary-icon" aria-hidden="true">📚</span>
+    </section>
+
+    <section id="weakWordList" class="weak-list" aria-label="復習する単語" aria-live="polite"></section>
+    <div id="weakWordEmpty" class="weak-empty" hidden>
+      <strong>苦手単語はまだありません</strong>
+      <p>バトルで英単語を間違えると、ここに自動で追加されるよ。</p>
+    </div>
+    <p id="weakWordFeedback" class="weak-feedback" role="status" aria-live="polite"></p>
+    <a class="back-home" href="./index.html">← ホームへ戻る</a>
+  </main>
+  <script type="module" src="./src/weak-words-page.js"></script>
+  <script type="module" src="./src/shared-layout.js"></script>
+</body>
+</html>

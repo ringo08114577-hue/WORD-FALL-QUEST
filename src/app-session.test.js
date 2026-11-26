@@ -45,3 +45,36 @@ test("共通セッションからホームへ戻ると挑戦中の階層をリ�
   assert.equal(restored.store.getState().phase, GAME_PHASE.TITLE);
   assert.equal(restored.dungeon.getProgress().enemyNumber, 1);
 });
+
+test("苦手単語帳はバトルの記録を施設ページ間で保存し、覚えた単語を削除できる", () => {
+  const storage = memoryStorage();
+  const first = createAppSession({ storage });
+  const apple = { id: "apple", japanese: "りんご", word: "APPLE" };
+  first.recordWeakWordMistake(apple, 100);
+  first.recordWeakWordMistake(apple, 200);
+  assert.equal(first.getWeakWords()[0].mistakes, 2);
+
+  const second = createAppSession({ storage });
+  assert.equal(second.initialLoad.loaded, true);
+  assert.equal(second.getWeakWords()[0].wordId, "apple");
+  assert.equal(second.getWeakWords()[0].mistakes, 2);
+
+  const removed = second.markWeakWordMastered("apple");
+  assert.equal(removed.removed, true);
+  assert.equal(removed.saved, true);
+  const third = createAppSession({ storage });
+  assert.deepEqual(third.getWeakWords(), []);
+});
+
+test("苦手単語帳は古いセーブデータに苦手単語の項目がなくても読み込める", () => {
+  const storage = memoryStorage();
+  const first = createAppSession({ storage });
+  first.save();
+  const raw = JSON.parse(storage.getItem("word-fall-quest.save.v1"));
+  delete raw.extra.weakWords;
+  storage.setItem("word-fall-quest.save.v1", JSON.stringify(raw));
+
+  const restored = createAppSession({ storage });
+  assert.equal(restored.initialLoad.loaded, true);
+  assert.deepEqual(restored.getWeakWords(), []);
+});

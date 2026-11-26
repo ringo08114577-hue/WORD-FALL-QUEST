@@ -580,6 +580,11 @@
     import { SKILL_DEFINITIONS, getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillDisplayName } from "./src/skills.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
     import { getElementLabel } from "./src/elements.js";
+    import {
+      isValidWeakWordEntries,
+      normalizeWeakWordEntries,
+      recordWeakWordMistake,
+    } from "./src/weak-words.js";
 
     const $ = (id) => document.getElementById(id);
 
@@ -623,11 +628,12 @@
     let enemyAttackCount = 0;
     let awaitingSkill = false;
     let selectedSkillId = null;
+    let weakWords = [];
     const saveController = createSaveController({
       store,
       dungeon,
       getExtraData: () => ({
-        wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId,
+        wordState, spawnElapsed, attackElapsed, awaitingSkill, selectedSkillId, weakWords,
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -641,7 +647,8 @@
             extra.attackElapsed < ENEMY_ATTACK_INTERVAL_MS)) &&
         (extra.awaitingSkill === undefined || typeof extra.awaitingSkill === "boolean") &&
         (extra.selectedSkillId === undefined || extra.selectedSkillId === null ||
-          Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)),
+          Object.hasOwn(SKILL_DEFINITIONS, extra.selectedSkillId)) &&
+        (extra.weakWords === undefined || isValidWeakWordEntries(extra.weakWords)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
@@ -650,6 +657,7 @@
           (wordState.phase === "word-complete");
         selectedSkillId = extra.selectedSkillId ??
           (awaitingSkill ? null : "quick-strike");
+        weakWords = normalizeWeakWordEntries(extra.weakWords ?? []);
         enemyAttackCount = 0;
         if (wordState.phase === "active") {
           const savedLetters = wordState.letters;
@@ -1292,6 +1300,10 @@
       for (const event of events) {
         const result = combat.handle(event);
         if (result.ignored) continue;
+
+        if (event.type === "wrong") {
+          weakWords = recordWeakWordMistake(weakWords, getCurrentChallenge(wordState));
+        }
 
         if (event.type === "correct" || event.type === "wrong" || event.type === "word-complete") {
           showJudgementFeedback(event.type, event.letter, event.expected);

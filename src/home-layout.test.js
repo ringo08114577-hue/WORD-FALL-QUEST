@@ -102,11 +102,13 @@ test("ホーム中央に冒険・装備・ショップ・鍛冶屋・スキル�
   assert.match(html, /session\.returnToTown\(\)/);
 });
 
-test("その他メニューは設定とアカウントだけを表示し、ホームの施設を重複させない", () => {
+test("その他メニューには苦手単語帳・設定・アカウントをまとめ、施設メニューと重複させない", () => {
   const script = read("src/shared-layout.js");
-  assert.match(script, /const MORE_ITEMS = Object\.freeze\(\[([\s\S]*?)settings\.html[\s\S]*?account\.html[\s\S]*?\]\)/);
+  const menu = script.match(/const MORE_ITEMS = Object\.freeze\(\[([\s\S]*?)\]\);/)[1];
+  assert.match(menu, /weak-words\.html/);
+  assert.match(menu, /settings\.html[\s\S]*account\.html/);
   for (const file of ["shop.html", "crafting.html", "skills.html"]) {
-    assert.doesNotMatch(script.match(/const MORE_ITEMS = Object\.freeze\(\[([\s\S]*?)\]\);/)[1], new RegExp(file.replace(".", "\\.")));
+    assert.doesNotMatch(menu, new RegExp(file.replace(".", "\\.")));
   }
 });
 
@@ -348,7 +350,7 @@ test("共通UIにカードへ重なる円形の装飾ラインを表示しない
 });
 
 test("通常ページは共通レイアウトとダークファンタジーのデザインを読み込む", () => {
-  const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html"];
+  const pages = ["index.html","inventory.html","shop.html","crafting.html","dungeons.html","status.html","skills.html","settings.html","account.html","weak-words.html"];
   for (const page of pages) {
     const html = read(page);
     assert.ok(html.includes("shared-layout.css"), page + " stylesheet");

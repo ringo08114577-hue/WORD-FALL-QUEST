@@ -8,6 +8,12 @@ import { createSaveController } from "./save-system.js";
 import { createTownController } from "./town.js";
 import { createWordBattleState, isValidSavedWordBattleState } from "./word-battle.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
+import {
+  isValidWeakWordEntries,
+  normalizeWeakWordEntries,
+  recordWeakWordMistake as addWeakWordMistake,
+  removeWeakWordEntry,
+} from "./weak-words.js";
 
 function createDefaultExtraData() {
   return {
@@ -16,6 +22,7 @@ function createDefaultExtraData() {
     attackElapsed: 0,
     awaitingSkill: false,
     selectedSkillId: null,
+    weakWords: [],
   };
 }
 
@@ -32,7 +39,8 @@ function isValidExtraData(value) {
       (Number.isFinite(value.attackElapsed) && value.attackElapsed >= 0 && value.attackElapsed < 9000)) &&
     (value.awaitingSkill === undefined || typeof value.awaitingSkill === "boolean") &&
     (value.selectedSkillId === undefined || value.selectedSkillId === null ||
-      Object.hasOwn(SKILL_DEFINITIONS, value.selectedSkillId))
+      Object.hasOwn(SKILL_DEFINITIONS, value.selectedSkillId)) &&
+    (value.weakWords === undefined || isValidWeakWordEntries(value.weakWords))
   );
 }
 
@@ -48,7 +56,9 @@ export function createAppSession({ storage } = {}) {
     getExtraData: () => extraData,
     validateExtraData: isValidExtraData,
     restoreExtraData: (value) => {
-      extraData = Object.keys(value).length === 0 ? createDefaultExtraData() : value;
+      extraData = Object.keys(value).length === 0
+        ? createDefaultExtraData()
+        : { ...value, weakWords: normalizeWeakWordEntries(value.weakWords ?? []) };
     },
   });
   const initialLoad = saves.load();
@@ -73,5 +83,27 @@ export function createAppSession({ storage } = {}) {
       return result;
     },
     save() { return saves.save(); },
+    getWeakWords() {
+      return normalizeWeakWordEntries(extraData.weakWords ?? []);
+    },
+    recordWeakWordMistake(challenge, timestamp = Date.now()) {
+      extraData = {
+        ...extraData,
+        weakWords: addWeakWordMistake(extraData.weakWords ?? [], challenge, timestamp),
+      };
+      return { words: this.getWeakWords(), ...saves.save() };
+    },
+    markWeakWordMastered(wordId) {
+      const current = extraData.weakWords ?? [];
+      const next = removeWeakWordEntry(current, wordId);
+      if (next.length === current.length) return { removed: false, saved: false };
+      extraData = { ...extraData, weakWords: next };
+      return { removed: true, ...saves.save() };
+    },
+    clearWeakWords() {
+      if ((extraData.weakWords ?? []).length === 0) return { cleared: false, saved: false };
+      extraData = { ...extraData, weakWords: [] };
+      return { cleared: true, ...saves.save() };
+    },
   };
 }

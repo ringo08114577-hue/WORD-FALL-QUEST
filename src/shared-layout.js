@@ -63,10 +63,16 @@ const NPC_PAGES = Object.freeze({
     name: "リリア", role: "冒険者ギルド受付", portrait: "./assets/npcs/guild-receptionist.webp",
     line: "冒険の記録は大切に保管しましょう。セーブの設定はこちらです。",
     lines: ["冒険の記録は大切に保管しましょう。セーブの設定はこちらです。", "アカウントを連携すると、冒険の記録を引き継ぎやすくなります。", "困ったときは、ここでセーブの状態を確認してくださいね。"]
+  },
+  "weak-words.html": {
+    name: "リリア", role: "英単語の復習案内", portrait: "./assets/npcs/guild-receptionist.webp",
+    line: "バトルで間違えた単語は、ここで何度でも復習できますよ。",
+    lines: ["バトルで間違えた単語は、ここで何度でも復習できますよ。", "答えを声に出したり、何度も書いたりして覚えていきましょう。", "覚えた単語は「覚えた！」を押してリストから卒業させましょう。"]
   }
 });
 
 const MORE_ITEMS = Object.freeze([
+  { href: "./weak-words.html", file: "weak-words.html", icon: "📖", label: "苦手単語帳", note: "間違えた英単語を復習" },
   { href: "./settings.html", file: "settings.html", icon: "⚙️", label: "ゲーム設定", note: "操作や演出を調整" },
   { href: "./account.html", file: "account.html", icon: "🔐", label: "アカウント", note: "セーブとログインを管理" },
 ]);
