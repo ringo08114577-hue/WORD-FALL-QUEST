@@ -65,11 +65,13 @@ test("キャラクターごとに別々の初期装備4枠を持つ", () => {
   assert.equal(isValidEquippedSkillIds(["gou-focus", null, null, null], "regen-knight"), false);
 });
 
-test("技の種類ごとに単語範囲と効果が共通処理される", () => {
+test("技ごとの単語レベルは固定され、スキル強化では変化しない", () => {
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
     if (skill.passive) continue;
-    const expectedRange = skill.wordDifficultyRange ?? { min: 1, max: 2 };
-    assert.deepEqual(getSkillWordDifficultyRange(skillId, 1), expectedRange);
+    const atLevelOne = getSkillWordDifficultyRange(skillId, 1);
+    const atLevelFive = getSkillWordDifficultyRange(skillId, 5);
+    assert.deepEqual(atLevelOne, atLevelFive);
+    assert.ok(atLevelOne.min <= atLevelOne.max);
     assert.ok(getSkillEffectForLevel(skillId, 1));
   }
   assert.deepEqual(getSkillEffectForLevel("gou-focus", 1), {
