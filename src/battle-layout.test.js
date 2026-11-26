@@ -119,6 +119,38 @@ test("enemy attack countdown shows a visible three-second warning and progress m
 });
 
 
+
+test("PC shortcut hints appear only on visible retry, next-skill, and home buttons", () => {
+  assert.match(html, /function setKeyboardShortcut\(button, key\)/);
+  assert.match(html, /button\.dataset\.keyboardShortcut = key/);
+  assert.match(html, /button\.dataset\.shortcutHint = key/);
+  assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \? "Enter" : null/);
+  assert.match(html, /setKeyboardShortcut\(\$\("nextButton"\), \$\("nextButton"\)\.hidden \? null : "Enter"\)/);
+  assert.match(html, /setKeyboardShortcut\(\$\("homeButton"\), \$\("homeButton"\)\.hidden \? null : "Backspace"\)/);
+  assert.match(html, /button\[data-shortcut-hint\]::after/);
+});
+
+test("Enter, Backspace, and 1-4 only activate matching visible and labelled buttons", () => {
+  const start = html.indexOf('window.addEventListener("keydown", (event) => {');
+  const end = html.indexOf('store.subscribe((state, action) => {', start);
+  const handler = html.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(handler, /event\.key === "Enter"/);
+  assert.match(handler, /!button\.hidden && button\.dataset\.keyboardShortcut === "Enter"/);
+  assert.match(handler, /event\.key === "Backspace"/);
+  assert.match(handler, /!homeButton\.hidden && homeButton\.dataset\.keyboardShortcut === "Backspace"/);
+  assert.match(handler, /\/\^\[1-4\]\$\//);
+  assert.match(handler, /button\.dataset\.keyboardShortcut === event\.key/);
+  assert.match(handler, /!\$\("skillPanel"\)\.hidden/);
+  assert.match(handler, /enterAction\.click\(\)|homeButton\.click\(\)|skillButton\.click\(\)/);
+});
+
+test("the first four visible equipped skills display matching number-key hints", () => {
+  assert.match(html, /if \(visibleSkillCount <= 4\) \{\s*button\.dataset\.keyboardShortcut = String\(visibleSkillCount\)/);
+  assert.match(html, /getSkillDisplayName\(skillId, evolved\) \+\s*\(visibleSkillCount <= 4 \? " \[" \+ visibleSkillCount \+ "\]" : ""\)/);
+  assert.match(html, /button\.dataset\.keyboardShortcut === event\.key/);
+});
+
 test("バトル画面に一時停止ボタンや自動一時停止処理を表示しない", () => {
   assert.doesNotMatch(html, /pauseButton|toggleBattlePause|pauseBattleForInterruption/);
   assert.doesNotMatch(html, /visibilitychange/);

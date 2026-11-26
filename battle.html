@@ -225,6 +225,12 @@
     }
     button.primary { background:#2563eb; border-color:#3b82f6; }
     button:disabled { opacity:.35; cursor:not-allowed; }
+    button[data-shortcut-hint]::after {
+      content:" [" attr(data-shortcut-hint) "]";
+      display:inline-block; margin-left:.35em;
+      color:#bfdbfe; font-size:.72em; font-weight:850;
+      letter-spacing:.02em; vertical-align:middle;
+    }
     .action-row { position:relative; z-index:10; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:8px; pointer-events:auto; }
     .action-row button { min-width:130px; }
     .home-button { background:#166534; border-color:#22c55e; }
@@ -901,8 +907,14 @@
               ? (dungeonProgress.rewardClaimed ? "次の階へ" : "宝箱を開ける")
               : "次の敵へ")
           : state.phase === GAME_PHASE.DEFEAT ? "この階から再挑戦" : "冒険を始める";
+      setKeyboardShortcut(
+        $("startButton"),
+        state.phase === GAME_PHASE.DEFEAT ? "Enter" : null,
+      );
       $("nextButton").hidden = !(active && wordState.phase === "word-complete" && !awaitingSkill);
       $("nextButton").textContent = "次の技を選ぶ";
+      setKeyboardShortcut($("nextButton"), $("nextButton").hidden ? null : "Enter");
+      setKeyboardShortcut($("homeButton"), $("homeButton").hidden ? null : "Backspace");
       $("skillPanel").hidden = !(active && awaitingSkill);
       const equippedSkillIds = state.equippedSkillIds ?? [];
       let visibleSkillCount = 0;
@@ -914,6 +926,11 @@
         button.disabled = !(active && awaitingSkill && isEquipped);
         if (!isEquipped) continue;
         visibleSkillCount += 1;
+        if (visibleSkillCount <= 4) {
+          button.dataset.keyboardShortcut = String(visibleSkillCount);
+        } else {
+          delete button.dataset.keyboardShortcut;
+        }
         const skill = SKILL_DEFINITIONS[skillId];
         const level = state.skillLevels[skillId] ?? skill.startingLevel ?? 1;
         const evolved = state.evolvedSkillIds?.includes(skillId) === true;
@@ -929,7 +946,8 @@
               ? "防御 +" + effect.bonus
               : "次の攻撃 ×" + effect.multiplier;
         button.querySelector("strong").textContent =
-          getSkillDisplayName(skillId, evolved);
+          getSkillDisplayName(skillId, evolved) +
+          (visibleSkillCount <= 4 ? " [" + visibleSkillCount + "]" : "");
         button.querySelector("span").textContent =
           "Lv." + level + " · 難易度 " + range.min + "〜" + range.max +
           " · " + effectLabel;
@@ -1041,6 +1059,16 @@
         node.setAttribute("aria-hidden", "true");
         layer.append(node);
       }
+    }
+
+    function setKeyboardShortcut(button, key) {
+      if (button.hidden || !key) {
+        delete button.dataset.keyboardShortcut;
+        delete button.dataset.shortcutHint;
+        return;
+      }
+      button.dataset.keyboardShortcut = key;
+      button.dataset.shortcutHint = key;
     }
 
     function render() {
@@ -1376,16 +1404,56 @@
 
     window.addEventListener("keydown", (event) => {
       const target = event.target;
+      if (event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
+      if (target instanceof HTMLElement && target.isContentEditable) return;
+
+      // Enter works only while its matching action button is actually shown.
+      if (event.key === "Enter") {
+        const enterAction = [
+          $("nextButton"),
+          $("startButton"),
+        ].find((button) =>
+          !button.hidden && button.dataset.keyboardShortcut === "Enter" && !button.disabled
+        );
+        if (enterAction) {
+          event.preventDefault();
+          enterAction.click();
+          return;
+        }
+      }
+
+      // Backspace returns home only when the Home button and its hint are visible.
+      if (event.key === "Backspace") {
+        const homeButton = $("homeButton");
+        if (!homeButton.hidden && homeButton.dataset.keyboardShortcut === "Backspace") {
+          event.preventDefault();
+          homeButton.click();
+          return;
+        }
+      }
+
+      // Number keys choose only among the first four currently displayed skills.
+      if (/^[1-4]$/.test(event.key)) {
+        const skillButton = [...$("skillOptions").querySelectorAll("button[data-skill]")].find(
+          (button) =>
+            !button.hidden && !button.disabled &&
+            button.dataset.keyboardShortcut === event.key
+        );
+        if (skillButton && !$("skillPanel").hidden) {
+          event.preventDefault();
+          skillButton.click();
+          return;
+        }
+      }
+
+      // Do not treat keys typed into the mobile keyboard field as global shortcuts.
       if (target instanceof HTMLElement &&
-          (target.isContentEditable || target === typingInput ||
-            ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
+          (target === typingInput || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
         return;
       }
 
-      if (event.ctrlKey || event.altKey || event.metaKey) return;
       if (!/^[a-z]$/i.test(event.key)) return;
       event.preventDefault();
-      if (event.repeat) return;
       typeSpellingLetter(event.key);
     });
 
