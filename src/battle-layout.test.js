@@ -16,8 +16,8 @@ test("battle page gives English gameplay more than half of the desktop and table
 
 test("battle layout keeps gameplay, HP, and inventory while hiding manual save controls", () => {
   for (const id of [
-    "japanesePrompt", "spellingProgress", "arena", "lettersLayer",
-    "leftButton", "confirmButton", "rightButton", "startButton",
+    "japanesePrompt", "spellingProgress", "arena", "lettersLayer", "typingInput",
+    "startButton",
     "nextButton", "homeButton", "enemyImage", "enemyHp", "enemyHpFill", "playerHp", "playerHpFill",
     "enemyAttackTimer", "inventoryItems", "townBackLink",
   ]) {
@@ -80,26 +80,33 @@ test("battle arena is compact at short-phone, phone, tablet, and desktop sizes",
 });
 
 
-test("lane movement buttons respond to touch pointer presses and remain keyboard accessible", () => {
-  assert.match(html, /function bindLaneMoveButton\(buttonId, direction\)/);
-  assert.match(html, /button\.addEventListener\("pointerdown"/);
-  assert.match(html, /event\.preventDefault\(\);\s*move\(direction\);/);
-  assert.match(html, /button\.addEventListener\("click", \(event\) => \{\s*if \(event\.detail === 0\) move\(direction\);/);
-  assert.match(html, /bindLaneMoveButton\("leftButton", -1\)/);
-  assert.match(html, /bindLaneMoveButton\("rightButton", 1\)/);
-  assert.ok(html.includes(".move-button { flex:1; min-width:0; min-height:52px; padding:9px 8px; font-size:.88rem; touch-action:manipulation;"));
+test("word battle accepts letters by typing and removes the old number/lane controls", () => {
+  assert.match(html, /id="typingInput"/);
+  assert.match(html, /inputmode="latin"/);
+  assert.match(html, /typingInput\.addEventListener\("input"/);
+  assert.match(html, /window\.addEventListener\("keydown"/);
+  assert.match(html, /function typeSpellingLetter\(rawLetter\)/);
+  assert.match(html, /resolveTypedLetterSelection\(wordState, rawLetter\)/);
+  assert.match(html, /wordState = setPlayerLane\(wordState, selection\.lane\)/);
+  assert.doesNotMatch(html, /leftButton|rightButton|confirmButton|selectLaneAndConfirm|numberKey/);
+  assert.doesNotMatch(html, /数字キー1〜5|レーンを1回タップ|bindLaneMoveButton/);
+  assert.doesNotMatch(html, /\$\("arena"\)\.addEventListener\("click"/);
 });
 
-
-test("lane movement buttons have reliable touch targets and a legacy touch fallback", () => {
-  assert.match(html, /\.move-button \{ min-height:48px; \}/);
-  assert.match(html, /min-height:52px; padding:9px 8px/);
-  assert.match(html, /if \(!\("PointerEvent" in window\)\) \{/);
-  assert.match(html, /button\.addEventListener\("touchstart"/);
-  assert.match(html, /\{ passive: false \}/);
-  assert.match(html, /event\.button !== 0 \|\| button\.disabled/);
+test("a key that is not an available choice shows a distinct typo cue without an immediate combat event", () => {
+  const start = html.indexOf("function typeSpellingLetter(rawLetter)");
+  const end = html.indexOf("function showTypingMistake", start);
+  const handler = html.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.match(handler, /selection\.status === "not-choice" \|\| selection\.status === "disabled"/);
+  assert.match(handler, /showTypingMistake\(selection\.letter/);
+  assert.match(handler, /return;/);
+  assert.ok(handler.indexOf("return;") < handler.indexOf("confirmLaneLetter();"));
+  assert.doesNotMatch(handler, /handleWordEvents|combat\.handle/);
+  assert.match(html, /judgement-feedback\.typing-error/);
+  assert.match(html, /\.typing-input\.typing-mistake/);
+  assert.match(html, /タイプミス！/);
 });
-
 
 test("enemy attack countdown shows a visible three-second warning and progress meter", () => {
   assert.match(html, /id="enemyAttackMeter"/);

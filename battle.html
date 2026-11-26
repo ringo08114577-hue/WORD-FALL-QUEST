@@ -85,7 +85,7 @@
     .arena-wrap { padding:10px; margin:6px 0; }
     .arena {
       position:relative; height:clamp(230px, 38svh, 340px); min-height:230px; overflow:hidden; border-radius:14px;
-      touch-action:manipulation; cursor:pointer;
+      touch-action:manipulation;
       border:1px solid #344963;
       background:
         linear-gradient(180deg, rgba(20,45,73,.75), rgba(13,25,43,.96)),
@@ -184,6 +184,25 @@
     .judgement-feedback[hidden] { display:none; }
     .judgement-feedback.good { color:#bbf7d0; border-color:rgba(74,222,128,.65); background:rgba(20,83,45,.92); }
     .judgement-feedback.bad { color:#fecdd3; border-color:rgba(251,113,133,.65); background:rgba(136,19,55,.94); }
+    .judgement-feedback.typing-error { color:#ffedd5; border-color:rgba(251,146,60,.75); background:rgba(124,45,18,.95); }
+    .typing-panel { display:grid; gap:6px; margin-top:8px; }
+    .typing-label { color:#bae6fd; font-size:.78rem; font-weight:850; }
+    .typing-input {
+      display:block; width:100%; min-height:48px; padding:9px 14px;
+      border:1px solid #496381; border-radius:11px;
+      background:#0e1c30; color:#f0f9ff; text-align:center;
+      font:inherit; font-size:1.15rem; font-weight:950; letter-spacing:.12em;
+      text-transform:uppercase; outline:none;
+    }
+    .typing-input:focus { border-color:#38bdf8; box-shadow:0 0 0 3px rgba(56,189,248,.16); }
+    .typing-input:disabled { opacity:.42; cursor:not-allowed; }
+    .typing-input.typing-mistake { border-color:#fb923c; animation:typingInputShake .28s ease; }
+    .typing-help { margin:0; color:#9eacc2; font-size:.72rem; line-height:1.4; }
+    @keyframes typingInputShake {
+      0%,100% { transform:translateX(0); }
+      20%,60% { transform:translateX(-5px); }
+      40%,80% { transform:translateX(5px); }
+    }
     .judgement-feedback.show { animation:judgementPop .72s ease-out both; }
     @keyframes judgementPop {
       0% { opacity:0; margin-top:5px; }
@@ -192,12 +211,11 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .lane-focus { transition:none; }
-      .lane-focus.pulse, .judgement-feedback.show { animation:none; }
+      .lane-focus.pulse, .judgement-feedback.show, .typing-input.typing-mistake { animation:none; }
       .judgement-feedback.show { opacity:1; }
     }
     .cover-title { font-size:1rem; font-weight:900; }
     .cover-note { color:#b7c7dc; font-size:.78rem; line-height:1.45; }
-    .controls { display:flex; justify-content:center; gap:8px; margin-top:8px; }
     button {
       border:1px solid #3b506e; color:#f2f6ff; background:#22334c;
       position:relative; z-index:1; touch-action:manipulation;
@@ -205,11 +223,8 @@
       border-radius:10px; padding:9px 14px; min-height:44px;
       font:inherit; font-weight:800; cursor:pointer;
     }
-    .move-button { min-height:48px; }
-    .move-button:active:not(:disabled) { transform:translateY(1px); background:#365477; }
     button.primary { background:#2563eb; border-color:#3b82f6; }
     button:disabled { opacity:.35; cursor:not-allowed; }
-    .move-button { min-width:95px; font-size:.95rem; }
     .action-row { position:relative; z-index:10; display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:8px; pointer-events:auto; }
     .action-row button { min-width:130px; }
     .home-button { background:#166534; border-color:#22c55e; }
@@ -267,7 +282,6 @@
     }
 
     .stats strong { color:#f4f7ff; font-variant-numeric:tabular-nums; }
-    .howto { color:#9eacc2; font-size:.75rem; line-height:1.5; margin:7px 1px 0; }
     .footer { color:#64748b; text-align:center; font-size:.7rem; margin-top:12px; }
     /* Narrow screens keep the vertical flow and show battle status first. */
     .battle-layout { display:flex; flex-direction:column; }
@@ -303,9 +317,9 @@
       .arena { height: clamp(230px, 34svh, 350px); min-height: 230px; }
       .lane-letter { width: 66px; height: 72px; margin-left: -33px; margin-top: -36px; font-size: 1.8rem; }
       .player { width: 62px; height: 62px; margin-left: -31px; font-size: 2.1rem; }
-      .controls { gap: 12px; margin-top: 12px; }
-      .move-button { min-width: 120px; min-height: 48px; }
-      .howto { font-size: .82rem; margin-top: 12px; }
+      .typing-panel { margin-top:12px; }
+      .typing-input { min-height:52px; font-size:1.2rem; }
+      .typing-help { font-size:.82rem; }
       .action-row { margin-top: 12px; }
       .battle-status { padding: 14px; }
       .battle-status > .panel-title h2 { font-size: 1rem; }
@@ -384,14 +398,15 @@
       .stats { gap:10px; font-size:.62rem; }
       .lane-letter { width:48px; height:52px; margin-left:-24px; margin-top:-26px; font-size:1.28rem; }
       .player { width:48px; height:48px; margin-left:-24px; font-size:1.55rem; }
-      .controls { gap:7px; margin-top:5px; }
       button { min-height:35px; padding:7px 10px; font-size:.82rem; }
-      .move-button { flex:1; min-width:0; min-height:52px; padding:9px 8px; font-size:.88rem; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+      .typing-panel { gap:4px; margin-top:5px; }
+      .typing-label { font-size:.68rem; }
+      .typing-input { min-height:44px; padding:7px 10px; font-size:1rem; }
+      .typing-help { font-size:.64rem; line-height:1.3; }
       .skill-options { gap:5px; }
       .skill-button { min-height:58px; padding:6px 3px; }
       .skill-button strong { font-size:.68rem; }
       .skill-button span { font-size:.57rem; }
-      .howto { margin:4px 1px 0; font-size:.64rem; line-height:1.3; }
       .action-row { gap:6px; margin-top:5px; }
       .action-row button { flex:1; min-width:0; }
       .footer { display:none; }
@@ -399,7 +414,6 @@
     @media (max-height:700px) and (max-width:480px) {
       .subtitle { display:none; }
       .arena { height:clamp(180px, 30svh, 225px); min-height:180px; }
-      .howto { font-size:.6rem; }
       .enemy-traits { max-height:1em; overflow:hidden; }
     }
   </style>
@@ -440,7 +454,7 @@
     </section>
 
     <section class="panel arena-wrap">
-      <div class="arena" id="arena" aria-label="5レーンの固定アルファベット選択画面">
+      <div class="arena" id="arena" aria-label="5つの英字選択肢">
         <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="lane-focus" id="laneFocus" data-flash-intensity="weak" aria-hidden="true"></div>
         <div id="lettersLayer"></div>
@@ -448,16 +462,29 @@
         <img class="player" id="playerSprite" alt="主人公" hidden>
         <div class="arena-cover" id="arenaCover">
           <div class="cover-title" id="coverTitle">冒険の準備はできた？</div>
-          <div class="cover-note" id="coverNote">左右に移動して、必要な文字のレーンで決定しよう。</div>
+          <div class="cover-note" id="coverNote">表示された英字を順番に入力しよう。</div>
         </div>
         <div class="judgement-feedback" id="judgementFeedback" role="status" aria-live="polite" hidden></div>
       </div>
-      <div class="controls">
-        <button class="move-button" id="leftButton" aria-label="左へ移動" disabled>◀ 左へ</button>
-        <button class="move-button primary confirm-button" id="confirmButton" disabled>決定</button>
-        <button class="move-button" id="rightButton" aria-label="右へ移動" disabled>右へ ▶</button>
+      <div class="typing-panel">
+        <label class="typing-label" for="typingInput">⌨ 英字を入力</label>
+        <input
+          class="typing-input"
+          id="typingInput"
+          type="text"
+          inputmode="latin"
+          autocomplete="off"
+          autocapitalize="characters"
+          autocorrect="off"
+          spellcheck="false"
+          maxlength="1"
+          placeholder="A〜Z"
+          aria-label="選択肢の英字を入力"
+          aria-describedby="typingHelp"
+          disabled
+        >
+        <p class="typing-help" id="typingHelp">表示された5つの英字から、次の1文字を入力しよう。スマホは入力欄をタップするとキーボードが開くよ。</p>
       </div>
-      <p class="howto">操作：PCは数字キー1〜5を1回押すだけで移動・決定。スマホもレーンを1回タップするだけで決定！画面下のボタンも使えるよ。</p>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
         <button class="primary next-button" id="nextButton" hidden>次のお題へ</button>
@@ -516,14 +543,13 @@
   </main>
 
   <script type="module">
+    import { resolveTypedLetterSelection } from "./src/typing-selection.js";
     import {
       createWordBattleState,
       getCurrentChallenge,
       getSpellingProgress,
       spawnLaneWave,
-      movePlayer,
       setPlayerLane,
-      canCollectCurrentLaneLetter,
       collectCurrentLaneLetter,
       selectChallengeForSkill,
       isValidSavedWordBattleState,
@@ -860,12 +886,8 @@
 
       const active = state.phase === GAME_PHASE.BATTLE;
       const inBattle = active;
-      const canControl = active && !awaitingSkill && wordState.phase === "active";
-      $("leftButton").disabled = !canControl;
-      $("rightButton").disabled = !canControl;
-      $("confirmButton").disabled = !(
-        canControl && canCollectCurrentLaneLetter(wordState)
-      );
+      const canType = active && !awaitingSkill && wordState.phase === "active";
+      $("typingInput").disabled = !canType;
       $("startButton").hidden = inBattle ||
         (state.phase === GAME_PHASE.VICTORY && dungeonProgress.dungeonCleared);
       $("homeButton").hidden = !(
@@ -969,7 +991,7 @@
         setStatus("プレイヤーのHPが0になったよ。もう一度挑戦しよう。", "bad");
       } else if (state.phase === GAME_PHASE.TITLE) {
         $("coverTitle").textContent = "冒険の準備はできた？";
-        $("coverNote").textContent = "左右に移動して、必要なアルファベットを集めよう。";
+        $("coverNote").textContent = "表示された英字を順番に入力しよう。";
       }
     }
 
@@ -1084,12 +1106,6 @@
       saveProgress();
     }
 
-    function move(direction) {
-      if (store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill) return;
-      wordState = movePlayer(wordState, direction);
-      render();
-    }
-
     function getEnemyAttackInterval(state = store.getState()) {
       return state.enemy?.isBoss ? BOSS_ATTACK_INTERVAL_MS : ENEMY_ATTACK_INTERVAL_MS;
     }
@@ -1109,10 +1125,53 @@
         getSkillDisplayName(skillId, currentState.evolvedSkillIds?.includes(skillId) === true) +
         " Lv." + skillLevel + "を選択！難易度Lv." +
         getCurrentChallenge(wordState).difficulty + "の「" + getCurrentChallenge(wordState).japanese +
-        "」を英語にしよう。必要な文字のレーンで決定を押してね。",
+        "」を英語にしよう。表示された英字から必要な文字を順番に入力してね。",
       );
       render();
       saveProgress();
+    }
+
+    function typeSpellingLetter(rawLetter) {
+      if (
+        store.getState().phase !== GAME_PHASE.BATTLE ||
+        awaitingSkill ||
+        wordState.phase !== "active"
+      ) return;
+
+      const selection = resolveTypedLetterSelection(wordState, rawLetter);
+      if (selection.status === "not-choice" || selection.status === "disabled") {
+        showTypingMistake(selection.letter, selection.status === "disabled");
+        return;
+      }
+      if (selection.status !== "selected") return;
+
+      wordState = setPlayerLane(wordState, selection.lane);
+      confirmLaneLetter();
+    }
+
+    function showTypingMistake(letter, wasDisabled = false) {
+      const feedback = $("judgementFeedback");
+      feedback.textContent = wasDisabled
+        ? "「" + letter + "」は使用済み！"
+        : "タイプミス！「" + letter + "」は選択肢にないよ";
+      feedback.className = "judgement-feedback typing-error";
+      feedback.hidden = false;
+      feedback.classList.remove("show");
+      void feedback.offsetWidth;
+      feedback.classList.add("show");
+
+      const input = $("typingInput");
+      input.classList.remove("typing-mistake");
+      void input.offsetWidth;
+      input.classList.add("typing-mistake");
+
+      if (judgementFeedbackTimer !== null) window.clearTimeout(judgementFeedbackTimer);
+      judgementFeedbackTimer = window.setTimeout(() => {
+        feedback.hidden = true;
+        feedback.classList.remove("show");
+        input.classList.remove("typing-mistake");
+        judgementFeedbackTimer = null;
+      }, 900);
     }
 
     function confirmLaneLetter() {
@@ -1136,20 +1195,6 @@
       }
       render();
       saveProgress();
-    }
-
-    function selectLaneAndConfirm(lane) {
-      const state = store.getState();
-      if (state.phase !== GAME_PHASE.BATTLE || awaitingSkill || wordState.phase !== "active") {
-        return;
-      }
-
-      // Disabled letters cannot be selected by tapping or number keys.
-      const targetLetter = wordState.letters.find((letter) => letter.lane === lane);
-      if (!targetLetter || targetLetter.disabled === true) return;
-      // One number-key press or one lane tap immediately confirms the lane.
-      wordState = setPlayerLane(wordState, lane);
-      confirmLaneLetter();
     }
 
     function showJudgementFeedback(type, letter, expected) {
@@ -1315,70 +1360,30 @@
       if (!button || button.disabled) return;
       selectSkill(button.dataset.skill);
     });
-    function bindLaneMoveButton(buttonId, direction) {
-      const button = $(buttonId);
-      // Touch, pen, and mouse input move immediately on pointer press.
-      button.addEventListener("pointerdown", (event) => {
-        if (event.button !== 0 || button.disabled) return;
-        event.preventDefault();
-        move(direction);
-      });
-      // Fallback for older touch browsers without Pointer Events.
-      if (!("PointerEvent" in window)) {
-        button.addEventListener("touchstart", (event) => {
-          if (button.disabled) return;
-          if (event.cancelable) event.preventDefault();
-          move(direction);
-        }, { passive: false });
-      }
-      // Keep keyboard and assistive-technology activation working.
-      button.addEventListener("click", (event) => {
-        if (event.detail === 0) move(direction);
-      });
-    }
-
-    bindLaneMoveButton("leftButton", -1);
-    bindLaneMoveButton("rightButton", 1);
-    $("confirmButton").addEventListener("click", confirmLaneLetter);
-
-    // Mobile: one tap selects the touched lane and immediately confirms its letter.
-    $("arena").addEventListener("click", (event) => {
-      const arena = event.currentTarget;
-      const bounds = arena.getBoundingClientRect();
-      if (!bounds.width || event.clientX < bounds.left || event.clientX >= bounds.right) return;
-      const relativeX = (event.clientX - bounds.left) / bounds.width;
-      const lane = Math.min(wordState.laneCount - 1, Math.floor(relativeX * wordState.laneCount));
-      selectLaneAndConfirm(lane);
+    const typingInput = $("typingInput");
+    typingInput.addEventListener("keydown", (event) => {
+      // Let the first key produce an input event; suppress held-key repeats.
+      if (/^[a-z]$/i.test(event.key) && event.repeat) event.preventDefault();
+    });
+    typingInput.addEventListener("input", () => {
+      const entered = typingInput.value;
+      typingInput.value = "";
+      const letter = entered.toUpperCase().match(/[A-Z]/)?.[0];
+      if (letter) typeSpellingLetter(letter);
     });
 
     window.addEventListener("keydown", (event) => {
-      // Do not steal number input while the player is typing in a form field.
       const target = event.target;
       if (target instanceof HTMLElement &&
-          (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
+          (target.isContentEditable || target === typingInput ||
+            ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) {
         return;
       }
 
-      // The number row and numeric keypad both report "1" through "5" here.
-      const numberKey = /^[1-5]$/.test(event.key) ? Number(event.key) : null;
-      if (numberKey !== null) {
-        event.preventDefault();
-        // Holding a key must not count as pressing the same number a second time.
-        if (event.repeat) return;
-
-        selectLaneAndConfirm(numberKey - 1);
-        return;
-      }
-
-      if (["ArrowLeft", "ArrowRight", "a", "A", "d", "D"].includes(event.key)) {
-        event.preventDefault();
-      }
-      if (event.key === "ArrowLeft" || event.key === "a" || event.key === "A") move(-1);
-      if (event.key === "ArrowRight" || event.key === "d" || event.key === "D") move(1);
-      if (event.key === "Enter") {
-        event.preventDefault();
-        confirmLaneLetter();
-      }
+      if (!/^[a-z]$/i.test(event.key)) return;
+      event.preventDefault();
+      if (event.repeat) return;
+      typeSpellingLetter(event.key);
     });
 
     store.subscribe((state, action) => {
