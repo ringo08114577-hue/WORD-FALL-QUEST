@@ -27,7 +27,7 @@ test("敗北から街へ戻っても育成・所持品を保持し、同じ階�
   const dungeon = createDungeonController(store, { random: () => 0 });
   const town = createTownController(store, dungeon);
   store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 70 });
-  store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
+  store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-focus" });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "large-potion", quantity: 2 });
   dungeon.start();
 
@@ -47,7 +47,7 @@ test("敗北から街へ戻っても育成・所持品を保持し、同じ階�
   assert.equal(state.player.experience, 30);
   assert.equal(state.player.maxHp, 1);
   assert.equal(state.player.attackPower, 20);
-  assert.equal(state.skillLevels["gou-basic"], 2);
+  assert.equal(state.skillLevels["gou-focus"], 2);
   assert.equal(state.inventory.gold, 20);
   assert.equal(state.inventory.items["large-potion"], 2);
   assert.equal(state.stats.enemiesDefeated, 1);

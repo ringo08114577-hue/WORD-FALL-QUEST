@@ -99,6 +99,7 @@ test("各技の文字数範囲に合う英単語のお題が必ずある", () =>
 
 test("全スキル・全レベルに文字数と難易度が合う単語候補がある", () => {
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
+    if (skill.passive) continue;
     for (let level = 1; level <= skill.maxLevel; level += 1) {
       const range = getSkillWordDifficultyRange(skillId, level);
       assert.ok(
@@ -112,18 +113,18 @@ test("全スキル・全レベルに文字数と難易度が合う単語候補�
     }
   }
 });
-test("4キャラクターの初期スキルはすべて専用の攻撃技として登録される", () => {
-  const expected = {
-    "gou-basic": "gou-swordsman",
-    "regen-basic": "regen-knight",
-    "shadow-basic": "shadow-blade",
-    "elemental-basic": "elemental-mage",
-  };
-  assert.deepEqual(Object.fromEntries(Object.entries(SKILL_DEFINITIONS)
-    .map(([id, skill]) => [id, skill.characterId])), expected);
+test("轟剣士の全技と他キャラの仮技は所属キャラクターに正しく登録される", () => {
+  const gouSkills = Object.values(SKILL_DEFINITIONS).filter((skill) => skill.characterId === "gou-swordsman");
+  assert.ok(gouSkills.length >= 15);
+  assert.ok(gouSkills.some((skill) => skill.effect?.type === "gouki-charge"));
+  assert.ok(gouSkills.some((skill) => skill.effect?.type === "gouki-consume-all"));
+  assert.ok(gouSkills.some((skill) => skill.passive));
+  assert.equal(SKILL_DEFINITIONS["regen-basic"].characterId, "regen-knight");
+  assert.equal(SKILL_DEFINITIONS["shadow-basic"].characterId, "shadow-blade");
+  assert.equal(SKILL_DEFINITIONS["elemental-basic"].characterId, "elemental-mage");
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
-    assert.equal(skill.category, "attack");
-    assert.deepEqual(getSkillWordDifficultyRange(skillId, 1), { min: 1, max: 2 });
+    if (skill.passive) continue;
+    assert.deepEqual(getSkillWordDifficultyRange(skillId, 1), skill.wordDifficultyRange ?? { min: 1, max: 2 });
   }
 });
 test("コンテンツ定義は変更できない", () => {

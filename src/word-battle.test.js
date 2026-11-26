@@ -257,9 +257,9 @@ test("セーブした英単語進行を検証して正しく復元できる", ()
 });
 
 
-test("4キャラクターの仮スキルはすべて3〜4文字の英単語を出題する", () => {
+test("各キャラクターの基本技は3〜4文字の英単語を出題する", () => {
   const skills = [
-    "gou-basic", "regen-basic", "shadow-basic", "elemental-basic",
+    "gou-slash", "regen-basic", "shadow-basic", "elemental-basic",
   ];
   for (const skillId of skills) {
     const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
@@ -272,8 +272,8 @@ test("4キャラクターの仮スキルはすべて3〜4文字の英単語を�
   assert.throws(() => selectChallengeForSkill(createWordBattleState(), "unknown-skill"), RangeError);
 });
 
-test("仮スキルのレベルを上げても単語は3〜4文字のまま、難易度範囲だけ成長する", () => {
-  for (const skillId of ["gou-basic", "regen-basic", "shadow-basic", "elemental-basic"]) {
+test("基本スキルのレベルを上げても単語は3〜4文字のまま、難易度範囲だけ成長する", () => {
+  for (const skillId of ["gou-slash", "regen-basic", "shadow-basic", "elemental-basic"]) {
     for (const skillLevel of [1, 3, 5]) {
       const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
         skillLevel, random: () => 0.99,
@@ -286,10 +286,10 @@ test("仮スキルのレベルを上げても単語は3〜4文字のまま、難
 });
 
 test("出題候補が複数難易度にまたがる場合、難易度ウェイトに沿って段階を選ぶ", () => {
-  const easy = selectChallengeForSkill(createWordBattleState(), "gou-basic", {
+  const easy = selectChallengeForSkill(createWordBattleState(), "gou-slash", {
     skillLevel: 1, random: () => 0,
   });
-  const harder = selectChallengeForSkill(createWordBattleState(), "gou-basic", {
+  const harder = selectChallengeForSkill(createWordBattleState(), "gou-slash", {
     skillLevel: 1, random: () => 0.99,
   });
   assert.equal(getCurrentChallenge(easy).difficulty, 1);
@@ -299,7 +299,7 @@ test("出題候補が複数難易度にまたがる場合、難易度ウェイ�
 test("未登録のスキルや無効なスキルレベルを拒否する", () => {
   const state = createWordBattleState();
   assert.throws(() => selectChallengeForSkill(state, "unknown-skill"), RangeError);
-  assert.throws(() => selectChallengeForSkill(state, "gou-basic", { skillLevel: 6 }), RangeError);
+  assert.throws(() => selectChallengeForSkill(state, "gou-slash", { skillLevel: 6 }), RangeError);
 });
 
 test("5レーンに固定された文字が出て、必要な文字は1レーンだけに配置される", () => {
@@ -390,11 +390,23 @@ test("選択中レーンに文字がない場合は何も消費しない", () =>
   assert.equal(result.event, null);
 });
 
-test("轟剣士の仮スキルも3〜4文字の単語を選ぶ", () => {
-  const selected = selectChallengeForSkill(createWordBattleState(), "gou-basic", {
+test("轟剣士の基本斬撃は3〜4文字の単語を選ぶ", () => {
+  const selected = selectChallengeForSkill(createWordBattleState(), "gou-slash", {
     skillLevel: 5,
     random: () => 0,
   });
   const challenge = getCurrentChallenge(selected);
   assert.ok(challenge.word.length >= 3 && challenge.word.length <= 4);
+});
+
+
+test("轟剣士の溜め技・必殺技は技ごとの文字数範囲を選ぶ", () => {
+  const charge = selectChallengeForSkill(createWordBattleState(), "gou-focus", {
+    skillLevel: 1, random: () => 0,
+  });
+  assert.ok(getCurrentChallenge(charge).word.length >= 3 && getCurrentChallenge(charge).word.length <= 4);
+  const finisher = selectChallengeForSkill(createWordBattleState(), "gou-heaven-one-flash", {
+    skillLevel: 1, random: () => 0,
+  });
+  assert.ok(getCurrentChallenge(finisher).word.length >= 9 && getCurrentChallenge(finisher).word.length <= 14);
 });

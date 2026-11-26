@@ -758,12 +758,11 @@ test("一時停止と再開を繰り返してもHP・敵・ダンジョン進行
 
 test("新しい4種類のスキルだけが初期化され、ゴールドで強化できる", () => {
   let state = createTestGameState();
-  assert.deepEqual(state.skillLevels, {
-    "gou-basic": 1, "regen-basic": 1, "shadow-basic": 1, "elemental-basic": 1,
-  });
+  assert.ok(Object.values(state.skillLevels).every((level) => level === 1));
+  assert.equal(state.skillLevels["gou-focus"], 1);
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 50 });
-  state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
-  assert.equal(state.skillLevels["gou-basic"], 2);
+  state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-focus" });
+  assert.equal(state.skillLevels["gou-focus"], 2);
   assert.equal(state.skillLevels["regen-basic"], 1);
   assert.equal(state.inventory.gold, 0);
 });
@@ -780,13 +779,13 @@ test("スキル強化は50・100・200・400Gで上昇し、Lv.5が上限", () =
 
 test("ゴールド不足・未登録スキル・戦闘中の強化は拒否する", () => {
   const poor = createTestGameState();
-  assert.equal(gameReducer(poor, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" }), poor);
+  assert.equal(gameReducer(poor, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-focus" }), poor);
   const invalid = gameReducer(gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
     { type: GAME_ACTION.UPGRADE_SKILL, skillId: "unknown-skill" });
   assert.equal(invalid.inventory.gold, 500);
   let battle = gameReducer(gameReducer(poor, { type: GAME_ACTION.ADD_GOLD, amount: 500 }),
     { type: GAME_ACTION.START_BATTLE, enemy: slime });
-  assert.equal(gameReducer(battle, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" }), battle);
+  assert.equal(gameReducer(battle, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-focus" }), battle);
 });
 
 test("ゲームをリセットすると4種類のスキルレベルも初期状態に戻る", () => {
@@ -799,9 +798,9 @@ test("ゲームをリセットすると4種類のスキルレベルも初期状�
 
 test("4キャラクターの専用技を初期装備し、他キャラの技は装備できない", () => {
   const state = createTestGameState();
-  assert.deepEqual(state.equippedSkillIds, ["gou-basic", null, null, null]);
+  assert.deepEqual(state.equippedSkillIds, ["gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade"]);
   const duplicate = gameReducer(state, {
-    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-basic", characterId: "gou-swordsman",
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-focus", characterId: "gou-swordsman",
   });
   assert.equal(duplicate, state);
   const wrongClass = gameReducer(state, {
@@ -822,7 +821,7 @@ test("4キャラクターの専用技を初期装備し、他キャラの技は�
   assert.deepEqual(regenLoadout.equippedSkillIds, ["regen-basic", null, null, null]);
   const battle = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
   assert.equal(gameReducer(battle, {
-    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-basic", characterId: "gou-swordsman",
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-focus", characterId: "gou-swordsman",
   }), battle);
 });
 
@@ -1003,22 +1002,22 @@ test("Lv.5スキルは対応素材と200Gを消費して1回だけ進化でき�
   let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 950 });
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
-  for (let i = 0; i < 4; i += 1) state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
-  assert.equal(state.skillLevels["gou-basic"], 5);
-  const evolved = gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" });
+  for (let i = 0; i < 4; i += 1) state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-focus" });
+  assert.equal(state.skillLevels["gou-focus"], 5);
+  const evolved = gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-focus" });
   assert.notEqual(evolved, state);
-  assert.deepEqual(evolved.evolvedSkillIds, ["gou-basic"]);
+  assert.deepEqual(evolved.evolvedSkillIds, ["gou-focus"]);
   assert.equal(evolved.inventory.items["forest-dragon-seal"], 0);
   assert.equal(evolved.inventory.gold, 0);
   assert.equal(isValidSavedGameState(evolved), true);
-  assert.equal(gameReducer(evolved, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" }), evolved);
+  assert.equal(gameReducer(evolved, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-focus" }), evolved);
 });
 
 test("進化はLv.5未満・素材不足・ゴールド不足・バトル中には実行できない", () => {
   let state = createTestGameState();
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 1000 });
   state = gameReducer(state, { type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
-  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" }), state);
+  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-focus" }), state);
   state = gameReducer(state, { type: GAME_ACTION.START_BATTLE, enemy: slime });
-  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" }), state);
+  assert.equal(gameReducer(state, { type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-focus" }), state);
 });

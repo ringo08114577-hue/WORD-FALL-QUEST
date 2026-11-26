@@ -16,7 +16,7 @@ test("試作ラボでは本編の所持数・レベルに関係なく未所持�
     equipment: { weapon: "forest-dragon-sword" },
     enemy: { ...forestEnemy, elementalWeakness: "wind" },
     baseAttackPower: 100,
-    skillId: "gou-basic",
+    skillId: "gou-slash",
     wordDifficulty: 1,
   });
   assert.equal(result.ignored, false);
@@ -96,7 +96,7 @@ test("登録済みの全敵を指定階層で一括比較し、撃破回数と�
   const results = comparePrototypeEnemies({
     floor: 1,
     playerLevel: 1,
-    skillId: "gou-basic",
+    skillId: "gou-slash",
     wordDifficulty: 1,
   });
   assert.equal(results.length, Object.keys(ENEMY_DEFINITIONS).length);

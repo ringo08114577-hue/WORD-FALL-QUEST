@@ -527,7 +527,7 @@ test("一時停止中のバトルを保存・ロードしても停止状態と�
     spawnElapsed: 0,
     attackElapsed: 4200,
     awaitingSkill: false,
-    selectedSkillId: "gou-basic",
+    selectedSkillId: "gou-focus",
   };
   const first = setup(storage, extra);
   first.dungeon.start();
@@ -545,7 +545,7 @@ test("一時停止中のバトルを保存・ロードしても停止状態と�
   assert.equal(second.store.getState().pausedFrom, GAME_PHASE.BATTLE);
   assert.equal(second.store.getState().player.hp, 2);
   assert.equal(second.getRestoredExtra().attackElapsed, 4200);
-  assert.equal(second.getRestoredExtra().selectedSkillId, "gou-basic");
+  assert.equal(second.getRestoredExtra().selectedSkillId, "gou-focus");
 });
 
 
@@ -584,13 +584,13 @@ test("スキル強化レベルと支払ったゴールドを保存・ロード�
   first.store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 150 });
   first.store.dispatch({
     type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "gou-basic",
+    skillId: "gou-focus",
   });
   first.store.dispatch({
     type: GAME_ACTION.UPGRADE_SKILL,
-    skillId: "gou-basic",
+    skillId: "gou-focus",
   });
-  assert.equal(first.store.getState().skillLevels["gou-basic"], 3);
+  assert.equal(first.store.getState().skillLevels["gou-focus"], 3);
   assert.equal(first.store.getState().inventory.gold, 0);
   assert.equal(first.controller.save().saved, true);
 
@@ -599,7 +599,7 @@ test("スキル強化レベルと支払ったゴールドを保存・ロード�
     spawnElapsed: 0,
   });
   assert.equal(second.controller.load().loaded, true);
-  assert.equal(second.store.getState().skillLevels["gou-basic"], 3);
+  assert.equal(second.store.getState().skillLevels["gou-focus"], 3);
   assert.equal(second.store.getState().inventory.gold, 0);
 });
 
@@ -619,12 +619,8 @@ test("以前のセーブにスキルレベルがなくてもLv.1で補完して�
     spawnElapsed: 0,
   });
   assert.equal(second.controller.load().loaded, true);
-  assert.deepEqual(second.store.getState().skillLevels, {
-    "gou-basic": 1,
-    "regen-basic": 1,
-    "shadow-basic": 1,
-    "elemental-basic": 1,
-  });
+  assert.ok(Object.values(second.store.getState().skillLevels).every((level) => level === 1));
+  assert.ok(Object.hasOwn(second.store.getState().skillLevels, "gou-focus"));
 });
 
 
@@ -732,7 +728,7 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
   const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().equippedSkillIds, [
-    "gou-basic", null, null, null,
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade",
   ]);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
@@ -877,14 +873,14 @@ test("進化済みスキルと素材消費後の状態をセーブ・ロード�
   const first = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
   first.store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 950 });
   first.store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
-  for (let i = 0; i < 4; i += 1) first.store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
-  first.store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" });
+  for (let i = 0; i < 4; i += 1) first.store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-focus" });
+  first.store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-focus" });
   assert.equal(first.controller.save().saved, true);
   const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
   assert.equal(second.controller.load().loaded, true);
-  assert.deepEqual(second.store.getState().evolvedSkillIds, ["gou-basic"]);
+  assert.deepEqual(second.store.getState().evolvedSkillIds, ["gou-focus"]);
   assert.equal(second.store.getState().inventory.items["forest-dragon-seal"], 0);
-  assert.equal(second.store.getState().skillLevels["gou-basic"], 5);
+  assert.equal(second.store.getState().skillLevels["gou-focus"], 5);
 });
 
 
