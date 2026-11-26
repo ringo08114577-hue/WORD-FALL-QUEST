@@ -899,7 +899,10 @@
           : state.phase === GAME_PHASE.DEFEAT ? "この階から再挑戦" : "冒険を始める";
       setKeyboardShortcut(
         $("startButton"),
-        state.phase === GAME_PHASE.DEFEAT ? "Enter" : null,
+        state.phase === GAME_PHASE.DEFEAT ||
+          (state.phase === GAME_PHASE.VICTORY && !dungeonProgress.floorCleared)
+          ? "Enter"
+          : null,
       );
       $("nextButton").hidden = !(active && wordState.phase === "word-complete" && !awaitingSkill);
       $("nextButton").textContent = "次の技を選ぶ";

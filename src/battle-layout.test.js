@@ -124,7 +124,9 @@ test("PC shortcut hints appear only on visible retry, next-skill, and home butto
   assert.match(html, /function setKeyboardShortcut\(button, key\)/);
   assert.match(html, /button\.dataset\.keyboardShortcut = key/);
   assert.match(html, /button\.dataset\.shortcutHint = key/);
-  assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \? "Enter" : null/);
+  assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \|\|\s*\(state\.phase === GAME_PHASE\.VICTORY && !dungeonProgress\.floorCleared\)\s*\? "Enter"\s*:\s*null/);
+  assert.match(html, /"次の敵へ"/);
+  assert.match(html, /setKeyboardShortcut\([\s\S]*?state\.phase === GAME_PHASE\.VICTORY && !dungeonProgress\.floorCleared/);
   assert.match(html, /setKeyboardShortcut\(\$\("nextButton"\), \$\("nextButton"\)\.hidden \? null : "Enter"\)/);
   assert.match(html, /setKeyboardShortcut\(\$\("homeButton"\), \$\("homeButton"\)\.hidden \? null : "Backspace"\)/);
   assert.match(html, /button\[data-shortcut-hint\]::after/);
