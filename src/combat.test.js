@@ -327,20 +327,27 @@ test("戦闘コントローラーは現在のキャラクター専用技だけ�
   assert.equal(rejected.reason, "skill-not-for-character");
 });
 
-test("単語難易度が高いほど攻撃ダメージが大きくなる", () => {
-  const store = startBattle({
-    playerAttackPower: 2,
-    enemy: { ...testSlime, maxHp: 100 },
-  });
-  const result = createCombatController(store).handle({
-    eventId: "difficulty-six",
-    type: "word-complete",
-    skillId: "gou-slash",
-    wordDifficulty: 6,
-  });
-  assert.equal(result.damage, 14);
-  assert.equal(store.getState().enemy.hp, 86);
-  assert.match(result.message, /難易度Lv.6/);
+test("単語難易度が1でも5でも攻撃ダメージは変わらない", () => {
+  const resolveDamage = (wordDifficulty, eventId) => {
+    const store = startBattle({
+      playerAttackPower: 2,
+      enemy: { ...testSlime, maxHp: 100 },
+    });
+    const result = createCombatController(store).handle({
+      eventId,
+      type: "word-complete",
+      skillId: "gou-slash",
+      wordDifficulty,
+    });
+    return { result, store };
+  };
+  const easy = resolveDamage(1, "difficulty-one");
+  const hard = resolveDamage(5, "difficulty-five");
+  assert.equal(easy.result.damage, 2);
+  assert.equal(hard.result.damage, 2);
+  assert.equal(easy.store.getState().enemy.hp, 98);
+  assert.equal(hard.store.getState().enemy.hp, 98);
+  assert.match(hard.result.message, /難易度Lv.5/);
 });
 
 test("難易度が省略された旧形式の戦闘イベントは難易度1として処理する", () => {
