@@ -29,7 +29,11 @@ function getEventSkillId(gameState, event) {
   if (typeof event?.skillId === "string") return event.skillId;
   return gameState.equippedSkillIds?.find((id) => {
     const skill = SKILL_DEFINITIONS[id];
-    return skill && (!event?.characterId || skill.characterId === event.characterId);
+    return skill && skill.category === "attack" && !skill.passive &&
+      (!event?.characterId || skill.characterId === event.characterId);
+  }) ?? gameState.equippedSkillIds?.find((id) => {
+    const skill = SKILL_DEFINITIONS[id];
+    return skill && !skill.passive && (!event?.characterId || skill.characterId === event.characterId);
   }) ?? null;
 }
 
@@ -129,7 +133,8 @@ export function resolveCombatEvent(gameState, event) {
   const isEvolved = gameState.evolvedSkillIds?.includes(skillId) === true;
   const skillEffect = getSkillEffectForLevel(skillId, skillLevel, isEvolved);
   const skillNote = "「" + getSkillDisplayName(skillId, isEvolved) + "」！";
-  const isGouSwordsman = event.characterId === "gou-swordsman";
+  const activeCharacterId = event.characterId ?? skill.characterId;
+  const isGouSwordsman = activeCharacterId === "gou-swordsman";
   const goukiState = isGouSwordsman ? normalizeGoukiState(event.goukiState) : createInitialGoukiState();
 
   if (skillEffect?.type === "gouki-charge" || skillEffect?.type === "gouki-low-hp-charge") {

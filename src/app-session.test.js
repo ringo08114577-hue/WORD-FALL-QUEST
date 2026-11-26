@@ -120,7 +120,7 @@ test("旧セーブにキャラクターIDがなくても初期キャラクター
 test("キャラクターごとのスキル装備は切り替え後も別々に保存される", () => {
   const storage = memoryStorage();
   const session = createAppSession({ storage });
-  assert.deepEqual(session.store.getState().equippedSkillIds, ["gou-basic", null, null, null]);
+  assert.deepEqual(session.store.getState().equippedSkillIds, ["gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade"]);
 
   const switched = session.selectCharacter("regen-knight");
   assert.equal(switched.selected, true);
@@ -137,7 +137,7 @@ test("キャラクターごとのスキル装備は切り替え後も別々に�
   assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-basic", null, null, null]);
 
   restored.selectCharacter("gou-swordsman");
-  assert.deepEqual(restored.store.getState().equippedSkillIds, ["gou-basic", null, null, null]);
+  assert.deepEqual(restored.store.getState().equippedSkillIds, ["gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade"]);
   restored.selectCharacter("regen-knight");
   assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-basic", null, null, null]);
   assert.equal(restored.store.getState().skillLevels["regen-basic"], 2);

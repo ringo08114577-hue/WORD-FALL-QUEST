@@ -48,7 +48,7 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
 
 test("各キャラクターの専用技は、そのキャラクターでのみ使用できる", () => {
   const classes = [
-    ["gou-swordsman", "gou-basic"],
+    ["gou-swordsman", "gou-slash"],
     ["regen-knight", "regen-basic"],
     ["shadow-blade", "shadow-basic"],
     ["elemental-mage", "elemental-basic"],
@@ -312,16 +312,16 @@ test("戦闘コントローラーは現在のキャラクター専用技だけ�
   const gouCombat = createCombatController(store, { getCharacterId: () => "gou-swordsman" });
   const result = gouCombat.handle({
     eventId: "gou-class-skill", type: "word-complete",
-    skillId: "gou-basic", wordDifficulty: 1,
+    skillId: "gou-slash", wordDifficulty: 1,
   });
   assert.equal(result.ignored, false);
   assert.equal(result.damage, 1);
-  assert.match(result.message, /「あ」/);
+  assert.match(result.message, /「基本斬撃」/);
 
   const otherClassCombat = createCombatController(store, { getCharacterId: () => "regen-knight" });
   const rejected = otherClassCombat.handle({
     eventId: "wrong-class-skill", type: "word-complete",
-    skillId: "gou-basic", wordDifficulty: 1,
+    skillId: "gou-slash", wordDifficulty: 1,
   });
   assert.equal(rejected.ignored, true);
   assert.equal(rejected.reason, "skill-not-for-character");
@@ -335,7 +335,7 @@ test("単語難易度が高いほど攻撃ダメージが大きくなる", () =>
   const result = createCombatController(store).handle({
     eventId: "difficulty-six",
     type: "word-complete",
-    skillId: "gou-basic",
+    skillId: "gou-slash",
     wordDifficulty: 6,
   });
   assert.equal(result.damage, 14);
@@ -348,7 +348,7 @@ test("難易度が省略された旧形式の戦闘イベントは難易度1と�
   const result = createCombatController(store).handle({
     eventId: "legacy-word-complete",
     type: "word-complete",
-    skillId: "gou-basic",
+    skillId: "gou-slash",
   });
   assert.equal(result.damage, 1);
 });
@@ -402,7 +402,7 @@ test("範囲外の単語難易度では攻撃ダメージを発生させない",
   const result = createCombatController(store).handle({
     eventId: "invalid-difficulty",
     type: "word-complete",
-    skillId: "gou-basic",
+    skillId: "gou-slash",
     wordDifficulty: 7,
   });
   assert.equal(result.ignored, true);
@@ -415,15 +415,15 @@ test("進化した攻撃スキルは実際のバトルダメージが上昇す�
   const store = createTestStore();
   store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 950 });
   store.dispatch({ type: GAME_ACTION.ADD_ITEM, itemId: "forest-dragon-seal", quantity: 1 });
-  for (let i = 0; i < 4; i += 1) store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-basic" });
-  store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-basic" });
+  for (let i = 0; i < 4; i += 1) store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-slash" });
+  store.dispatch({ type: GAME_ACTION.EVOLVE_SKILL, skillId: "gou-slash" });
   store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...testSlime, maxHp: 10 } });
   const result = createCombatController(store).handle({
-    eventId: "evolved-quick-strike", type: "word-complete",
-    skillId: "gou-basic", wordDifficulty: 1,
+    eventId: "evolved-gou-slash", type: "word-complete",
+    skillId: "gou-slash", wordDifficulty: 1,
   });
   assert.equal(result.damage, 2);
-  assert.match(result.message, /あ・改/);
+  assert.match(result.message, /基本斬撃・改/);
 });
 
 

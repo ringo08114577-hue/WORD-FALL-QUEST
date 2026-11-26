@@ -14,6 +14,7 @@ function defineSkill(id, name, characterId, description, options = {}) {
     description,
     minWordLength: options.minWordLength ?? 3,
     maxWordLength: options.maxWordLength ?? 4,
+    ...(options.wordDifficultyRange ? { wordDifficultyRange: Object.freeze({ ...options.wordDifficultyRange }) } : {}),
     damageMultiplier: options.damageMultiplier ?? 1,
     effect: options.effect ? Object.freeze(options.effect) : undefined,
     startingLevel: 1,
@@ -102,7 +103,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
     }),
   "gou-break-army": defineSkill("gou-break-army", "破軍斬", GOU,
     "轟気を10個消費する強撃。ボスの防御ギミックを破壊できる。", {
-      category: "attack", minWordLength: 7, maxWordLength: 8,
+      category: "attack", minWordLength: 7, maxWordLength: 8, wordDifficultyRange: { min: 3, max: 6 },
       effect: {
         type: "gouki-consume-attack", consumeAmount: 10, breakGuard: true,
         bonusPerStackByLevel: LEVELS([0.25, 0.28, 0.32, 0.36, 0.4]),
@@ -110,7 +111,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
     }),
   "gou-collapse": defineSkill("gou-collapse", "崩壊撃", GOU,
     "轟気を20個消費。強固なボスの防御を打ち砕く大技。", {
-      category: "attack", minWordLength: 7, maxWordLength: 10,
+      category: "attack", minWordLength: 7, maxWordLength: 10, wordDifficultyRange: { min: 3, max: 6 },
       effect: {
         type: "gouki-consume-attack", consumeAmount: 20, breakGuard: true,
         bonusPerStackByLevel: LEVELS([0.3, 0.34, 0.38, 0.42, 0.5]),
@@ -118,7 +119,7 @@ export const SKILL_DEFINITIONS = Object.freeze({
     }),
   "gou-overlord": defineSkill("gou-overlord", "覇王斬", GOU,
     "轟気を50個消費して放つ、規格外の一撃。", {
-      category: "attack", minWordLength: 9, maxWordLength: 14,
+      category: "attack", minWordLength: 9, maxWordLength: 14, wordDifficultyRange: { min: 3, max: 6 }, wordDifficultyRange: { min: 3, max: 6 },
       effect: {
         type: "gouki-consume-attack", consumeAmount: 50, breakGuard: true,
         bonusPerStackByLevel: LEVELS([0.35, 0.38, 0.42, 0.46, 0.5]),

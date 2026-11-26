@@ -1145,11 +1145,11 @@
       const previousPhase = store.getState().phase;
       combat.reset();
       if (previousPhase === GAME_PHASE.DEFEAT) {
-        goukiState = createInitialGoukiState();
         // Defeat abandons the current attempt, but keeps level, gold, items,
         // equipment, skill levels, and permanent dungeon unlocks.
         store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
         dungeon.reset();
+        goukiState = createInitialGoukiState();
       }
       const result = previousPhase === GAME_PHASE.VICTORY
         ? dungeon.advance()

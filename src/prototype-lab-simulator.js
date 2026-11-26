@@ -55,7 +55,7 @@ export function createPrototypeBattleState(options = {}) {
     baseAttackPower,
     baseMaxHp,
     baseDefensePower = 0,
-    skillId = "gou-basic",
+    skillId = "gou-slash",
   } = options;
   const levelStats = playerLevel === undefined
     ? { attackPower: 100, maxHp: 100 }
@@ -121,7 +121,7 @@ export function simulatePrototypeAttack(options = {}) {
   const state = createPrototypeBattleState(options);
   const result = resolveCombatEvent(state, {
     type: COMBAT_EVENT.WORD_COMPLETE,
-    skillId: options.skillId ?? "gou-basic",
+    skillId: options.skillId ?? "gou-slash",
     wordDifficulty,
   });
   return Object.freeze({
