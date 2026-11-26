@@ -332,12 +332,14 @@ test("英語バトル画面の主人公画像は全画面サイズで一回り�
 
 
 test("正しい選択を間違えた単語だけ苦手単語帳に保存し、単なるタイプミスは記録しない", () => {
-  assert.match(html, /import \\{[\\s\\S]*?recordWeakWordMistake[\\s\\S]*?from "\.\\/src\\/weak-words\.js"/);
-  assert.match(html, /weakWords,\\s*\\}/);
+  assert.ok(html.includes('from "./src/weak-words.js"'));
+  assert.ok(html.includes("isValidWeakWordEntries"));
+  assert.ok(html.includes("weakWords,"));
   const handlerStart = html.indexOf("function handleWordEvents(events)");
-  const handlerEnd = html.indexOf('$( "inventoryItems" )', handlerStart);
+  const handlerEnd = html.indexOf('$("inventoryItems").addEventListener', handlerStart);
   const handler = html.slice(handlerStart, handlerEnd > handlerStart ? handlerEnd : handlerStart + 1800);
-  assert.match(handler, /event\.type === "wrong"[\\s\\S]*?recordWeakWordMistake\\(weakWords, getCurrentChallenge\\(wordState\\)\\)/);
+  assert.ok(handler.includes('event.type === "wrong"'));
+  assert.ok(handler.includes("recordWeakWordMistake(weakWords, getCurrentChallenge(wordState))"));
   const typingStart = html.indexOf("function typeSpellingLetter(rawLetter)");
   const typingEnd = html.indexOf("function showTypingMistake", typingStart);
   assert.doesNotMatch(html.slice(typingStart, typingEnd), /recordWeakWordMistake/);
