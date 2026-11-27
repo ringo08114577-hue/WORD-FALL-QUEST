@@ -27,15 +27,17 @@
     .eyebrow { color:#8bd4aa;font-size:.66rem;font-weight:950;letter-spacing:.18em; }
     h1 { margin:7px 0 8px;font-size:clamp(1.7rem,6vw,2.3rem);letter-spacing:.04em; }
     .intro { margin:0 0 20px;color:#a9bbb7;font-size:.86rem;line-height:1.8; }
+    #jobOptions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px; }
     .job-card {
-      display:grid;grid-template-columns:66px minmax(0,1fr);gap:14px;align-items:center;
-      padding:17px;border:1px solid #527b68;border-radius:15px;
-      background:linear-gradient(145deg,rgba(34,70,57,.96),rgba(20,42,43,.98));
-      box-shadow:0 12px 28px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.06);
+      display:grid;grid-template-columns:48px minmax(0,1fr);gap:10px;align-items:start;
+      min-width:0;padding:13px;border:1px solid #405d53;border-radius:14px;
+      background:linear-gradient(145deg,rgba(30,58,52,.97),rgba(17,35,39,.98));
+      box-shadow:0 9px 22px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.05);
     }
+    .job-card.selected { border-color:#8bd4aa;box-shadow:0 0 0 1px rgba(139,212,170,.25),0 9px 22px rgba(0,0,0,.2); }
     .job-icon {
-      display:grid;place-items:center;width:66px;height:66px;border:1px solid #678f73;
-      border-radius:14px;background:#2c5744;font-size:2rem;
+      display:grid;place-items:center;width:48px;height:48px;border:1px solid #567d67;
+      border-radius:12px;background:#2c5744;font-size:1.55rem;
     }
     .job-copy { min-width:0; }
     .job-copy h2 { margin:0 0 4px;font-size:1.18rem; }
@@ -46,6 +48,12 @@
       grid-column:1/-1;justify-self:start;padding:4px 8px;border:1px solid #63866a;
       border-radius:99px;background:#1d493b;color:#d7f1db;font-size:.62rem;font-weight:900;
     }
+    .choose-job {
+      grid-column:1/-1;width:100%;min-height:39px;padding:8px 10px;
+      border:1px solid #567b67;border-radius:9px;background:#203f35;
+      color:#e9f7eb;font-size:.76rem;font-weight:900;
+    }
+    .choose-job[aria-pressed="true"] { border-color:#8bd4aa;background:#2d7854; }
     .confirm {
       width:100%;min-height:50px;margin-top:13px;padding:11px 16px;
       border:1px solid #76c695;border-radius:11px;
@@ -61,8 +69,15 @@
     }
     @media(max-width:390px) {
       body { padding-inline:11px; }
-      .job-card { grid-template-columns:54px minmax(0,1fr);gap:11px;padding:13px; }
-      .job-icon { width:54px;height:54px;font-size:1.7rem; }
+      #jobOptions { gap:8px; }
+      .job-card { grid-template-columns:40px minmax(0,1fr);gap:8px;padding:10px; }
+      .job-icon { width:40px;height:40px;font-size:1.35rem; }
+      .job-copy h2 { font-size:1rem; }
+      .job-description { font-size:.7rem; }
+      .job-strength { font-size:.65rem; }
+    }
+    @media(max-width:340px) {
+      #jobOptions { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -70,11 +85,11 @@
   <main>
     <div class="eyebrow">ADVENTURER REGISTRATION</div>
     <h1>最初の職業を選ぼう</h1>
-    <p class="intro">冒険を始める前に、最初の職業を決めよう。選んだ職業はセーブデータに保存され、今後追加する職業別の成長やスキルの基準になるよ。</p>
+    <p class="intro">4つの職業から1つを選ぼう。選んだ職業に対応する戦闘スタイルも設定されるよ。</p>
     <section id="jobOptions" aria-label="選べる職業"></section>
     <button class="confirm" id="confirmJob" type="button" disabled>職業を選択してください</button>
     <p class="status" id="jobStatus" role="status" aria-live="polite"></p>
-    <p class="note">現在選択できる職業は「剣士」です。ほかの職業は、専用の能力やスキルを整えてから追加していくよ。</p>
+    <p class="note">職業ごとの専用スキルや能力は、今後のアップデートでさらに充実させていくよ。</p>
   </main>
   <script type="module" src="./src/job-selection-page.js"></script>
 </body>
