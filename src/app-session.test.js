@@ -90,6 +90,33 @@ test("共通セッションからホームへ戻ると挑戦中の階層をリ�
   assert.equal(restored.dungeon.getProgress().enemyNumber, 1);
 });
 
+test("ホームへ戻ると轟気と次回獲得倍率が0・初期値に戻って保存される", () => {
+  const storage = memoryStorage();
+  const first = createAppSession({ storage });
+  assert.equal(first.save().saved, true);
+
+  const saved = JSON.parse(storage.getItem("word-fall-quest.save.v1"));
+  saved.extra.goukiState = { stacks: 125, nextGainMultiplier: 3 };
+  storage.setItem("word-fall-quest.save.v1", JSON.stringify(saved));
+
+  const returning = createAppSession({ storage });
+  assert.equal(returning.initialLoad.loaded, true);
+  returning.returnToTown();
+
+  const afterReturn = JSON.parse(storage.getItem("word-fall-quest.save.v1"));
+  assert.deepEqual(afterReturn.extra.goukiState, {
+    stacks: 0,
+    nextGainMultiplier: 1,
+  });
+
+  const reopened = createAppSession({ storage });
+  assert.equal(reopened.initialLoad.loaded, true);
+  assert.deepEqual(reopened.initialLoad.extra.goukiState, {
+    stacks: 0,
+    nextGainMultiplier: 1,
+  });
+});
+
 test("苦手単語帳はバトルの記録を施設ページ間で保存し、覚えた単語を削除できる", () => {
   const storage = memoryStorage();
   const first = createAppSession({ storage });
