@@ -252,6 +252,22 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
     type: "regen-drain-boost",
     drainRatioBonus: levelValue(effect.drainRatioBonusByLevel, index),
   };
+  else if (effect.type === "shadow-attack") result = {
+    type: "shadow-attack",
+    damageMultiplier: levelValue(effect.damageMultiplierByLevel, index, 1),
+    criticalMultiplier: levelValue(effect.criticalMultiplierByLevel, index, 2),
+    heavyMultiplier: levelValue(effect.heavyMultiplierByLevel, index, 3),
+    baseHeavyRate: levelValue(effect.baseHeavyRateByLevel, index),
+    hitCount: effect.hitCount ?? 1,
+  };
+  else if (effect.type === "shadow-focus") result = {
+    type: "shadow-focus",
+    criticalRateBonus: levelValue(effect.criticalRateBonusByLevel, index),
+  };
+  else if (effect.type === "shadow-passive") result = {
+    type: "shadow-passive",
+    heavyRateBonus: levelValue(effect.heavyRateBonusByLevel, index),
+  };
   else return null;
 
   if (!evolved) return result;
@@ -284,6 +300,19 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
     highDamageMultiplier: result.highDamageMultiplier
       ? Number((result.highDamageMultiplier + 0.1).toFixed(2)) : undefined,
   };
+  if (result.type === "shadow-attack") return {
+    ...result,
+    damageMultiplier: Number((result.damageMultiplier * 1.1).toFixed(2)),
+    criticalMultiplier: Number((result.criticalMultiplier + 0.2).toFixed(2)),
+    heavyMultiplier: Number((result.heavyMultiplier + 0.3).toFixed(2)),
+    baseHeavyRate: Math.min(0.95, Number((result.baseHeavyRate + 0.02).toFixed(2))),
+  };
+  if (result.type === "shadow-focus") return {
+    ...result, criticalRateBonus: result.criticalRateBonus + 5,
+  };
+  if (result.type === "shadow-passive") return {
+    ...result, heavyRateBonus: Number((result.heavyRateBonus + 0.01).toFixed(2)),
+  };
   return result;
 }
 export function getSkillEffectLabel(effect) {
@@ -307,6 +336,10 @@ export function getSkillEffectLabel(effect) {
   if (effect.type === "regen-overhp-gain") return "オーバーHP +" + effect.amount;
   if (effect.type === "regen-overhp-cap") return "オーバーHP上限 ×" + effect.capMultiplier;
   if (effect.type === "regen-drain-boost") return "ドレイン吸収率 +" + Math.round(effect.drainRatioBonus * 100) + "%";
+  if (effect.type === "shadow-attack") return effect.hitCount + "連撃 · 会心 ×" +
+    effect.criticalMultiplier + " · 重撃 ×" + effect.heavyMultiplier;
+  if (effect.type === "shadow-focus") return "次の攻撃の会心率 +" + effect.criticalRateBonus + "%";
+  if (effect.type === "shadow-passive") return "会心後の重撃率 +" + Math.round(effect.heavyRateBonus * 100) + "%";
   return "効果あり";
 }
 export function createInitialSkillLevels() {
