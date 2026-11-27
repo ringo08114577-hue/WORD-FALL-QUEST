@@ -684,3 +684,130 @@ test("破壊の極意は轟気20個以上でボスの防御を自動で破壊す
   assert.ok(!store.getState().enemy.abilities.includes("guard"));
   assert.match(result.message, /防御ギミックを破壊/);
 });
+
+
+function createRegenTestBattle({
+  skillIds = [
+    "regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis",
+    "regen-eternal-vessel",
+  ],
+  overHp = 0,
+  playerMaxHp = 100,
+  playerAttackPower = 20,
+  enemy = { ...testSlime, maxHp: 100000, attackPower: 20 },
+} = {}) {
+  const store = createTestStore({ playerMaxHp, playerAttackPower });
+  const activeSkills = skillIds.filter((id) => SKILL_DEFINITIONS[id]?.passive !== true);
+  const passiveSkills = skillIds.filter((id) => SKILL_DEFINITIONS[id]?.passive === true);
+  store.dispatch({
+    type: GAME_ACTION.SET_EQUIPPED_SKILLS,
+    skillIds: [
+      ...activeSkills, ...Array(4 - activeSkills.length).fill(null),
+      ...passiveSkills, ...Array(2 - passiveSkills.length).fill(null),
+    ],
+    characterId: "regen-knight",
+  });
+  store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy });
+  const resource = { value: { overHp } };
+  const controller = createCombatController(store, {
+    getCharacterId: () => "regen-knight",
+    getRegenState: () => resource.value,
+    setRegenState: (next) => { resource.value = next; },
+  });
+  return { store, controller, resource };
+}
+
+test("吸命斬はダメージの一部を回復し、HP上限を超えた分をオーバーHPにする", () => {
+  const { store, controller, resource } = createRegenTestBattle();
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 8 });
+  const result = controller.handle({
+    eventId: "regen-drain-slash",
+    type: "word-complete",
+    skillId: "regen-drain-slash",
+    wordDifficulty: 1,
+  });
+
+  assert.equal(result.ignored, false);
+  assert.equal(result.damage, 18);
+  assert.equal(result.regenDrained, 10);
+  assert.equal(result.regenHpHealed, 8);
+  assert.equal(result.regenOverHpGained, 2);
+  assert.equal(store.getState().player.hp, 100);
+  assert.equal(resource.value.overHp, 2);
+});
+
+test("オーバーHPを蓄えていると生命断ちの威力が上がる", () => {
+  const { controller, resource } = createRegenTestBattle({ overHp: 100 });
+  const result = controller.handle({
+    eventId: "regen-overhp-strike",
+    type: "word-complete",
+    skillId: "regen-life-breaker",
+    wordDifficulty: 2,
+  });
+
+  assert.equal(result.ignored, false);
+  assert.equal(result.damage, 29);
+  assert.match(result.message, /オーバーHPで威力/);
+  assert.equal(resource.value.overHp, 100);
+});
+
+test("敵の反撃はオーバーHPを先に削り、残りだけ通常HPへ与える", () => {
+  const { store, controller, resource } = createRegenTestBattle({ overHp: 15 });
+  const result = controller.handle({
+    eventId: "regen-overhp-partial-guard",
+    type: "wrong",
+    letter: "Z",
+  });
+
+  assert.equal(result.damage, 20);
+  assert.equal(store.getState().player.hp, 95);
+  assert.equal(resource.value.overHp, 0);
+  assert.match(result.message, /オーバーHPで 15 ダメージを吸収/);
+});
+
+test("十分なオーバーHPがあれば敵の攻撃をすべて吸収し、通常HPは減らない", () => {
+  const { store, controller, resource } = createRegenTestBattle({ overHp: 20 });
+  const result = controller.handle({
+    eventId: "regen-overhp-full-guard",
+    type: "timed-attack",
+  });
+
+  assert.equal(result.damage, 20);
+  assert.equal(store.getState().player.hp, 100);
+  assert.equal(resource.value.overHp, 0);
+  assert.match(result.message, /HPへのダメージは0/);
+});
+
+test("敵を倒すとオーバーHPは即座に0へ戻り、次の敵に持ち越されない", () => {
+  const { controller, resource } = createRegenTestBattle({
+    overHp: 40,
+    playerAttackPower: 1000,
+    enemy: { ...testSlime, maxHp: 5, attackPower: 1 },
+  });
+  const result = controller.handle({
+    eventId: "regen-overhp-victory-reset",
+    type: "word-complete",
+    skillId: "regen-life-breaker",
+    wordDifficulty: 1,
+  });
+
+  assert.equal(result.state.phase, GAME_PHASE.VICTORY);
+  assert.equal(resource.value.overHp, 0);
+});
+
+test("生命蓄積はオーバーHPを直接増やすが、専用上限を超えない", () => {
+  const { controller, resource } = createRegenTestBattle({
+    skillIds: ["regen-overflow", "regen-eternal-vessel"],
+    overHp: 110,
+  });
+  const result = controller.handle({
+    eventId: "regen-overflow-gain",
+    type: "word-complete",
+    skillId: "regen-overflow",
+    wordDifficulty: 2,
+  });
+
+  assert.equal(result.ignored, false);
+  assert.equal(result.regenOverHpGained, 5);
+  assert.equal(resource.value.overHp, 115);
+});
