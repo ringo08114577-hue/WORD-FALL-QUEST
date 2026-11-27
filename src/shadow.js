@@ -96,5 +96,5 @@ export function getShadowHeavyRate(criticalRate, baseHeavyRate, passiveBonus = 0
   const momentumBonus = Math.floor(
     (safeCriticalRate - SHADOW_BASE_CRITICAL_RATE) / SHADOW_CRITICAL_RATE_STEP,
   ) * 0.01;
-  return Math.min(0.95, safeBaseRate + momentumBonus + safePassiveBonus);
+  return Number(Math.min(0.95, safeBaseRate + momentumBonus + safePassiveBonus).toFixed(4));
 }
