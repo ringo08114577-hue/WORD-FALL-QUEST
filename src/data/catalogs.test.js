@@ -8,6 +8,7 @@ import { ENEMY_ABILITY_DEFINITIONS, ENEMY_DEFINITIONS } from "../enemies.js";
 import { DUNGEON_DEFINITIONS, DEFAULT_DUNGEON_ID } from "./dungeons.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
 import { WORD_CHALLENGES } from "./words.js";
+import { TARGET1400_WORDS } from "./target1400-words.js";
 import { getSkillWordDifficultyRange } from "../skills.js";
 import { getWordDifficultyLevelFromLength } from "../word-difficulty.js";
 import { CRAFTING_RECIPES } from "./crafting-recipes.js";
@@ -133,6 +134,19 @@ test("轟剣士と再生騎士の専用技は所属キャラクターに正し�
     });
   }
 });
+test("ターゲット1400の全番号・英単語・日本語訳がゲーム内に登録されている", () => {
+  assert.deepEqual(TARGET1400_WORDS.map((entry) => entry.targetNumber),
+    Array.from({ length: 1400 }, (_, index) => index + 1));
+  assert.equal(new Set(TARGET1400_WORDS.map((entry) => entry.word)).size, 1400);
+  for (const sourceEntry of TARGET1400_WORDS) {
+    const gameEntry = WORD_CHALLENGES.find((entry) => entry.word === sourceEntry.word);
+    assert.ok(gameEntry, sourceEntry.targetNumber + " " + sourceEntry.word);
+    assert.equal(gameEntry.japanese, sourceEntry.japanese, sourceEntry.word);
+    assert.equal(gameEntry.targetNumber, sourceEntry.targetNumber, sourceEntry.word);
+    assert.equal(gameEntry.difficulty, sourceEntry.difficulty, sourceEntry.word);
+  }
+});
+
 test("コンテンツ定義は変更できない", () => {
   assert.equal(Object.isFrozen(ENEMY_ABILITY_DEFINITIONS), true);
   assert.equal(Object.isFrozen(ENEMY_DEFINITIONS), true);
@@ -144,19 +158,20 @@ test("コンテンツ定義は変更できない", () => {
 test("単語データはID・英単語の重複がなく、文字数に応じた難易度1〜5を正しく保持する", () => {
   const ids = WORD_CHALLENGES.map((challenge) => challenge.id);
   const words = WORD_CHALLENGES.map((challenge) => challenge.word);
-  assert.equal(WORD_CHALLENGES.length, 245);
+  assert.equal(WORD_CHALLENGES.length, 1516);
+  assert.equal(TARGET1400_WORDS.length, 1400);
   assert.equal(new Set(ids).size, ids.length);
   assert.equal(new Set(words).size, words.length);
   for (const challenge of WORD_CHALLENGES) {
     assert.match(challenge.word, /^[A-Z]{3,14}$/);
     assert.ok(challenge.japanese.length > 0);
     assert.ok(Number.isInteger(challenge.difficulty) && challenge.difficulty >= 1 && challenge.difficulty <= 5);
-    assert.ok(["noun", "verb", "adjective", "adverb", "preposition", "conjunction"].includes(challenge.partOfSpeech));
+    assert.ok(["noun", "verb", "adjective", "adverb", "preposition", "conjunction", "unknown"].includes(challenge.partOfSpeech));
   }
   assert.deepEqual(
     Object.fromEntries([1, 2, 3, 4, 5].map((difficulty) => [
       difficulty, WORD_CHALLENGES.filter((challenge) => challenge.difficulty === difficulty).length,
     ])),
-    { 1: 35, 2: 86, 3: 69, 4: 30, 5: 25 },
+    { 1: 246, 2: 554, 3: 299, 4: 181, 5: 236 },
   );
 });
