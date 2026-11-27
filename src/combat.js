@@ -15,6 +15,10 @@ import {
   createInitialGoukiState, normalizeGoukiState, getGoukiAbilityMultiplier,
   gainGouki, setNextGoukiGainMultiplier, spendGouki, spendAllGouki,
 } from "./gouki.js";
+import {
+  createInitialRegenState, normalizeRegenState, getRegenOverHpCap,
+  getRegenDrainRatio, gainRegenOverHp, absorbRegenOverHp,
+} from "./regen.js";
 
 export const COMBAT_EVENT = Object.freeze({
   CORRECT: "correct",
@@ -85,6 +89,13 @@ export function resolveCombatEvent(gameState, event) {
       gameState.inventory?.equipment, incomingElement,
     );
     const amount = rawAmount === 0 ? 0 : Math.max(1, Math.ceil(rawAmount * incomingResistanceMultiplier));
+    const activeCharacterId = event.characterId ?? null;
+    const isRegenKnight = activeCharacterId === "regen-knight";
+    const regenState = isRegenKnight ? normalizeRegenState(event.regenState) : createInitialRegenState();
+    const absorbed = isRegenKnight
+      ? absorbRegenOverHp(regenState, amount)
+      : { state: regenState, absorbed: 0, remainingDamage: amount };
+    const hpDamage = absorbed.remainingDamage;
     const resistanceValue = incomingElement
       ? getEquipmentElementalBonuses(gameState.inventory?.equipment).resistance[incomingElement] ?? 0
       : 0;
@@ -95,19 +106,29 @@ export function resolveCombatEvent(gameState, event) {
     const counterAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.counterAttackBonus>0);
     const abilityNote = counterAbility ? "（"+counterAbility.name+"）" : "";
     const piercingNote = effects.defensePiercing>0 ? " 防御力を一部無視！" : "";
+    const regenNote = absorbed.absorbed > 0
+      ? " オーバーHPで " + absorbed.absorbed + " ダメージを吸収！"
+      : "";
+    const damageAction = hpDamage > 0 ? {
+      type:GAME_ACTION.DAMAGE_PLAYER,
+      amount:hpDamage,
+      consumeDefenseBuff: battleDefenseBonus > 0,
+      logReason: event.type === COMBAT_EVENT.TIMED_ATTACK ? "時間攻撃" : "反撃",
+    } : null;
+    const attackMessage = event.type === COMBAT_EVENT.TIMED_ATTACK
+      ? gameState.enemy.name + "の時間攻撃！"
+      : gameState.enemy.name + "の反撃" + abilityNote + "！「" + (event.letter || "?") + "」は違う文字。";
     return {
-      ignored:false, action:{
-        type:GAME_ACTION.DAMAGE_PLAYER,
-        amount,
-        consumeDefenseBuff: battleDefenseBonus > 0,
-        logReason: event.type === COMBAT_EVENT.TIMED_ATTACK ? "時間攻撃" : "反撃",
-      }, damageTarget:"player", damage:amount,
+      ignored:false,
+      action: damageAction,
+      ...(isRegenKnight ? { regenState: absorbed.state } : {}),
+      damageTarget:"player", damage:amount,
       message: amount === 0
         ? gameState.enemy.name + "の攻撃を「鉄壁の構え」で完全に防いだ！ダメージ0。" + incomingElementNote
-        : event.type === COMBAT_EVENT.TIMED_ATTACK
-          ? gameState.enemy.name + "の時間攻撃！ HP -" + amount + "。" + abilityNote + piercingNote + incomingElementNote
-          : gameState.enemy.name + "の反撃" + abilityNote + "！「" + (event.letter || "?") + "」は違う文字。HP -" + amount + "。" + piercingNote + incomingElementNote,
-      tone:"bad",
+        : attackMessage + regenNote +
+          (hpDamage > 0 ? " HP -" + hpDamage + "。" : " HPへのダメージは0！") +
+          piercingNote + incomingElementNote,
+      tone: hpDamage > 0 ? "bad" : "good",
     };
   }
   const skillId = getEventSkillId(gameState, event);
@@ -135,7 +156,24 @@ export function resolveCombatEvent(gameState, event) {
   const skillNote = "「" + getSkillDisplayName(skillId, isEvolved) + "」！";
   const activeCharacterId = event.characterId ?? skill.characterId;
   const isGouSwordsman = activeCharacterId === "gou-swordsman";
+  const isRegenKnight = activeCharacterId === "regen-knight";
   const goukiState = isGouSwordsman ? normalizeGoukiState(event.goukiState) : createInitialGoukiState();
+  const regenState = isRegenKnight ? normalizeRegenState(event.regenState) : createInitialRegenState();
+
+  if (isRegenKnight && skillEffect?.type === "regen-overhp-gain") {
+    const gained = gainRegenOverHp(regenState, skillEffect.amount, getRegenOverHpCap(gameState));
+    return {
+      ignored: false,
+      action: null,
+      damageTarget: null,
+      regenState: gained.state,
+      regenOverHpGained: gained.gained,
+      message: skillNote + (gained.gained > 0
+        ? "オーバーHPを " + gained.gained + " 獲得！現在 " + gained.state.overHp + "。"
+        : "オーバーHPは上限に達している！"),
+      tone: "good",
+    };
+  }
 
   if (skillEffect?.type === "gouki-charge" || skillEffect?.type === "gouki-low-hp-charge") {
     const remainingHpRatio = gameState.player.maxHp > 0
@@ -228,6 +266,20 @@ export function resolveCombatEvent(gameState, event) {
   let goukiSpent = 0;
   let goukiGained = 0;
   let goukiAttackMultiplier = 1;
+  let regenAttackMultiplier = 1;
+  let regenDrainRatio = 0;
+  let regenAfterAttack = null;
+  let regenDrained = 0;
+  let regenHpHealed = 0;
+  let regenOverHpGained = 0;
+  if (isRegenKnight && skillEffect?.type === "regen-overhp-attack") {
+    const maxHp = Math.max(1, gameState.player.maxHp);
+    const overHpRatio = Math.min(1.5, regenState.overHp / maxHp);
+    regenAttackMultiplier = 1 + overHpRatio * skillEffect.bonusAtFullOverHp;
+  }
+  if (isRegenKnight && skillEffect?.type === "regen-drain-attack") {
+    regenDrainRatio = getRegenDrainRatio(gameState, skillEffect.drainRatio);
+  }
   let breakGuard = skillEffect?.breakGuard === true;
   const isGoukiAttack = isGouSwordsman;
   if (isGoukiAttack) {
@@ -296,12 +348,22 @@ export function resolveCombatEvent(gameState, event) {
     (skillEffect?.damageMultiplier ?? skill?.damageMultiplier ?? 1) *
     activeAttackMultiplier *
     elementalAttackMultiplier *
-    goukiAttackMultiplier,
+    goukiAttackMultiplier *
+    regenAttackMultiplier,
   );
   const guardReduction = breaksBossGuard
     ? (ENEMY_ABILITY_DEFINITIONS.guard?.damageReduction ?? 0) : 0;
   const effectiveDamageReduction = Math.max(0, effects.damageReduction - guardReduction);
   const amount = Math.max(1, baseDamage - effectiveDamageReduction);
+  if (isRegenKnight && regenDrainRatio > 0) {
+    regenDrained = Math.max(1, Math.floor(amount * regenDrainRatio));
+    const missingHp = Math.max(0, gameState.player.maxHp - gameState.player.hp);
+    regenHpHealed = Math.min(missingHp, regenDrained);
+    const overflow = regenDrained - regenHpHealed;
+    const gained = gainRegenOverHp(regenState, overflow, getRegenOverHpCap(gameState));
+    regenAfterAttack = gained.state;
+    regenOverHpGained = gained.gained;
+  }
   const outgoingElementNote = attackElement
     ? "（" + getElementLabel(attackElement) + "属性" +
       (elementalMatchup.label ? "・" + elementalMatchup.label : "") +
@@ -310,16 +372,27 @@ export function resolveCombatEvent(gameState, event) {
   const guardAbility = (gameState.enemy.abilities ?? []).map((id)=>ENEMY_ABILITY_DEFINITIONS[id]).find((ability)=>ability?.damageReduction>0);
   const abilityNote = guardAbility && !breaksBossGuard ? "（"+guardAbility.name+"でダメージ軽減）" : "";
   const extraActions = breaksBossGuard ? [{ type: GAME_ACTION.BREAK_ENEMY_GUARD }] : [];
+  if (regenHpHealed > 0) {
+    extraActions.push({ type: GAME_ACTION.HEAL_PLAYER, amount: regenHpHealed, skillId });
+  }
   const goukiNotes = [
     goukiSpent > 0 ? "轟気 -" + goukiSpent + " 個" : "",
     goukiGained > 0 ? "轟気 +" + goukiGained + " 個" : "",
     goukiAttackMultiplier > 1 ? "轟気技倍率 ×" + goukiAttackMultiplier.toFixed(2) : "",
     breaksBossGuard ? "ボスの防御ギミックを破壊！" : "",
   ].filter(Boolean).join(" · ");
+  const regenNotes = [
+    regenAttackMultiplier > 1
+      ? "オーバーHPで威力 ×" + regenAttackMultiplier.toFixed(2)
+      : "",
+    regenDrained > 0 ? "ドレイン +" + regenHpHealed + " HP" : "",
+    regenOverHpGained > 0 ? "オーバーHP +" + regenOverHpGained : "",
+  ].filter(Boolean).join(" · ");
   return {
     ignored:false,
     ...(extraActions.length > 0 ? { extraActions } : {}),
     ...(goukiAfterAttack ? { goukiState: goukiAfterAttack, goukiSpent, goukiGained } : {}),
+    ...(regenAfterAttack ? { regenState: regenAfterAttack, regenDrained, regenHpHealed, regenOverHpGained } : {}),
     action: {
       type: GAME_ACTION.DAMAGE_ENEMY,
       amount,
@@ -329,7 +402,8 @@ export function resolveCombatEvent(gameState, event) {
     damage:amount,
     message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+outgoingElementNote+
       (activeAttackMultiplier > 1 ? " 攻撃強化が発動！" : "") + abilityNote +
-      (goukiNotes ? " [" + goukiNotes + "]" : ""),
+      (goukiNotes ? " [" + goukiNotes + "]" : "") +
+      (regenNotes ? " [" + regenNotes + "]" : ""),
     tone:"good",
   };
 }
@@ -343,6 +417,8 @@ export function createCombatController(store, {
   getCharacterId = null,
   getGoukiState = null,
   setGoukiState = null,
+  getRegenState = null,
+  setRegenState = null,
 } = {}) {
   if (
     !store ||
@@ -355,7 +431,9 @@ export function createCombatController(store, {
   if (typeof random !== "function" ||
       (getCharacterId !== null && typeof getCharacterId !== "function") ||
       (getGoukiState !== null && typeof getGoukiState !== "function") ||
-      (setGoukiState !== null && typeof setGoukiState !== "function")) {
+      (setGoukiState !== null && typeof setGoukiState !== "function") ||
+      (getRegenState !== null && typeof getRegenState !== "function") ||
+      (setRegenState !== null && typeof setRegenState !== "function")) {
     throw new TypeError("combat controllerには乱数関数が必要です。");
   }
 
@@ -377,6 +455,8 @@ export function createCombatController(store, {
         ...(activeCharacterId ? { characterId: activeCharacterId } : {}),
         ...(activeCharacterId === "gou-swordsman" && typeof getGoukiState === "function"
           ? { goukiState: getGoukiState() } : {}),
+        ...(activeCharacterId === "regen-knight" && typeof getRegenState === "function"
+          ? { regenState: getRegenState() } : {}),
       };
       const resolution = resolveCombatEvent(previousState, combatEvent);
       if (resolution.ignored) return resolution;
@@ -384,6 +464,9 @@ export function createCombatController(store, {
       processedEventIds.add(event.eventId);
       if (resolution.goukiState && typeof setGoukiState === "function") {
         setGoukiState(resolution.goukiState);
+      }
+      if (resolution.regenState && typeof setRegenState === "function") {
+        setRegenState(normalizeRegenState(resolution.regenState));
       }
       for (const extraAction of resolution.extraActions ?? []) {
         store.dispatch(extraAction);
@@ -424,6 +507,9 @@ export function createCombatController(store, {
         previousState.phase === GAME_PHASE.BATTLE &&
         state.phase === GAME_PHASE.VICTORY
       ) {
+        if (activeCharacterId === "regen-knight" && typeof setRegenState === "function") {
+          setRegenState(createInitialRegenState());
+        }
         const defeatedEnemy = state.enemy;
         experienceGained = defeatedEnemy?.experienceReward ?? 0;
         levelUps = state.player.level - previousState.player.level;
@@ -452,6 +538,9 @@ export function createCombatController(store, {
       } else if (state.phase === GAME_PHASE.DEFEAT) {
         if (activeCharacterId === "gou-swordsman" && typeof setGoukiState === "function") {
           setGoukiState(createInitialGoukiState());
+        }
+        if (activeCharacterId === "regen-knight" && typeof setRegenState === "function") {
+          setRegenState(createInitialRegenState());
         }
         message = "HPがなくなった！冒険失敗……";
         tone = "bad";
