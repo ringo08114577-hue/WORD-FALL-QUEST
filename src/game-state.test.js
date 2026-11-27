@@ -799,7 +799,7 @@ test("ゲームをリセットすると4種類のスキルレベルも初期状�
 test("4キャラクターの専用技を初期装備し、他キャラの技は装備できない", () => {
   const state = createTestGameState();
   assert.deepEqual(state.equippedSkillIds, [
-    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null, null,
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null,
   ]);
   const duplicate = gameReducer(state, {
     type: GAME_ACTION.EQUIP_SKILL, slotIndex: 1, skillId: "gou-focus", characterId: "gou-swordsman",
@@ -811,13 +811,13 @@ test("4キャラクターの専用技を初期装備し、他キャラの技は�
   assert.equal(wrongClass, state);
   const wrongLoadout = gameReducer(state, {
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-    skillIds: ["regen-drain-slash", null, null, null, null, null],
+    skillIds: ["regen-drain-slash", null, null, null, null],
     characterId: "gou-swordsman",
   });
   assert.equal(wrongLoadout, state);
   const regenSkills = [
     "regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis",
-    "regen-eternal-vessel", null,
+    "regen-eternal-vessel",
   ];
   const regenLoadout = gameReducer(state, {
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
@@ -829,7 +829,7 @@ test("4キャラクターの専用技を初期装備し、他キャラの技は�
     type: GAME_ACTION.EQUIP_SKILL, slotIndex: 4, skillId: "gou-destruction", characterId: "gou-swordsman",
   });
   assert.deepEqual(withPassive.equippedSkillIds, [
-    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-destruction", null,
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-destruction",
   ]);
   const passiveInActiveSlot = gameReducer(state, {
     type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: "gou-destruction", characterId: "gou-swordsman",
