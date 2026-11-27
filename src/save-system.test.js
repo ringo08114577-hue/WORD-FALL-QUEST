@@ -751,7 +751,30 @@ test("バージョン15のセーブに入ったパッシブ技を専用枠へ移
   const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().equippedSkillIds, [
-    "gou-focus", null, "gou-slash", null, "gou-destruction", "gou-resonance",
+    "gou-focus", null, "gou-slash", null, "gou-destruction",
+  ]);
+  assert.equal(second.controller.save().saved, true);
+  assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
+});
+
+test("バージョン18の通常4枠・パッシブ2枠セーブはパッシブ1枠へ移行する", () => {
+  const storage = memoryStorage();
+  const first = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  first.dungeon.start();
+  assert.equal(first.controller.save().saved, true);
+
+  const legacy = JSON.parse(storage.getItem(SAVE_STORAGE_KEY));
+  legacy.version = 18;
+  legacy.gameState.equippedSkillIds = [
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade",
+    "gou-destruction", "gou-resonance",
+  ];
+  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(legacy));
+
+  const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
+  assert.equal(second.controller.load().loaded, true);
+  assert.deepEqual(second.store.getState().equippedSkillIds, [
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-destruction",
   ]);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
@@ -887,7 +910,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 18);
+  assert.equal(SAVE_VERSION, 19);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {
