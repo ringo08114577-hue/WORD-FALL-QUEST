@@ -269,7 +269,7 @@ test("バトル画面は共通の初期能力値HP100・攻撃力20を使う", (
 
 
 
-test("PCとスマホは英字タイピングで選択でき、数字キーやレーンタップ操作は使わない", () => {
+test("スマホは表示された英字を直接タップでき、PCは従来どおり英字入力できる", () => {
   assert.match(html, /id="typingInput"/);
   assert.match(html, /lang="en"/);
   assert.match(html, /inputmode="text"/);
@@ -279,7 +279,13 @@ test("PCとスマホは英字タイピングで選択でき、数字キーやレ
   assert.match(html, /typeSpellingLetter\(event\.key\)/);
   assert.match(html, /\$\("typingInput"\)\.disabled = !canType/);
   assert.match(html, /target === typingInput/);
-  assert.doesNotMatch(html, /数字キー1〜5|レーンを1回タップ/);
+  assert.match(html, /const node = document\.createElement\("button"\)/);
+  assert.match(html, /node\.dataset\.letterChoice = letter\.value/);
+  assert.match(html, /node\.setAttribute\("aria-label", letter\.value \+ "を選択"\)/);
+  assert.match(html, /\$\("lettersLayer"\)\.addEventListener\("click"/);
+  assert.match(html, /typeSpellingLetter\(button\.dataset\.letterChoice\)/);
+  assert.match(html, /スマホは画面に並んだ英字を直接タップ/);
+  assert.doesNotMatch(html, /数字キー1〜5/);
   assert.doesNotMatch(html, /bindLaneMoveButton|selectLaneAndConfirm|numberKey/);
   assert.doesNotMatch(html, /\$\("arena"\)\.addEventListener\("click"/);
 });

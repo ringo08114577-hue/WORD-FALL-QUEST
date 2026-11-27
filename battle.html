@@ -139,7 +139,12 @@
       border-radius:12px; background:linear-gradient(145deg,#164e63,#15334a);
       color:#f0f9ff; font-size:1.55rem; font-weight:950;
       box-shadow:0 5px 15px rgba(0,0,0,.28);
-      pointer-events:none;
+      pointer-events:auto; cursor:pointer; touch-action:manipulation;
+      padding:0; appearance:none; -webkit-appearance:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .lane-letter:focus-visible {
+      outline:3px solid #fef08a; outline-offset:3px;
     }
     .lane-letter-ready {
       border-color:#facc15; border-bottom-color:#ca8a04;
@@ -461,7 +466,7 @@
     </section>
 
     <section class="panel arena-wrap">
-      <div class="arena" id="arena" aria-label="5つの英字選択肢">
+      <div class="arena" id="arena" aria-label="5つの英字選択肢。正しい文字をタップして選択">
         <div class="lane-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
         <div class="lane-focus" id="laneFocus" data-flash-intensity="weak" aria-hidden="true"></div>
         <div id="lettersLayer"></div>
@@ -474,7 +479,7 @@
         <div class="judgement-feedback" id="judgementFeedback" role="status" aria-live="polite" hidden></div>
       </div>
       <div class="typing-panel">
-        <label class="typing-label" for="typingInput">⌨ 英字を入力</label>
+        <label class="typing-label" for="typingInput">👆 英字をタップ／⌨ 入力</label>
         <input
           class="typing-input"
           id="typingInput"
@@ -491,7 +496,7 @@
           aria-describedby="typingHelp"
           disabled
         >
-        <p class="typing-help" id="typingHelp">表示された5つの英字から、次の1文字を入力しよう。スマホは入力欄をタップするとキーボードが開くよ。</p>
+        <p class="typing-help" id="typingHelp">スマホは画面に並んだ英字を直接タップ！ PCは英字キーでも選べるよ。入力欄から手入力することもできます。</p>
       </div>
       <div class="action-row">
         <button class="primary start-button" id="startButton">冒険を始める</button>
@@ -1080,7 +1085,13 @@
       const layer = $("lettersLayer");
       layer.replaceChildren();
       for (const letter of wordState.letters) {
-        const node = document.createElement("div");
+        const node = document.createElement("button");
+        node.type = "button";
+        node.dataset.letterChoice = letter.value;
+        node.disabled = letter.disabled === true ||
+          store.getState().phase !== GAME_PHASE.BATTLE || awaitingSkill ||
+          wordState.phase !== "active";
+        node.setAttribute("aria-label", letter.value + "を選択");
         const isSelected = letter.lane === wordState.playerLane;
         const isDisabled = letter.disabled === true;
         node.className = "lane-letter" +
@@ -1089,7 +1100,6 @@
         node.textContent = letter.value;
         node.style.left = (((letter.lane + 0.5) / wordState.laneCount) * 100) + "%";
         node.style.top = "50%";
-        node.setAttribute("aria-hidden", "true");
         layer.append(node);
       }
     }
@@ -1437,6 +1447,14 @@
       if (!button || button.disabled) return;
       selectSkill(button.dataset.skill);
     });
+    // Tap/click the visible letter itself to choose it immediately.
+    // This gives phones a direct touch target while preserving keyboard typing.
+    $("lettersLayer").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-letter-choice]");
+      if (!button || button.disabled) return;
+      typeSpellingLetter(button.dataset.letterChoice);
+    });
+
     const typingInput = $("typingInput");
     typingInput.addEventListener("keydown", (event) => {
       // Let the first key produce an input event; suppress held-key repeats.
