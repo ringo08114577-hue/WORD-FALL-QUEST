@@ -4,7 +4,7 @@ import { GAME_ACTION } from "./game-state.js";
 import { getElementLabel } from "./elements.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, getSkillsForCharacter, getSkillWordDifficultyRange,
-  getSkillEffectForLevel, getSkillDisplayName, getSkillEffectLabel,
+  getSkillEffectForLevel, getSkillDisplayName, getSkillEffectLabel, SKILL_EQUIP_SLOT_COUNT,
 } from "./skills.js";
 
 const $ = (id) => document.getElementById(id);
@@ -26,14 +26,20 @@ function renderSlots(state) {
   root.replaceChildren();
   state.equippedSkillIds.forEach((equippedId, slotIndex) => {
     const card = node("div", "slot-card");
-    card.append(node("strong", "slot-title", "スキル枠 " + (slotIndex + 1)));
+    const isPassiveSlot = slotIndex >= SKILL_EQUIP_SLOT_COUNT;
+    card.append(node("strong", "slot-title", isPassiveSlot
+      ? "パッシブスキル（1枠）"
+      : "通常スキル " + (slotIndex + 1)));
     const select = node("select", "skill-select");
     select.dataset.skillSlot = String(slotIndex);
-    select.setAttribute("aria-label", "スキル枠 " + (slotIndex + 1) + "の装備");
+    select.setAttribute("aria-label", isPassiveSlot
+      ? "パッシブスキルの装備"
+      : "通常スキル枠 " + (slotIndex + 1) + "の装備");
     const empty = node("option", "", "未装備");
     empty.value = "";
     select.append(empty);
     for (const [skillId, skill] of characterSkills) {
+      if ((skill.passive === true) !== isPassiveSlot) continue;
       const usedElsewhere = state.equippedSkillIds.some((id, index) => index !== slotIndex && id === skillId);
       if (usedElsewhere) continue;
       const option = node("option", "", getSkillDisplayName(skillId,
