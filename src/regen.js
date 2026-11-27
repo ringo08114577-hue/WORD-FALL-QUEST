@@ -37,7 +37,7 @@ export function getRegenDrainRatio(gameState, baseRatio) {
       gameState.evolvedSkillIds?.includes(skillId) === true);
     if (effect?.type === "regen-drain-boost") bonus += effect.drainRatioBonus;
   }
-  return Math.min(1.25, Math.max(0, baseRatio + bonus));
+  return Number(Math.min(1.25, Math.max(0, baseRatio + bonus)).toFixed(2));
 }
 
 export function gainRegenOverHp(regenState, amount, cap) {
