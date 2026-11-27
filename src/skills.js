@@ -342,6 +342,110 @@ export function getSkillEffectLabel(effect) {
   if (effect.type === "shadow-passive") return "会心後の重撃率 +" + Math.round(effect.heavyRateBonus * 100) + "%";
   return "効果あり";
 }
+
+function formatCalculationValue(value) {
+  return Number.isFinite(value) ? Number(value.toFixed(2)).toString() : "0";
+}
+
+/**
+ * 現在のスキルレベル・進化状態に対応した、戦闘中の実際の効果計算式を返す。
+ * スキル工房の説明欄と戦闘ロジックの式が食い違わないよう、
+ * getSkillEffectForLevel() が返す実効値を使って組み立てる。
+ */
+export function getSkillCalculationText(skillId, currentLevel, evolved = false) {
+  const skill = getSkillDefinition(skillId);
+  const effect = getSkillEffectForLevel(skillId, currentLevel, evolved);
+  if (!skill || !effect) return "計算式を表示できません。";
+
+  const value = formatCalculationValue;
+  const damageStat = effect.type === "magic" || skill.category === "magic" ? "魔力" : "攻撃力";
+  const goukiFactor = skill.characterId === "gou-swordsman"
+    ? " × 轟気補正（1＋現在轟気数÷100） × 条件付きパッシブ補正"
+    : "";
+  const commonDamage = (skillMultiplier, extra = "") =>
+    "ダメージ＝max(1, ceil(" + damageStat + " × " + skillMultiplier +
+    goukiFactor + extra + " × 攻撃強化倍率 × 属性補正) − 敵のダメージ軽減)";
+  const numberOf = (number) => value(number);
+
+  switch (effect.type) {
+    case "attack":
+    case "magic":
+      return commonDamage("技倍率 " + "×" + numberOf(effect.damageMultiplier));
+    case "gouki-charge":
+      return "轟気獲得＝ceil(" + effect.amount + " × 次回轟気獲得倍率)";
+    case "gouki-low-hp-charge":
+      return "轟気獲得＝ceil((" + effect.baseAmount +
+        " ＋ floor(HP不足率 × " + effect.missingHpBonus + ")) × 次回轟気獲得倍率)";
+    case "gouki-attack":
+      return commonDamage("轟気技倍率 ×" + numberOf(effect.damageMultiplier)) +
+        " ／ 追加で轟気 +" + effect.gainAmount + "（次回獲得倍率の影響あり）";
+    case "gouki-consume-attack":
+      return commonDamage(
+        "(1 ＋ 消費轟気数 × " + numberOf(effect.bonusPerStack) + ")",
+        "",
+      ) + " ／ 轟気を " + effect.consumeAmount + " 個消費" +
+        (effect.breakGuard ? "（ボスの防御ギミックにも対応）" : "");
+    case "gouki-consume-all":
+      return commonDamage(
+        "(1 ＋ 消費前の轟気数 × " + numberOf(effect.bonusPerStack) + ")",
+      ) + " ／ 轟気を全消費";
+    case "gouki-defense":
+      return "轟気を " + effect.consumeAmount + " 個消費 → 防御力 +" +
+        effect.bonus + " が敵の攻撃 " + effect.hits + " 回に適用";
+    case "gouki-limit-break":
+      return "次に獲得する轟気＝ceil(次回の基本獲得量 ×" +
+        numberOf(effect.multiplier) + ")";
+    case "gouki-passive":
+      if (effect.passiveKind === "breaker") {
+        return "轟気 " + effect.threshold + " 個以上かつボス戦：攻撃ダメージ ×" +
+          numberOf(effect.damageMultiplier) + " ＋ ボスの防御ギミックを破壊";
+      }
+      return "轟気 " + effect.threshold + " 個以上：攻撃ダメージ ×" +
+        numberOf(effect.damageMultiplier) + " ／ " + effect.highThreshold +
+        " 個以上：攻撃ダメージ ×" + numberOf(effect.highDamageMultiplier);
+    case "regen-drain-attack":
+      return commonDamage("技倍率 ×" + numberOf(effect.damageMultiplier)) +
+        " ／ 吸収HP＝max(1, floor(与ダメージ ×" +
+        Math.round(effect.drainRatio * 100) + "%))。余剰分はオーバーHPへ（吸収率上限125%）";
+    case "regen-overhp-attack":
+      return commonDamage(
+        "技倍率 ×" + numberOf(effect.damageMultiplier),
+        " × オーバーHP補正（1 ＋ min(2, 現在オーバーHP÷最大HP) ×" +
+          numberOf(effect.bonusAtFullOverHp) + ")",
+      ) + "（オーバーHPが多いほど威力上昇）";
+    case "regen-overhp-gain":
+      return "オーバーHP獲得＝min(" + effect.amount +
+        ", オーバーHP上限 − 現在オーバーHP)";
+    case "regen-overhp-cap":
+      return "オーバーHP上限＝ceil(最大HP ×" + numberOf(effect.capMultiplier) + ")";
+    case "regen-drain-boost":
+      return "ドレイン吸収率＝min(125%, 吸収技の基本吸収率 ＋" +
+        Math.round(effect.drainRatioBonus * 100) + "%)";
+    case "heal":
+      return "回復量＝min(最大HP − 現在HP, max(" + effect.amount +
+        ", ceil(最大HP ×" + Math.round(effect.hpRatio * 100) + "%)))";
+    case "defense":
+      return "防御力 +" + effect.bonus + " を、次の敵の攻撃 " + effect.hits + " 回に適用";
+    case "attack-buff":
+      return "次の攻撃 " + effect.uses + " 回のダメージ＝通常計算 ×" +
+        numberOf(effect.multiplier);
+    case "shadow-attack":
+      return "各ヒット＝max(1, ceil(ceil(攻撃力 × 技倍率 × 攻撃強化倍率 × 属性補正) × 判定倍率) − 敵軽減)。通常×1／会心×" +
+        numberOf(effect.criticalMultiplier) + "／重撃×" +
+        numberOf(effect.heavyMultiplier) + "（重撃は会心倍率と重複しない）" +
+        (effect.hitCount > 1 ? "。全ヒットのダメージを合計" : "") +
+        "。会心時のみ重撃を追加抽選";
+    case "shadow-focus":
+      return "次の攻撃の会心率＝min(80%, 現在会心率 ＋" +
+        effect.criticalRateBonus + "%)。通常会心率は正解連続数で5〜60%";
+    case "shadow-passive":
+      return "会心後の重撃率に +" + Math.round(effect.heavyRateBonus * 100) +
+        "%（技ごとの基本重撃率 ＋ 会心率上昇分 ＋ このパッシブ。重撃率上限95%）";
+    default:
+      return commonDamage("技倍率 ×" + numberOf(effect.damageMultiplier ?? skill.damageMultiplier ?? 1));
+  }
+}
+
 export function createInitialSkillLevels() {
   return Object.fromEntries(Object.entries(SKILL_DEFINITIONS).map(([id, skill]) => [id, skill.startingLevel ?? 1]));
 }
