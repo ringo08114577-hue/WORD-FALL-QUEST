@@ -887,7 +887,7 @@ test("バージョン8のセーブデータを進化未実装状態から安全�
   assert.deepEqual(second.store.getState().evolvedSkillIds, []);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
-  assert.equal(SAVE_VERSION, 17);
+  assert.equal(SAVE_VERSION, 18);
 });
 
 test("進化済みスキルと素材消費後の状態をセーブ・ロードで保持する", () => {
