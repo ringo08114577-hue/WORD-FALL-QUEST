@@ -728,7 +728,7 @@ test("バージョン5のセーブを4枠スキル装備つきのバージョン
   const second = setup(storage, { wordState: createWordBattleState(), spawnElapsed: 0 });
   assert.equal(second.controller.load().loaded, true);
   assert.deepEqual(second.store.getState().equippedSkillIds, [
-    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null, null,
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null,
   ]);
   assert.equal(second.controller.save().saved, true);
   assert.equal(JSON.parse(storage.getItem(SAVE_STORAGE_KEY)).version, SAVE_VERSION);
