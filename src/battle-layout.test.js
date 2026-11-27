@@ -193,7 +193,7 @@ test("バトルのスキル選択ボタンは4キャラクターの専用技を�
   assert.match(html, /getSkillEffectForLevel\(skillId, level, evolved\)/);
   assert.ok(Object.values(SKILL_DEFINITIONS).filter((skill) => skill.characterId === "gou-swordsman").length >= 15);
   assert.ok(Object.values(SKILL_DEFINITIONS).some((skill) => skill.id === "gou-heaven-one-flash"));
-  assert.equal(SKILL_DEFINITIONS["regen-basic"].characterId, "regen-knight");
+  assert.equal(SKILL_DEFINITIONS["regen-drain-slash"].characterId, "regen-knight");
   assert.equal(SKILL_DEFINITIONS["shadow-basic"].characterId, "shadow-blade");
   assert.equal(SKILL_DEFINITIONS["elemental-basic"].characterId, "elemental-mage");
   assert.doesNotMatch(html, /getSkillLevelDifficultyRange\(level\)/);
