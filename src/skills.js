@@ -5,7 +5,8 @@ import { getWordDifficultyLevelFromLength } from "./word-difficulty.js";
 export { SKILL_DEFINITIONS };
 
 export const SKILL_EQUIP_SLOT_COUNT = 4;
-export const PASSIVE_SKILL_EQUIP_SLOT_COUNT = 2;
+export const PASSIVE_SKILL_EQUIP_SLOT_COUNT = 1;
+const LEGACY_PASSIVE_SKILL_EQUIP_SLOT_COUNT = 2;
 export const TOTAL_SKILL_EQUIP_SLOT_COUNT =
   SKILL_EQUIP_SLOT_COUNT + PASSIVE_SKILL_EQUIP_SLOT_COUNT;
 
@@ -66,7 +67,7 @@ export function normalizeEquippedSkillIds(skillIds, characterId = DEFAULT_CHARAC
     }
   }
   const passiveCandidates = [
-    ...source.slice(SKILL_EQUIP_SLOT_COUNT, TOTAL_SKILL_EQUIP_SLOT_COUNT),
+    ...source.slice(SKILL_EQUIP_SLOT_COUNT),
     ...source.slice(0, SKILL_EQUIP_SLOT_COUNT).filter((id) => SKILL_DEFINITIONS[id]?.passive === true),
   ];
   let passiveIndex = 0;
@@ -96,7 +97,9 @@ export function isValidCharacterSkillLoadouts(loadouts) {
   return CHARACTERS.every((character) => {
     const slots = loadouts[character.id];
     return Array.isArray(slots) &&
-      (slots.length === SKILL_EQUIP_SLOT_COUNT || slots.length === TOTAL_SKILL_EQUIP_SLOT_COUNT) &&
+      (slots.length === SKILL_EQUIP_SLOT_COUNT ||
+        slots.length === TOTAL_SKILL_EQUIP_SLOT_COUNT ||
+        slots.length === SKILL_EQUIP_SLOT_COUNT + LEGACY_PASSIVE_SKILL_EQUIP_SLOT_COUNT) &&
       slots.every((id) => id === null || typeof id === "string") &&
       new Set(slots.filter((id) => id !== null)).size === slots.filter((id) => id !== null).length;
   });
