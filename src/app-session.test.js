@@ -12,6 +12,32 @@ function memoryStorage() {
   };
 }
 
+test("新規冒険では職業を選ぶまで未選択で、決定後は保存して引き継ぐ", () => {
+  const storage = memoryStorage();
+  const first = createAppSession({ storage });
+  assert.equal(first.getSelectedJobId(), null);
+  assert.equal(first.getSelectedJob(), null);
+
+  const selected = first.selectJob("swordsman");
+  assert.equal(selected.selected, true);
+  assert.equal(selected.changed, true);
+  assert.equal(selected.saved, true);
+  assert.equal(first.getSelectedJob().name, "剣士");
+
+  const restored = createAppSession({ storage });
+  assert.equal(restored.initialLoad.loaded, true);
+  assert.equal(restored.getSelectedJobId(), "swordsman");
+  assert.equal(restored.getSelectedJob().name, "剣士");
+});
+
+test("職業選択は未実装の職業や冒険中の変更を受け付けない", () => {
+  const session = createAppSession({ storage: memoryStorage() });
+  assert.equal(session.selectJob("mage").reason, "invalid-job");
+  session.dungeon.start();
+  assert.equal(session.selectJob("swordsman").reason, "not-in-town");
+  assert.equal(session.getSelectedJobId(), null);
+});
+
 test("共通セッションはホームと施設ページで同じ保存データを読み書きできる", () => {
   const storage = memoryStorage();
   const first = createAppSession({ storage });
@@ -110,10 +136,13 @@ test("旧セーブにキャラクターIDがなくても初期キャラクター
   first.save();
   const raw = JSON.parse(storage.getItem("word-fall-quest.save.v1"));
   delete raw.extra.characterId;
+  delete raw.extra.jobId;
+  raw.version = 16;
   storage.setItem("word-fall-quest.save.v1", JSON.stringify(raw));
   const restored = createAppSession({ storage });
   assert.equal(restored.initialLoad.loaded, true);
   assert.equal(restored.getSelectedCharacterId(), "gou-swordsman");
+  assert.equal(restored.getSelectedJobId(), "swordsman");
 });
 
 

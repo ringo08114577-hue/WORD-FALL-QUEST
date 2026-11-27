@@ -256,12 +256,13 @@
       flex-basis:40px; width:40px; height:40px; font-size:1.45rem;
     }
   }
+  body[data-job-check="pending"] #homePage { visibility:hidden; }
   @media(prefers-reduced-motion:reduce) {
     #homePage .home-choice-card { transition:none; }
   }
 </style>
 </head>
-<body>
+<body data-job-check="pending">
 <main id="homePage" aria-label="冒険者ホーム">
   <div class="home-heading">
     <div>
@@ -276,7 +277,8 @@
       <div class="avatar"><img id="heroAvatar" alt="主人公" hidden></div>
       <div class="home-player-copy">
         <strong>冒険者 <span id="levelValue">LV.1</span></strong>
-        <small id="currentCharacterLabel">轟剣士</small>
+        <small id="currentJobLabel">職業：未選択</small>
+        <small id="currentCharacterLabel">戦闘スタイル：轟剣士</small>
         <small id="heroMessage">次の冒険に向けて準備しよう。</small>
       </div>
     </div>
@@ -348,34 +350,40 @@
 import { createAppSession } from "./src/app-session.js";
 import { setCharacterImage } from "./src/character-images.js";
 
-setCharacterImage(document.getElementById("heroAvatar"), "hero", {
-  alt: "主人公",
-  baseUrl: document.baseURI,
-});
-
 const session = createAppSession();
-const { store, dungeon } = session;
-const result = session.returnToTown();
-const state = store.getState();
+if (!session.getSelectedJobId()) {
+  window.location.replace("./job-selection.html");
+} else {
+  setCharacterImage(document.getElementById("heroAvatar"), "hero", {
+    alt: "主人公",
+    baseUrl: document.baseURI,
+  });
 
-document.getElementById("levelValue").textContent = "LV." + state.player.level;
-document.getElementById("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
-document.getElementById("goldValue").textContent = state.inventory.gold + " G";
-document.getElementById("currentCharacterLabel").textContent = session.getSelectedCharacter().name + " ・戦闘スタイル";
-document.getElementById("heroMessage").textContent = result.restoredHp > 0
-  ? "ホームに戻ったのでHPが全回復したよ。"
-  : "次の冒険に向けて準備しよう。";
+  const { store, dungeon } = session;
+  const result = session.returnToTown();
+  const state = store.getState();
 
-window.WFQ_HOME_CONTEXT = {
-  player: {
-    level: state.player.level,
-    hp: state.player.hp,
-    maxHp: state.player.maxHp,
-  },
-  dungeonProgress: dungeon.getAllProgress(),
-};
+  document.getElementById("levelValue").textContent = "LV." + state.player.level;
+  document.getElementById("hpValue").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
+  document.getElementById("goldValue").textContent = state.inventory.gold + " G";
+  document.getElementById("currentJobLabel").textContent = "職業：" + session.getSelectedJob().name;
+  document.getElementById("currentCharacterLabel").textContent = "戦闘スタイル：" + session.getSelectedCharacter().name;
+  document.getElementById("heroMessage").textContent = result.restoredHp > 0
+    ? "ホームに戻ったのでHPが全回復したよ。"
+    : "次の冒険に向けて準備しよう。";
 
-window.addEventListener("pagehide", () => session.save());
+  window.WFQ_HOME_CONTEXT = {
+    player: {
+      level: state.player.level,
+      hp: state.player.hp,
+      maxHp: state.player.maxHp,
+    },
+    dungeonProgress: dungeon.getAllProgress(),
+  };
+
+  document.body.removeAttribute("data-job-check");
+  window.addEventListener("pagehide", () => session.save());
+}
 </script>
 <script type="module" src="./src/shared-layout.js"></script>
 </body>

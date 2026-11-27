@@ -1,6 +1,7 @@
 import { getReceptionistAdvice } from "./receptionist-advisor.js";
 import { getBlacksmithAdvice } from "./blacksmith-advisor.js";
 import { getMerchantAdvice } from "./merchant-advisor.js";
+import { isValidJobId } from "./jobs.js";
 
 const NAV_ITEMS = Object.freeze([
   { href: "./index.html", file: "index.html", icon: "🏡", label: "ホーム" },
@@ -220,11 +221,30 @@ function createNpcStage(current) {
   }
   return stage;
 }
+function needsInitialJobSelection(current) {
+  if (current === "job-selection.html") return false;
+  try {
+    const raw = window.localStorage.getItem("word-fall-quest.save.v1");
+    if (!raw) return true;
+    const snapshot = JSON.parse(raw);
+    const extra = snapshot?.extra;
+    // Saves created before the job system are migrated to the starting swordsman.
+    if (!extra || !Object.hasOwn(extra, "jobId")) return false;
+    return !isValidJobId(extra.jobId);
+  } catch {
+    return true;
+  }
+}
+
 function setupSharedLayout() {
   const main = document.querySelector("main");
   if (!main || document.querySelector(".wfq-app-shell")) return;
 
   const current = pageFile();
+  if (needsInitialJobSelection(current)) {
+    window.location.replace("./job-selection.html");
+    return;
+  }
   const moreActive = MORE_ITEMS.some(item => item.file === current);
   const facilityActive = FACILITY_ITEMS.some(item => item.file === current);
   const mobileMenuActive = moreActive || facilityActive;

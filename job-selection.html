@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101c25">
+  <title>WORD FALL QUEST | 職業選択</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Noto Sans JP", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:#0b151c;
+      color:#edf4ee;
+    }
+    * { box-sizing:border-box; }
+    body {
+      min-height:100vh;
+      margin:0;
+      padding:24px 14px calc(24px + env(safe-area-inset-bottom));
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(ellipse at 50% 0%,rgba(78,143,111,.22),transparent 34rem),
+        linear-gradient(155deg,#101f28,#0b151c 70%);
+    }
+    main { width:min(100%,560px); }
+    .eyebrow { color:#8bd4aa;font-size:.66rem;font-weight:950;letter-spacing:.18em; }
+    h1 { margin:7px 0 8px;font-size:clamp(1.7rem,6vw,2.3rem);letter-spacing:.04em; }
+    .intro { margin:0 0 20px;color:#a9bbb7;font-size:.86rem;line-height:1.8; }
+    .job-card {
+      display:grid;grid-template-columns:66px minmax(0,1fr);gap:14px;align-items:center;
+      padding:17px;border:1px solid #527b68;border-radius:15px;
+      background:linear-gradient(145deg,rgba(34,70,57,.96),rgba(20,42,43,.98));
+      box-shadow:0 12px 28px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.06);
+    }
+    .job-icon {
+      display:grid;place-items:center;width:66px;height:66px;border:1px solid #678f73;
+      border-radius:14px;background:#2c5744;font-size:2rem;
+    }
+    .job-copy { min-width:0; }
+    .job-copy h2 { margin:0 0 4px;font-size:1.18rem; }
+    .job-title { color:#d9c38f;font-size:.72rem;font-weight:850; }
+    .job-description { margin:8px 0 0;color:#bfd0c7;font-size:.76rem;line-height:1.6; }
+    .job-strength { margin:7px 0 0;color:#9cdbb2;font-size:.69rem;font-weight:850; }
+    .job-badge {
+      grid-column:1/-1;justify-self:start;padding:4px 8px;border:1px solid #63866a;
+      border-radius:99px;background:#1d493b;color:#d7f1db;font-size:.62rem;font-weight:900;
+    }
+    .confirm {
+      width:100%;min-height:50px;margin-top:13px;padding:11px 16px;
+      border:1px solid #76c695;border-radius:11px;
+      background:linear-gradient(180deg,#338d61,#236c4c);
+      color:#f4fff6;font-size:.9rem;font-weight:950;
+      box-shadow:0 6px 17px rgba(15,83,54,.25);
+    }
+    .confirm:disabled { opacity:.55; }
+    .status { min-height:1.5em;margin:10px 2px 0;color:#e6c98d;font-size:.72rem;line-height:1.5; }
+    .note {
+      margin:16px 2px 0;padding-top:13px;border-top:1px solid #293d40;
+      color:#849a96;font-size:.68rem;line-height:1.8;
+    }
+    @media(max-width:390px) {
+      body { padding-inline:11px; }
+      .job-card { grid-template-columns:54px minmax(0,1fr);gap:11px;padding:13px; }
+      .job-icon { width:54px;height:54px;font-size:1.7rem; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">ADVENTURER REGISTRATION</div>
+    <h1>最初の職業を選ぼう</h1>
+    <p class="intro">冒険を始める前に、最初の職業を決めよう。選んだ職業はセーブデータに保存され、今後追加する職業別の成長やスキルの基準になるよ。</p>
+    <section id="jobOptions" aria-label="選べる職業"></section>
+    <button class="confirm" id="confirmJob" type="button" disabled>職業を選択してください</button>
+    <p class="status" id="jobStatus" role="status" aria-live="polite"></p>
+    <p class="note">現在選択できる職業は「剣士」です。ほかの職業は、専用の能力やスキルを整えてから追加していくよ。</p>
+  </main>
+  <script type="module" src="./src/job-selection-page.js"></script>
+</body>
+</html>

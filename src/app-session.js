@@ -9,6 +9,7 @@ import { createTownController } from "./town.js";
 import { createWordBattleState, isValidSavedWordBattleState } from "./word-battle.js";
 import { SKILL_DEFINITIONS, createInitialCharacterSkillLoadouts, isValidCharacterSkillLoadouts, normalizeCharacterSkillLoadouts, normalizeEquippedSkillIds } from "./skills.js";
 import { DEFAULT_CHARACTER_ID, getCharacterDefinition, isValidCharacterId, normalizeCharacterId } from "./characters.js";
+import { DEFAULT_JOB_ID, getJobDefinition, isValidJobId } from "./jobs.js";
 import {
   isValidWeakWordEntries,
   normalizeWeakWordEntries,
@@ -25,6 +26,7 @@ function createDefaultExtraData() {
     selectedSkillId: null,
     weakWords: [],
     characterId: DEFAULT_CHARACTER_ID,
+    jobId: null,
     characterSkillLoadouts: createInitialCharacterSkillLoadouts(),
   };
 }
@@ -44,6 +46,7 @@ function isValidExtraData(value) {
     (value.selectedSkillId === undefined || value.selectedSkillId === null || typeof value.selectedSkillId === "string") &&
     (value.weakWords === undefined || isValidWeakWordEntries(value.weakWords)) &&
     (value.characterId === undefined || isValidCharacterId(value.characterId)) &&
+    (value.jobId === undefined || value.jobId === null || isValidJobId(value.jobId)) &&
     (value.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(value.characterSkillLoadouts))
   );
 }
@@ -62,6 +65,7 @@ export function createAppSession({ storage } = {}) {
       return {
         ...extraData,
         characterId,
+        jobId: extraData.jobId ?? null,
         characterSkillLoadouts: {
           ...normalizeCharacterSkillLoadouts(extraData.characterSkillLoadouts),
           [characterId]: normalizeEquippedSkillIds(store.getState().equippedSkillIds, characterId),
@@ -71,11 +75,14 @@ export function createAppSession({ storage } = {}) {
     validateExtraData: isValidExtraData,
     restoreExtraData: (value) => {
       extraData = Object.keys(value).length === 0
-        ? createDefaultExtraData()
+        ? { ...createDefaultExtraData(), jobId: DEFAULT_JOB_ID }
         : {
           ...value,
           weakWords: normalizeWeakWordEntries(value.weakWords ?? []),
           characterId: normalizeCharacterId(value.characterId),
+          // Existing saves predate profession selection, so preserve progress by
+          // assigning their current starting style to the first profession.
+          jobId: value.jobId === undefined ? DEFAULT_JOB_ID : value.jobId,
           characterSkillLoadouts: normalizeCharacterSkillLoadouts(value.characterSkillLoadouts),
         };
       if (store.getState().phase === GAME_PHASE.TITLE) {
@@ -109,6 +116,26 @@ export function createAppSession({ storage } = {}) {
       return result;
     },
     save() { return saves.save(); },
+    getSelectedJobId() {
+      return extraData.jobId ?? null;
+    },
+    getSelectedJob() {
+      return getJobDefinition(extraData.jobId);
+    },
+    selectJob(jobId) {
+      if (!isValidJobId(jobId)) return { selected: false, changed: false, reason: "invalid-job" };
+      if (store.getState().phase !== GAME_PHASE.TITLE) {
+        return { selected: false, changed: false, reason: "not-in-town" };
+      }
+      if (extraData.jobId !== null && extraData.jobId !== undefined) {
+        if (extraData.jobId !== jobId) {
+          return { selected: false, changed: false, reason: "already-selected" };
+        }
+        return { selected: true, changed: false, job: getJobDefinition(jobId), ...saves.save() };
+      }
+      extraData = { ...extraData, jobId };
+      return { selected: true, changed: true, job: getJobDefinition(jobId), ...saves.save() };
+    },
     getSelectedCharacterId() {
       return normalizeCharacterId(extraData.characterId);
     },
