@@ -756,24 +756,24 @@ test("一時停止と再開を繰り返してもHP・敵・ダンジョン進行
 });
 
 
-test("新しい4種類のスキルだけが初期化され、ゴールドで強化できる", () => {
+test("全キャラクターのスキルが初期化され、ゴールドで強化できる", () => {
   let state = createTestGameState();
   assert.ok(Object.values(state.skillLevels).every((level) => level === 1));
   assert.equal(state.skillLevels["gou-focus"], 1);
   state = gameReducer(state, { type: GAME_ACTION.ADD_GOLD, amount: 50 });
   state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "gou-focus" });
   assert.equal(state.skillLevels["gou-focus"], 2);
-  assert.equal(state.skillLevels["regen-basic"], 1);
+  assert.equal(state.skillLevels["regen-drain-slash"], 1);
   assert.equal(state.inventory.gold, 0);
 });
 
 test("スキル強化は50・100・200・400Gで上昇し、Lv.5が上限", () => {
   let state = gameReducer(createTestGameState(), { type: GAME_ACTION.ADD_GOLD, amount: 750 });
   for (let expectedLevel = 2; expectedLevel <= 5; expectedLevel += 1) {
-    state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-basic" });
-    assert.equal(state.skillLevels["regen-basic"], expectedLevel);
+    state = gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-drain-slash" });
+    assert.equal(state.skillLevels["regen-drain-slash"], expectedLevel);
   }
-  assert.equal(gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-basic" }), state);
+  assert.equal(gameReducer(state, { type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-drain-slash" }), state);
   assert.equal(state.inventory.gold, 0);
 });
 
@@ -806,21 +806,25 @@ test("4キャラクターの専用技を初期装備し、他キャラの技は�
   });
   assert.equal(duplicate, state);
   const wrongClass = gameReducer(state, {
-    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: "regen-basic", characterId: "gou-swordsman",
+    type: GAME_ACTION.EQUIP_SKILL, slotIndex: 0, skillId: "regen-drain-slash", characterId: "gou-swordsman",
   });
   assert.equal(wrongClass, state);
   const wrongLoadout = gameReducer(state, {
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-    skillIds: ["regen-basic", null, null, null, null, null],
+    skillIds: ["regen-drain-slash", null, null, null, null, null],
     characterId: "gou-swordsman",
   });
   assert.equal(wrongLoadout, state);
+  const regenSkills = [
+    "regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis",
+    "regen-eternal-vessel", null,
+  ];
   const regenLoadout = gameReducer(state, {
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-    skillIds: ["regen-basic", null, null, null, null, null],
+    skillIds: regenSkills,
     characterId: "regen-knight",
   });
-  assert.deepEqual(regenLoadout.equippedSkillIds, ["regen-basic", null, null, null, null, null]);
+  assert.deepEqual(regenLoadout.equippedSkillIds, regenSkills);
   const withPassive = gameReducer(state, {
     type: GAME_ACTION.EQUIP_SKILL, slotIndex: 4, skillId: "gou-destruction", characterId: "gou-swordsman",
   });
