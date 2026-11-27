@@ -1,5 +1,11 @@
-/** Content catalog: Japanese prompts, English spellings, and difficulty (1-5, based only on spelling length). */
-export const WORD_CHALLENGES = Object.freeze([
+/**
+ * Existing vocabulary remains first so saved challenge indexes stay compatible.
+ * Target 1400 entries are appended in source order; overlapping words keep their
+ * existing IDs but receive the Target 1400 Japanese meaning and source number.
+ */
+import { TARGET1400_WORDS } from "./target1400-words.js";
+
+const EXISTING_WORD_CHALLENGES = Object.freeze([
   Object.freeze({ id: "apple", japanese: "りんご", word: "APPLE", difficulty: 2, partOfSpeech: "noun" }),
   Object.freeze({ id: "dog", japanese: "いぬ", word: "DOG", difficulty: 1, partOfSpeech: "noun" }),
   Object.freeze({ id: "cat", japanese: "ねこ", word: "CAT", difficulty: 1, partOfSpeech: "noun" }),
@@ -254,4 +260,31 @@ export const WORD_CHALLENGES = Object.freeze([
   Object.freeze({ id: "therefore", japanese: "したがって", word: "THEREFORE", difficulty: 5, partOfSpeech: "adverb" }),
   Object.freeze({ id: "unless", japanese: "～でない限り", word: "UNLESS", difficulty: 2, partOfSpeech: "conjunction" }),
   Object.freeze({ id: "whether", japanese: "～かどうか", word: "WHETHER", difficulty: 3, partOfSpeech: "conjunction" }),
+]);
+
+const TARGET1400_BY_WORD = new Map(
+  TARGET1400_WORDS.map((challenge) => [challenge.word, challenge]),
+);
+const EXISTING_WORD_SET = new Set(
+  EXISTING_WORD_CHALLENGES.map((challenge) => challenge.word),
+);
+
+const UPDATED_EXISTING_WORDS = EXISTING_WORD_CHALLENGES.map((challenge) => {
+  const targetEntry = TARGET1400_BY_WORD.get(challenge.word);
+  if (!targetEntry) return challenge;
+  return Object.freeze({
+    ...challenge,
+    japanese: targetEntry.japanese,
+    difficulty: targetEntry.difficulty,
+    targetNumber: targetEntry.targetNumber,
+  });
+});
+
+const NEW_TARGET_WORDS = TARGET1400_WORDS.filter(
+  (challenge) => !EXISTING_WORD_SET.has(challenge.word),
+);
+
+export const WORD_CHALLENGES = Object.freeze([
+  ...UPDATED_EXISTING_WORDS,
+  ...NEW_TARGET_WORDS,
 ]);
