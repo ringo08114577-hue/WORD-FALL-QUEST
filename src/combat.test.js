@@ -729,11 +729,11 @@ test("吸命斬はダメージの一部を回復し、HP上限を超えた分を
 
   assert.equal(result.ignored, false);
   assert.equal(result.damage, 18);
-  assert.equal(result.regenDrained, 10);
+  assert.equal(result.regenDrained, 15);
   assert.equal(result.regenHpHealed, 8);
-  assert.equal(result.regenOverHpGained, 2);
+  assert.equal(result.regenOverHpGained, 7);
   assert.equal(store.getState().player.hp, 100);
-  assert.equal(resource.value.overHp, 2);
+  assert.equal(resource.value.overHp, 7);
 });
 
 test("オーバーHPを蓄えていると生命断ちの威力が上がる", () => {
@@ -749,6 +749,34 @@ test("オーバーHPを蓄えていると生命断ちの威力が上がる", () 
   assert.equal(result.damage, 29);
   assert.match(result.message, /オーバーHPで威力/);
   assert.equal(resource.value.overHp, 100);
+});
+
+test("オーバーHPが最大HPの2倍まで貯まると生命断ちの威力もさらに上がる", () => {
+  const { controller } = createRegenTestBattle({ overHp: 200 });
+  const result = controller.handle({
+    eventId: "regen-overhp-double-strike",
+    type: "word-complete",
+    skillId: "regen-life-breaker",
+    wordDifficulty: 2,
+  });
+  assert.equal(result.ignored, false);
+  assert.ok(result.damage > 29);
+  assert.match(result.message, /オーバーHPで威力/);
+});
+
+test("再生の祈りは序盤のLv.1から最大HPの30%を回復する", () => {
+  const { store, controller } = createRegenTestBattle();
+  store.dispatch({ type: GAME_ACTION.DAMAGE_PLAYER, amount: 70 });
+  assert.equal(store.getState().player.hp, 30);
+  const result = controller.handle({
+    eventId: "regen-prayer-early-heal",
+    type: "word-complete",
+    skillId: "regen-prayer",
+    wordDifficulty: 2,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(store.getState().player.hp, 60);
+  assert.match(result.message, /HPを 30 回復/);
 });
 
 test("敵の反撃はオーバーHPを先に削り、残りだけ通常HPへ与える", () => {
@@ -808,6 +836,6 @@ test("生命蓄積はオーバーHPを直接増やすが、専用上限を超え
   });
 
   assert.equal(result.ignored, false);
-  assert.equal(result.regenOverHpGained, 5);
-  assert.equal(resource.value.overHp, 115);
+  assert.equal(result.regenOverHpGained, 25);
+  assert.equal(resource.value.overHp, 135);
 });
