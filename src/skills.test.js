@@ -129,13 +129,22 @@ test("技ごとの単語レベルは固定され、スキル強化では変化�
     type: "gouki-consume-all", bonusPerStack: 0.4, breakGuard: true,
   });
   assert.deepEqual(getSkillEffectForLevel("regen-drain-slash", 1), {
-    type: "regen-drain-attack", damageMultiplier: 0.9, drainRatio: 0.6,
+    type: "regen-drain-attack", damageMultiplier: 0.9, drainRatio: 0.85,
   });
   assert.deepEqual(getSkillEffectForLevel("regen-life-breaker", 1), {
     type: "regen-overhp-attack", damageMultiplier: 1.05, bonusAtFullOverHp: 0.35,
   });
+  assert.deepEqual(getSkillEffectForLevel("regen-prayer", 1), {
+    type: "heal", amount: 30, hpRatio: 0.3,
+  });
+  assert.deepEqual(getSkillEffectForLevel("regen-holy-drain", 1), {
+    type: "regen-drain-attack", damageMultiplier: 1.3, drainRatio: 0.95,
+  });
+  assert.deepEqual(getSkillEffectForLevel("regen-overflow", 1), {
+    type: "regen-overhp-gain", amount: 25,
+  });
   assert.deepEqual(getSkillEffectForLevel("regen-eternal-vessel", 5), {
-    type: "regen-overhp-cap", capMultiplier: 1.5,
+    type: "regen-overhp-cap", capMultiplier: 2,
   });
 });
 
