@@ -53,7 +53,10 @@ test("再生騎士のドレイン・回復・オーバーHP技が専用スキル
   assert.equal(SKILL_DEFINITIONS["regen-life-breaker"].effect.type, "regen-overhp-attack");
   assert.equal(SKILL_DEFINITIONS["regen-eternal-vessel"].passive, true);
   assert.equal(SKILL_DEFINITIONS["regen-vampiric-will"].passive, true);
-  assert.deepEqual(getSkillsForCharacter("shadow-blade").map(([id]) => id), ["shadow-basic"]);
+  assert.deepEqual(getSkillsForCharacter("shadow-blade").map(([id]) => id), [
+    "shadow-basic", "shadow-pierce", "shadow-flurry", "shadow-focus",
+    "shadow-finisher", "shadow-mastery",
+  ]);
   assert.deepEqual(getSkillsForCharacter("elemental-mage").map(([id]) => id), ["elemental-basic"]);
   assert.deepEqual(getSkillsForCharacter("unknown"), []);
   assert.equal(isSkillAvailableForCharacter("gou-focus", "gou-swordsman"), true);
@@ -73,7 +76,9 @@ test("通常技4枠とパッシブ専用1枠をキャラクターごとに持つ
     "regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis",
     "regen-eternal-vessel",
   ]);
-  assert.deepEqual(createInitialEquippedSkillIds("shadow-blade"), ["shadow-basic", null, null, null, null]);
+  assert.deepEqual(createInitialEquippedSkillIds("shadow-blade"), [
+    "shadow-basic", "shadow-pierce", "shadow-flurry", "shadow-focus", "shadow-mastery",
+  ]);
   assert.deepEqual(createInitialEquippedSkillIds("elemental-mage"), ["elemental-basic", null, null, null, null]);
 
   const loadouts = createInitialCharacterSkillLoadouts();
@@ -146,6 +151,15 @@ test("技ごとの単語レベルは固定され、スキル強化では変化�
   assert.deepEqual(getSkillEffectForLevel("regen-eternal-vessel", 5), {
     type: "regen-overhp-cap", capMultiplier: 2,
   });
+  assert.deepEqual(getSkillEffectForLevel("shadow-basic", 1), {
+    type: "shadow-attack", damageMultiplier: 1, criticalMultiplier: 2,
+    heavyMultiplier: 3, baseHeavyRate: 0.05, hitCount: 1,
+  });
+  assert.equal(getSkillEffectForLevel("shadow-pierce", 1).criticalMultiplier, 2.2);
+  assert.equal(getSkillEffectForLevel("shadow-flurry", 1).hitCount, 3);
+  assert.equal(getSkillEffectForLevel("shadow-focus", 1).criticalRateBonus, 15);
+  assert.equal(getSkillEffectForLevel("shadow-mastery", 1).heavyRateBonus, 0.02);
+  assert.equal(getSkillEffectForLevel("shadow-finisher", 1).baseHeavyRate, 0.35);
 });
 
 test("スキルレベルの初期化・検証・旧データ補完が正しく動作する", () => {
