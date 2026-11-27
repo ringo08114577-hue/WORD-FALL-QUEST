@@ -84,8 +84,9 @@ test("通常技4枠とパッシブ専用1枠をキャラクターごとに持つ
   const loadouts = createInitialCharacterSkillLoadouts();
   assert.equal(isValidCharacterSkillLoadouts(loadouts), true);
   assert.deepEqual(normalizeCharacterSkillLoadouts(loadouts), loadouts);
-  assert.deepEqual(normalizeEquippedSkillIds(["gou-focus", null, null, null], "shadow-blade"),
-    ["shadow-basic", null, null, null, null]);
+  assert.deepEqual(normalizeEquippedSkillIds(["gou-focus", null, null, null], "shadow-blade"), [
+    "shadow-basic", "shadow-pierce", "shadow-flurry", "shadow-focus", "shadow-mastery",
+  ]);
   assert.equal(isValidEquippedSkillIds(["gou-focus", null, null, null, null], "gou-swordsman"), true);
   assert.equal(isValidEquippedSkillIds(["gou-focus", null, null, null, null], "regen-knight"), false);
   const legacyLoadouts = Object.fromEntries(Object.keys(loadouts).map((id) => [
