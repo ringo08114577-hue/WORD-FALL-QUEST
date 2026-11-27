@@ -154,8 +154,74 @@ export const SKILL_DEFINITIONS = Object.freeze({
         highThreshold: 50,
       },
     }),
+  // 再生騎士：ドレイン・回復・オーバーHP蓄積を軸にした耐久型。
+  "regen-drain-slash": defineSkill("regen-drain-slash", "吸命斬", OTHER.regen,
+    "攻撃で与えたダメージの一部を吸収。HPが満タンなら、あふれた回復分がオーバーHPになる。", {
+      category: "attack", initiallyEquipped: true, minWordLength: 3, maxWordLength: 4,
+      effect: {
+        type: "regen-drain-attack",
+        damageMultiplierByLevel: LEVELS([0.9, 0.95, 1, 1.05, 1.1]),
+        drainRatioByLevel: LEVELS([0.6, 0.65, 0.7, 0.78, 0.85]),
+      },
+    }),
+  "regen-life-breaker": defineSkill("regen-life-breaker", "生命断ち", OTHER.regen,
+    "蓄えたオーバーHPが多いほど威力が上昇する。再生騎士の主力攻撃。", {
+      category: "attack", initiallyEquipped: true, minWordLength: 5, maxWordLength: 6,
+      effect: {
+        type: "regen-overhp-attack",
+        damageMultiplierByLevel: LEVELS([1.05, 1.1, 1.15, 1.25, 1.35]),
+        bonusAtFullOverHpByLevel: LEVELS([0.35, 0.45, 0.55, 0.65, 0.8]),
+      },
+    }),
+  "regen-prayer": defineSkill("regen-prayer", "再生の祈り", OTHER.regen,
+    "自身のHPを大きく回復する。ピンチから立て直す基本回復技。", {
+      category: "heal", initiallyEquipped: true, minWordLength: 5, maxWordLength: 6,
+      effect: {
+        type: "heal",
+        amountByLevel: LEVELS([15, 20, 25, 30, 35]),
+        hpRatioByLevel: LEVELS([0.15, 0.18, 0.21, 0.24, 0.27]),
+      },
+    }),
+  "regen-aegis": defineSkill("regen-aegis", "再生装甲", OTHER.regen,
+    "再生力を防御に変換し、敵の攻撃を複数回軽減する。", {
+      category: "defense", initiallyEquipped: true, minWordLength: 5, maxWordLength: 6,
+      effect: { type: "defense", bonusByLevel: LEVELS([25, 30, 35, 42, 50]), hits: 2 },
+    }),
+  "regen-holy-drain": defineSkill("regen-holy-drain", "聖血の一撃", OTHER.regen,
+    "重い一撃と同時に大量のHPを吸収する上位ドレイン技。", {
+      category: "attack", minWordLength: 7, maxWordLength: 8,
+      effect: {
+        type: "regen-drain-attack",
+        damageMultiplierByLevel: LEVELS([1.3, 1.4, 1.5, 1.65, 1.8]),
+        drainRatioByLevel: LEVELS([0.65, 0.7, 0.75, 0.85, 0.95]),
+      },
+    }),
+  "regen-overflow": defineSkill("regen-overflow", "生命蓄積", OTHER.regen,
+    "攻撃せずにオーバーHPを直接蓄える。強力な一撃を放つ前の準備に使う。", {
+      category: "support", minWordLength: 5, maxWordLength: 6,
+      effect: { type: "regen-overhp-gain", amountByLevel: LEVELS([15, 20, 25, 32, 40]) },
+    }),
+  "regen-immortal-strike": defineSkill("regen-immortal-strike", "不滅崩し", OTHER.regen,
+    "オーバーHPを力に変えて放つ大技。蓄積量が多いほど大幅に威力が上がる。", {
+      category: "attack", minWordLength: 8, maxWordLength: 10,
+      effect: {
+        type: "regen-overhp-attack",
+        damageMultiplierByLevel: LEVELS([1.35, 1.5, 1.65, 1.8, 2]),
+        bonusAtFullOverHpByLevel: LEVELS([0.5, 0.6, 0.7, 0.85, 1]),
+      },
+    }),
+  "regen-eternal-vessel": defineSkill("regen-eternal-vessel", "不滅の器", OTHER.regen,
+    "パッシブ。オーバーHPの最大蓄積量を増やす。レベル5で通常最大HPの1.5倍まで蓄積可能。", {
+      category: "passive", passive: true, initiallyEquipped: true,
+      effect: { type: "regen-overhp-cap", capMultiplierByLevel: LEVELS([1.15, 1.2, 1.3, 1.4, 1.5]) },
+    }),
+  "regen-vampiric-will": defineSkill("regen-vampiric-will", "吸命の極意", OTHER.regen,
+    "パッシブ。ドレイン攻撃のHP吸収率を上げ、オーバーHPを蓄えやすくする。", {
+      category: "passive", passive: true,
+      effect: { type: "regen-drain-boost", drainRatioBonusByLevel: LEVELS([0.05, 0.08, 0.1, 0.13, 0.16]) },
+    }),
   // Other characters keep their temporary skills until their own systems are built.
-  "regen-basic": defineSkill("regen-basic", "い", OTHER.regen, "再生騎士の仮スキル。固有技を追加するための初期枠。", { initiallyEquipped: true }),
+  "shadow-basic": defineSkill("shadow-basic", "う", OTHER.shadow, "影刃の仮スキル。固有技を追加するための初期枠。", { initiallyEquipped: true }),
   "shadow-basic": defineSkill("shadow-basic", "う", OTHER.shadow, "影刃の仮スキル。固有技を追加するための初期枠。", { initiallyEquipped: true }),
   "elemental-basic": defineSkill("elemental-basic", "え", OTHER.elemental, "元素術師の仮スキル。固有技を追加するための初期枠。", { initiallyEquipped: true }),
 });
