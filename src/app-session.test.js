@@ -176,23 +176,23 @@ test("キャラクターごとのスキル装備は切り替え後も別々に�
 
   const switched = session.selectCharacter("regen-knight");
   assert.equal(switched.selected, true);
-  assert.deepEqual(session.store.getState().equippedSkillIds, ["regen-basic", null, null, null, null, null]);
+  assert.deepEqual(session.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel", null]);
 
   session.store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 50 });
-  session.store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-basic" });
-  assert.equal(session.store.getState().skillLevels["regen-basic"], 2);
+  session.store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-drain-slash" });
+  assert.equal(session.store.getState().skillLevels["regen-drain-slash"], 2);
   assert.equal(session.save().saved, true);
 
   const restored = createAppSession({ storage });
   assert.equal(restored.initialLoad.loaded, true);
   assert.equal(restored.getSelectedCharacterId(), "regen-knight");
-  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-basic", null, null, null, null, null]);
+  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel", null]);
 
   restored.selectCharacter("gou-swordsman");
   assert.deepEqual(restored.store.getState().equippedSkillIds, [
     "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-destruction", null,
   ]);
   restored.selectCharacter("regen-knight");
-  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-basic", null, null, null, null, null]);
-  assert.equal(restored.store.getState().skillLevels["regen-basic"], 2);
+  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel", null]);
+  assert.equal(restored.store.getState().skillLevels["regen-drain-slash"], 2);
 });
