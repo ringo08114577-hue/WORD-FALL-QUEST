@@ -4,6 +4,8 @@ import { SKILL_DEFINITIONS } from "./skills.js";
 import { readFileSync } from "node:fs";
 
 const html = readFileSync(new URL("../battle.html", import.meta.url), "utf8");
+const statusHtml = readFileSync(new URL("../status.html", import.meta.url), "utf8");
+const statusPage = readFileSync(new URL("./status-page.js", import.meta.url), "utf8");
 
 test("battle page gives English gameplay more than half of the desktop and tablet width", () => {
   assert.match(html, /class="battle-layout"/);
@@ -199,8 +201,12 @@ test("バトルのスキル選択ボタンは4キャラクターの専用技を�
   assert.doesNotMatch(html, /getSkillLevelDifficultyRange\(level\)/);
 });
 
-test("冒険者ステータスは通常4枠とパッシブ1枠を案内する", () => {
-  assert.match(html, /通常スキル4枠とパッシブスキル1枠/);
+test("冒険者ステータスは通常4枠とパッシブ1枠を表示し、選択肢を分ける", () => {
+  assert.match(statusHtml, /通常スキル4枠とパッシブスキル1枠/);
+  assert.match(statusHtml, /スキル装備（通常4枠・パッシブ1枠）/);
+  assert.match(statusPage, /PASSIVE_SKILL_EQUIP_SLOT_COUNT|SKILL_EQUIP_SLOT_COUNT/);
+  assert.match(statusPage, /パッシブスキル（1枠）/);
+  assert.match(statusPage, /if \(\(skill\.passive === true\) !== isPassiveSlot\) continue/);
 });
 
 test("battle status displays the selected dungeon name from the saved controller state", () => {
