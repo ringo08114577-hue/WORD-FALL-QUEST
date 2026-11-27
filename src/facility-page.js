@@ -7,7 +7,7 @@ import { createCraftingController, CRAFTING_RECIPES } from "./crafting.js";
 import {
   SKILL_DEFINITIONS, SKILL_CATEGORY_LABELS, SKILL_EQUIP_SLOT_COUNT,
   PASSIVE_SKILL_EQUIP_SLOT_COUNT, getSkillsForCharacter, getSkillUpgradeCost,
-  getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillEffectLabel,
+  getSkillWordDifficultyRange, getSkillEffectForLevel, getSkillEffectLabel, getSkillCalculationText,
   getSkillEvolutionRecipe, getSkillDisplayName,
 } from "./skills.js";
 
@@ -270,7 +270,7 @@ function renderSkills(state) {
   const passivePanel = node("section", "subpanel");
   passivePanel.append(node("h2", "", "パッシブ専用枠"));
   passivePanel.append(node("p", "muted",
-    "通常スキル枠とは別に、パッシブ技を2つまで装備できるよ。装備中は常に効果が発動するよ。"));
+    "通常スキル枠とは別に、パッシブ技を1つ装備できるよ。装備中は常に効果が発動するよ。"));
   appendSkillSlots(passivePanel, passiveSkills, SKILL_EQUIP_SLOT_COUNT,
     PASSIVE_SKILL_EQUIP_SLOT_COUNT, "パッシブ枠");
   root.append(passivePanel);
@@ -284,6 +284,7 @@ function renderSkills(state) {
     const effect = getSkillEffectForLevel(skillId, level, evolved);
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
     const effectText = getSkillEffectLabel(effect);
+    const calculationText = getSkillCalculationText(skillId, level, evolved);
     const upgradeCost = getSkillUpgradeCost(skillId, level);
     const upgradeButton = node("button", upgradeCost === null ? "secondary-button" : "primary-button",
       upgradeCost === null ? "最大レベル" : "スキルを強化（" + upgradeCost + "G）");
@@ -307,8 +308,10 @@ function renderSkills(state) {
     const card = node("article", "offer-card");
     card.append(node("strong", "offer-name",
       displayName + " · Lv." + level + " · " + category + (evolved ? " · 進化済み" : "")));
+    card.append(node("p", "offer-description", skill.description));
     card.append(node("p", "offer-description",
       "単語難易度 " + range.min + "〜" + range.max + " · " + effectText));
+    card.append(node("p", "offer-calculation", "計算式：" + calculationText));
     card.append(node("p", "offer-meta", skill.passive
       ? "パッシブ：装備中は常に効果が発動するよ。"
       : evolved
