@@ -375,7 +375,7 @@ export function getSkillCalculationText(skillId, currentLevel, evolved = false) 
       return "轟気獲得＝ceil(" + effect.amount + " × 次回轟気獲得倍率)";
     case "gouki-low-hp-charge":
       return "轟気獲得＝ceil((" + effect.baseAmount +
-        " ＋ floor(HP不足率 × " + effect.missingHpBonus + ")) × 次回轟気獲得倍率)";
+        " ＋ floor((1 − 現在HP÷最大HP) × " + effect.missingHpBonus + ")) × 次回轟気獲得倍率)";
     case "gouki-attack":
       return commonDamage("轟気技倍率 ×" + numberOf(effect.damageMultiplier)) +
         " ／ 追加で轟気 +" + effect.gainAmount + "（次回獲得倍率の影響あり）";
@@ -393,8 +393,7 @@ export function getSkillCalculationText(skillId, currentLevel, evolved = false) 
       return "轟気を " + effect.consumeAmount + " 個消費 → 防御力 +" +
         effect.bonus + " が敵の攻撃 " + effect.hits + " 回に適用";
     case "gouki-limit-break":
-      return "次に獲得する轟気＝ceil(次回の基本獲得量 ×" +
-        numberOf(effect.multiplier) + ")";
+      return "次回轟気獲得倍率＝max(現在設定中の倍率, " + numberOf(effect.multiplier) + ")。次の獲得量＝ceil(基本獲得量 × 次回倍率)";
     case "gouki-passive":
       if (effect.passiveKind === "breaker") {
         return "轟気 " + effect.threshold + " 個以上かつボス戦：攻撃ダメージ ×" +
@@ -405,8 +404,8 @@ export function getSkillCalculationText(skillId, currentLevel, evolved = false) 
         " 個以上：攻撃ダメージ ×" + numberOf(effect.highDamageMultiplier);
     case "regen-drain-attack":
       return commonDamage("技倍率 ×" + numberOf(effect.damageMultiplier)) +
-        " ／ 吸収HP＝max(1, floor(与ダメージ ×" +
-        Math.round(effect.drainRatio * 100) + "%))。余剰分はオーバーHPへ（吸収率上限125%）";
+        " ／ 吸収HP＝max(1, floor(与ダメージ × min(125%, " +
+        Math.round(effect.drainRatio * 100) + "% ＋ パッシブ加算)))。余剰分はオーバーHPへ";
     case "regen-overhp-attack":
       return commonDamage(
         "技倍率 ×" + numberOf(effect.damageMultiplier),
@@ -434,7 +433,7 @@ export function getSkillCalculationText(skillId, currentLevel, evolved = false) 
         numberOf(effect.criticalMultiplier) + "／重撃×" +
         numberOf(effect.heavyMultiplier) + "（重撃は会心倍率と重複しない）" +
         (effect.hitCount > 1 ? "。全ヒットのダメージを合計" : "") +
-        "。会心時のみ重撃を追加抽選";
+        "。会心率=min(80%, 基本5%＋正解連続数×5%＋一時補正)、会心時のみ重撃を追加抽選。重撃率=min(95%, 技基本率＋会心率上昇分＋パッシブ加算)";
     case "shadow-focus":
       return "次の攻撃の会心率＝min(80%, 現在会心率 ＋" +
         effect.criticalRateBonus + "%)。通常会心率は正解連続数で5〜60%";
