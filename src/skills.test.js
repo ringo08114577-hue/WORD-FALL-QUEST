@@ -176,7 +176,7 @@ test("すべての技に現在レベル・進化状態に対応した計算式�
   assert.ok(getSkillCalculationText("gou-focus", 1).includes("轟気を +"));
   assert.match(getSkillCalculationText("regen-prayer", 1), /回復/);
   assert.match(getSkillCalculationText("shadow-flurry", 1), /これを 3 回攻撃/);
-  assert.match(getSkillCalculationText("shadow-mastery", 1), /重撃率/);
+  assert.match(getSkillCalculationText("shadow-mastery", 1), /重撃になる確率/);
   assert.match(getSkillCalculationText("shadow-basic", 5, true), /会心の代わりに発動/);
 });
 
