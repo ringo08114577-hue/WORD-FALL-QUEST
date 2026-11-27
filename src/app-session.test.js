@@ -22,17 +22,35 @@ test("新規冒険では職業を選ぶまで未選択で、決定後は保存�
   assert.equal(selected.selected, true);
   assert.equal(selected.changed, true);
   assert.equal(selected.saved, true);
-  assert.equal(first.getSelectedJob().name, "剣士");
+  assert.equal(first.getSelectedJob().name, "轟剣士");
 
   const restored = createAppSession({ storage });
   assert.equal(restored.initialLoad.loaded, true);
   assert.equal(restored.getSelectedJobId(), "swordsman");
-  assert.equal(restored.getSelectedJob().name, "剣士");
+  assert.equal(restored.getSelectedJob().name, "轟剣士");
+});
+
+test("4つの職業を選ぶと対応する戦闘スタイルも設定される", () => {
+  const cases = [
+    ["swordsman", "gou-swordsman", "轟剣士"],
+    ["regen-knight", "regen-knight", "再生騎士"],
+    ["shadow-blade", "shadow-blade", "影刃"],
+    ["elemental-mage", "elemental-mage", "元素術師"],
+  ];
+  for (const [jobId, characterId, name] of cases) {
+    const session = createAppSession({ storage: memoryStorage() });
+    const result = session.selectJob(jobId);
+    assert.equal(result.selected, true);
+    assert.equal(result.saved, true);
+    assert.equal(session.getSelectedJob().name, name);
+    assert.equal(session.getSelectedCharacterId(), characterId);
+    assert.equal(session.getSelectedCharacter().name, name);
+  }
 });
 
 test("職業選択は未実装の職業や冒険中の変更を受け付けない", () => {
   const session = createAppSession({ storage: memoryStorage() });
-  assert.equal(session.selectJob("mage").reason, "invalid-job");
+  assert.equal(session.selectJob("cleric").reason, "invalid-job");
   session.dungeon.start();
   assert.equal(session.selectJob("swordsman").reason, "not-in-town");
   assert.equal(session.getSelectedJobId(), null);
