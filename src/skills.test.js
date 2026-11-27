@@ -173,7 +173,7 @@ test("すべての技に現在レベル・進化状態に対応した計算式�
     assert.notEqual(formula, "計算式を表示できません。", skillId);
     assert.notEqual(evolvedFormula, "計算式を表示できません。", skillId);
   }
-  assert.match(getSkillCalculationText("gou-focus", 1), /轟気を \+/);
+  assert.ok(getSkillCalculationText("gou-focus", 1).includes("轟気を +"));
   assert.match(getSkillCalculationText("regen-prayer", 1), /回復/);
   assert.match(getSkillCalculationText("shadow-flurry", 1), /これを 3 回攻撃/);
   assert.match(getSkillCalculationText("shadow-mastery", 1), /重撃率/);
