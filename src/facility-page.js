@@ -283,8 +283,7 @@ function renderSkills(state) {
     const range = getSkillWordDifficultyRange(skillId, level);
     const effect = getSkillEffectForLevel(skillId, level, evolved);
     const category = SKILL_CATEGORY_LABELS[skill.category] ?? "スキル";
-    const effectText = getSkillEffectLabel(effect);
-    const calculationText = getSkillCalculationText(skillId, level, evolved);
+      const calculationText = getSkillCalculationText(skillId, level, evolved);
     const upgradeCost = getSkillUpgradeCost(skillId, level);
     const upgradeButton = node("button", upgradeCost === null ? "secondary-button" : "primary-button",
       upgradeCost === null ? "最大レベル" : "スキルを強化（" + upgradeCost + "G）");
@@ -310,8 +309,8 @@ function renderSkills(state) {
       displayName + " · Lv." + level + " · " + category + (evolved ? " · 進化済み" : "")));
     card.append(node("p", "offer-description", skill.description));
     card.append(node("p", "offer-description",
-      "単語難易度 " + range.min + "〜" + range.max + " · " + effectText));
-    card.append(node("p", "offer-calculation", "計算式：" + calculationText));
+      "単語難易度 Lv." + range.min + "〜Lv." + range.max));
+    card.append(node("p", "offer-calculation", "計算：" + calculationText));
     card.append(node("p", "offer-meta", skill.passive
       ? "パッシブ：装備中は常に効果が発動するよ。"
       : evolved
