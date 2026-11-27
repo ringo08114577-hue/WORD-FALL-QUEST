@@ -64,25 +64,33 @@ test("再生騎士のドレイン・回復・オーバーHP技が専用スキル
   assert.equal(getSkillDefinition("unknown"), null);
 });
 
-test("通常技4枠とパッシブ専用2枠をキャラクターごとに持つ", () => {
-  assert.equal(PASSIVE_SKILL_EQUIP_SLOT_COUNT, 2);
+test("通常技4枠とパッシブ専用1枠をキャラクターごとに持つ", () => {
+  assert.equal(PASSIVE_SKILL_EQUIP_SLOT_COUNT, 1);
   assert.deepEqual(createInitialEquippedSkillIds(), [
-    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null, null,
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null,
   ]);
   assert.deepEqual(createInitialEquippedSkillIds("regen-knight"), [
     "regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis",
-    "regen-eternal-vessel", null,
+    "regen-eternal-vessel",
   ]);
-  assert.deepEqual(createInitialEquippedSkillIds("shadow-blade"), ["shadow-basic", null, null, null, null, null]);
-  assert.deepEqual(createInitialEquippedSkillIds("elemental-mage"), ["elemental-basic", null, null, null, null, null]);
+  assert.deepEqual(createInitialEquippedSkillIds("shadow-blade"), ["shadow-basic", null, null, null, null]);
+  assert.deepEqual(createInitialEquippedSkillIds("elemental-mage"), ["elemental-basic", null, null, null, null]);
 
   const loadouts = createInitialCharacterSkillLoadouts();
   assert.equal(isValidCharacterSkillLoadouts(loadouts), true);
   assert.deepEqual(normalizeCharacterSkillLoadouts(loadouts), loadouts);
   assert.deepEqual(normalizeEquippedSkillIds(["gou-focus", null, null, null], "shadow-blade"),
-    ["shadow-basic", null, null, null, null, null]);
-  assert.equal(isValidEquippedSkillIds(["gou-focus", null, null, null, null, null], "gou-swordsman"), true);
-  assert.equal(isValidEquippedSkillIds(["gou-focus", null, null, null, null, null], "regen-knight"), false);
+    ["shadow-basic", null, null, null, null]);
+  assert.equal(isValidEquippedSkillIds(["gou-focus", null, null, null, null], "gou-swordsman"), true);
+  assert.equal(isValidEquippedSkillIds(["gou-focus", null, null, null, null], "regen-knight"), false);
+  const legacyLoadouts = Object.fromEntries(Object.keys(loadouts).map((id) => [
+    id, [...loadouts[id], id === "gou-swordsman" ? "gou-resonance" : null],
+  ]));
+  assert.equal(isValidCharacterSkillLoadouts(legacyLoadouts), true);
+  assert.deepEqual(
+    normalizeCharacterSkillLoadouts(legacyLoadouts)["gou-swordsman"],
+    ["gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-resonance"],
+  );
 });
 
 test("旧装備データのパッシブ技を専用枠へ移動し、通常枠には混ぜない", () => {
@@ -91,12 +99,15 @@ test("旧装備データのパッシブ技を専用枠へ移動し、通常枠�
     "gou-swordsman",
   );
   assert.deepEqual(migrated, [
-    "gou-focus", null, "gou-slash", null, "gou-destruction", "gou-resonance",
+    "gou-focus", null, "gou-slash", null, "gou-destruction",
   ]);
   assert.equal(isValidEquippedSkillIds(migrated, "gou-swordsman"), true);
   assert.equal(isValidEquippedSkillIds([
-    "gou-focus", "gou-destruction", null, null, "gou-resonance", null,
+    "gou-focus", "gou-destruction", null, null, "gou-resonance",
   ], "gou-swordsman"), false);
+  assert.deepEqual(normalizeEquippedSkillIds([
+    "gou-focus", null, null, null, null, "gou-resonance",
+  ], "gou-swordsman"), ["gou-focus", null, null, null, "gou-resonance"]);
 });
 
 test("技ごとの単語レベルは固定され、スキル強化では変化しない", () => {
