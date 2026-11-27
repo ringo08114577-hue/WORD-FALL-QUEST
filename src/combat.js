@@ -274,7 +274,7 @@ export function resolveCombatEvent(gameState, event) {
   let regenOverHpGained = 0;
   if (isRegenKnight && skillEffect?.type === "regen-overhp-attack") {
     const maxHp = Math.max(1, gameState.player.maxHp);
-    const overHpRatio = Math.min(1.5, regenState.overHp / maxHp);
+    const overHpRatio = Math.min(2, regenState.overHp / maxHp);
     regenAttackMultiplier = 1 + overHpRatio * skillEffect.bonusAtFullOverHp;
   }
   if (isRegenKnight && skillEffect?.type === "regen-drain-attack") {
