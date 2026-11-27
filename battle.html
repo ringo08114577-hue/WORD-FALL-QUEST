@@ -706,7 +706,14 @@
           (wordState.phase === "word-complete");
         selectedCharacterId = normalizeCharacterId(extra.characterId);
         characterSkillLoadouts = normalizeCharacterSkillLoadouts(extra.characterSkillLoadouts);
-        goukiState = normalizeGoukiState(extra.goukiState);
+        const restoredPhase = store.getState().phase;
+        const restoredProgress = dungeon.getProgress();
+        const restoredGoukiRunEnded = restoredPhase === GAME_PHASE.TITLE ||
+          restoredPhase === GAME_PHASE.DEFEAT ||
+          (restoredPhase === GAME_PHASE.VICTORY && restoredProgress.floorCleared);
+        goukiState = restoredGoukiRunEnded
+          ? createInitialGoukiState()
+          : normalizeGoukiState(extra.goukiState);
         regenState = normalizeRegenState(extra.regenState);
         shadowState = normalizeShadowState(extra.shadowState);
         const restoredSkillId = extra.selectedSkillId;
@@ -1227,6 +1234,13 @@
 
     function startGame() {
       const previousPhase = store.getState().phase;
+      const previousProgress = dungeon.getProgress();
+      if (selectedCharacterId === "gou-swordsman" &&
+          (previousPhase === GAME_PHASE.TITLE ||
+            previousPhase === GAME_PHASE.DEFEAT ||
+            (previousPhase === GAME_PHASE.VICTORY && previousProgress.floorCleared))) {
+        goukiState = createInitialGoukiState();
+      }
       combat.reset();
       if (previousPhase === GAME_PHASE.DEFEAT) {
         // Defeat abandons the current attempt, but keeps level, gold, items,
@@ -1430,6 +1444,16 @@
       for (const event of events) {
         const result = combat.handle(event);
         if (result.ignored) continue;
+
+        // 轟気は同じ階層の敵との連戦中だけ保持し、階層クリア・敗北で0に戻す。
+        if (selectedCharacterId === "gou-swordsman") {
+          const phaseAfterEvent = store.getState().phase;
+          const progressAfterEvent = dungeon.getProgress();
+          if (phaseAfterEvent === GAME_PHASE.DEFEAT ||
+              (phaseAfterEvent === GAME_PHASE.VICTORY && progressAfterEvent.floorCleared)) {
+            goukiState = createInitialGoukiState();
+          }
+        }
 
         if (event.type === "wrong") {
           weakWords = recordWeakWordMistake(weakWords, getCurrentChallenge(wordState));
