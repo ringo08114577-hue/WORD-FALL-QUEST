@@ -220,8 +220,71 @@ export const SKILL_DEFINITIONS = Object.freeze({
       category: "passive", passive: true,
       effect: { type: "regen-drain-boost", drainRatioBonusByLevel: LEVELS([0.05, 0.08, 0.1, 0.13, 0.16]) },
     }),
-  // Other characters keep their temporary skills until their own systems are built.
-  "shadow-basic": defineSkill("shadow-basic", "う", OTHER.shadow, "影刃の仮スキル。固有技を追加するための初期枠。", { initiallyEquipped: true }),
-  "shadow-basic": defineSkill("shadow-basic", "う", OTHER.shadow, "影刃の仮スキル。固有技を追加するための初期枠。", { initiallyEquipped: true }),
+  // 影刃：正解の積み重ねで会心率を上げ、会心後に重撃を抽選する。
+  "shadow-basic": defineSkill("shadow-basic", "影刃斬", OTHER.shadow,
+    "安定した単発攻撃。会心率が高いほど、会心後の重撃も発生しやすい。", {
+      category: "attack", initiallyEquipped: true, minWordLength: 3, maxWordLength: 4,
+      effect: {
+        type: "shadow-attack",
+        damageMultiplierByLevel: LEVELS([1, 1.05, 1.1, 1.15, 1.2]),
+        criticalMultiplierByLevel: LEVELS([2, 2.05, 2.1, 2.15, 2.2]),
+        heavyMultiplierByLevel: LEVELS([3, 3.05, 3.1, 3.15, 3.2]),
+        baseHeavyRateByLevel: LEVELS([0.05, 0.06, 0.07, 0.08, 0.1]),
+        hitCount: 1,
+      },
+    }),
+  "shadow-pierce": defineSkill("shadow-pierce", "急所穿ち", OTHER.shadow,
+    "会心時のダメージ倍率が高い単発攻撃。会心の重撃も狙いやすい。", {
+      category: "attack", initiallyEquipped: true, minWordLength: 5, maxWordLength: 6,
+      effect: {
+        type: "shadow-attack",
+        damageMultiplierByLevel: LEVELS([1.15, 1.25, 1.35, 1.45, 1.6]),
+        criticalMultiplierByLevel: LEVELS([2.2, 2.3, 2.4, 2.5, 2.7]),
+        heavyMultiplierByLevel: LEVELS([3, 3.1, 3.2, 3.35, 3.5]),
+        baseHeavyRateByLevel: LEVELS([0.2, 0.22, 0.24, 0.27, 0.3]),
+        hitCount: 1,
+      },
+    }),
+  "shadow-flurry": defineSkill("shadow-flurry", "影連斬", OTHER.shadow,
+    "3連続攻撃。それぞれの一撃で会心判定を行い、会心が出た攻撃だけ重撃を抽選する。", {
+      category: "attack", initiallyEquipped: true, minWordLength: 3, maxWordLength: 4,
+      effect: {
+        type: "shadow-attack",
+        damageMultiplierByLevel: LEVELS([0.45, 0.48, 0.52, 0.56, 0.6]),
+        criticalMultiplierByLevel: LEVELS([2, 2.05, 2.1, 2.15, 2.2]),
+        heavyMultiplierByLevel: LEVELS([3, 3.1, 3.2, 3.3, 3.4]),
+        baseHeavyRateByLevel: LEVELS([0.08, 0.09, 0.1, 0.11, 0.12]),
+        hitCount: 3,
+      },
+    }),
+  "shadow-focus": defineSkill("shadow-focus", "会心の構え", OTHER.shadow,
+    "攻撃せずに集中し、次の攻撃の会心率を大幅に上げる。", {
+      category: "support", initiallyEquipped: true, minWordLength: 5, maxWordLength: 6,
+      effect: {
+        type: "shadow-focus",
+        criticalRateBonusByLevel: LEVELS([15, 18, 21, 24, 28]),
+      },
+    }),
+  "shadow-finisher": defineSkill("shadow-finisher", "絶影・重撃", OTHER.shadow,
+    "高威力の大技。会心率と重撃率の両方を活かした一撃を狙う。", {
+      category: "attack", minWordLength: 8, maxWordLength: 10,
+      effect: {
+        type: "shadow-attack",
+        damageMultiplierByLevel: LEVELS([1.8, 2, 2.2, 2.4, 2.7]),
+        criticalMultiplierByLevel: LEVELS([2.4, 2.5, 2.6, 2.75, 3]),
+        heavyMultiplierByLevel: LEVELS([3.5, 3.7, 4, 4.2, 4.5]),
+        baseHeavyRateByLevel: LEVELS([0.35, 0.37, 0.4, 0.43, 0.45]),
+        hitCount: 1,
+      },
+    }),
+  "shadow-mastery": defineSkill("shadow-mastery", "影の極意", OTHER.shadow,
+    "パッシブ。会心の重撃が発生する確率を高める。", {
+      category: "passive", passive: true, initiallyEquipped: true,
+      effect: {
+        type: "shadow-passive",
+        heavyRateBonusByLevel: LEVELS([0.02, 0.03, 0.04, 0.05, 0.06]),
+      },
+    }),
+  // 元素術師の固有技は次の開発段階で追加する。
   "elemental-basic": defineSkill("elemental-basic", "え", OTHER.elemental, "元素術師の仮スキル。固有技を追加するための初期枠。", { initiallyEquipped: true }),
 });
