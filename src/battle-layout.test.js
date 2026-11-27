@@ -244,6 +244,13 @@ test("敵撃破後は未制覇なら次の敵・宝箱・次階層へ進むボ�
   assert.match(labelLogic, /"次の階へ"/);
 });
 
+test("轟剣士の轟気は階層クリア・敗北で初期化され、同じ階層の敵の間だけ蓄積する", () => {
+  assert.match(html, /restoredGoukiRunEnded = restoredPhase === GAME_PHASE\.TITLE \|\|\s*restoredPhase === GAME_PHASE\.DEFEAT \|\|\s*\(restoredPhase === GAME_PHASE\.VICTORY && restoredProgress\.floorCleared\)/);
+  assert.match(html, /phaseAfterEvent === GAME_PHASE\.DEFEAT \|\|\s*\(phaseAfterEvent === GAME_PHASE\.VICTORY && progressAfterEvent\.floorCleared\)/);
+  assert.match(html, /previousPhase === GAME_PHASE\.DEFEAT \|\|\s*\(previousPhase === GAME_PHASE\.VICTORY && previousProgress\.floorCleared\)/);
+  assert.match(html, /goukiState = createInitialGoukiState\(\)/);
+});
+
 test("敗北してもプレイヤーの育成データを消さず、現在の階から再挑戦する", () => {
   assert.match(html, /state\.phase === GAME_PHASE\.DEFEAT \? "この階から再挑戦"/);
   assert.match(html, /if \(previousPhase === GAME_PHASE\.DEFEAT\) \{\s*\/\/ Defeat abandons[\s\S]*?GAME_ACTION\.RETURN_TO_TOWN[\s\S]*?dungeon\.reset\(\);\s*\}/);
