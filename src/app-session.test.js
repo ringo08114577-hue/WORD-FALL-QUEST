@@ -167,7 +167,7 @@ test("旧セーブにキャラクターIDがなくても初期キャラクター
 test("キャラクターごとのスキル装備は切り替え後も別々に保存される", () => {
   const storage = memoryStorage();
   const session = createAppSession({ storage });
-  assert.deepEqual(session.store.getState().equippedSkillIds, ["gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null, null]);
+  assert.deepEqual(session.store.getState().equippedSkillIds, ["gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null]);
 
   const passiveEquipped = session.store.dispatch({
     type: GAME_ACTION.EQUIP_SKILL, slotIndex: 4, skillId: "gou-destruction", characterId: "gou-swordsman",
@@ -176,7 +176,7 @@ test("キャラクターごとのスキル装備は切り替え後も別々に�
 
   const switched = session.selectCharacter("regen-knight");
   assert.equal(switched.selected, true);
-  assert.deepEqual(session.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel", null]);
+  assert.deepEqual(session.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel"]);
 
   session.store.dispatch({ type: GAME_ACTION.ADD_GOLD, amount: 50 });
   session.store.dispatch({ type: GAME_ACTION.UPGRADE_SKILL, skillId: "regen-drain-slash" });
@@ -186,13 +186,13 @@ test("キャラクターごとのスキル装備は切り替え後も別々に�
   const restored = createAppSession({ storage });
   assert.equal(restored.initialLoad.loaded, true);
   assert.equal(restored.getSelectedCharacterId(), "regen-knight");
-  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel", null]);
+  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel"]);
 
   restored.selectCharacter("gou-swordsman");
   assert.deepEqual(restored.store.getState().equippedSkillIds, [
-    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-destruction", null,
+    "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", "gou-destruction",
   ]);
   restored.selectCharacter("regen-knight");
-  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel", null]);
+  assert.deepEqual(restored.store.getState().equippedSkillIds, ["regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis", "regen-eternal-vessel"]);
   assert.equal(restored.store.getState().skillLevels["regen-drain-slash"], 2);
 });
