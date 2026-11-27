@@ -118,7 +118,7 @@ test("敵一括比較は階層補正と指定した敵の絞り込みを反映�
     floor: 5,
     enemyIds: ["slime", "forest-dragon"],
     playerLevel: 2,
-    skillId: "regen-basic",
+    skillId: "regen-drain-slash",
     wordDifficulty: 2,
   });
   assert.equal(results.length, 2);
