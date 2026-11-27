@@ -50,7 +50,7 @@ test("敵データはIDから作成され、呼び出し元で安全に変更で
 test("各キャラクターの専用技は、そのキャラクターでのみ使用できる", () => {
   const classes = [
     ["gou-swordsman", "gou-slash"],
-    ["regen-knight", "regen-basic"],
+    ["regen-knight", "regen-drain-slash"],
     ["shadow-blade", "shadow-basic"],
     ["elemental-mage", "elemental-basic"],
   ];
@@ -71,7 +71,7 @@ test("各キャラクターの専用技は、そのキャラクターでのみ�
 
   const store = startBattle({ enemy: { ...testSlime, maxHp: 100 } });
   const wrongClass = resolveCombatEvent(store.getState(), {
-    type: "word-complete", skillId: "regen-basic",
+    type: "word-complete", skillId: "regen-drain-slash",
     characterId: "gou-swordsman", wordDifficulty: 1,
   });
   assert.equal(wrongClass.ignored, true);
@@ -389,7 +389,7 @@ test("未装備のスキルや登録外スキルでは攻撃できない", () =>
   const unequipped = combat.handle({
     eventId: "unequipped-skill",
     type: "word-complete",
-    skillId: "regen-basic",
+    skillId: "regen-holy-drain",
   });
   assert.equal(unequipped.ignored, true);
   assert.equal(unequipped.reason, "skill-not-equipped");
