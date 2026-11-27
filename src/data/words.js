@@ -276,6 +276,13 @@ const UPDATED_EXISTING_WORDS = EXISTING_WORD_CHALLENGES.map((challenge) => {
     ...challenge,
     japanese: targetEntry.japanese,
     difficulty: targetEntry.difficulty,
+    ...(Array.isArray(challenge.alternateMeanings)
+      ? {
+          alternateMeanings: Object.freeze(challenge.alternateMeanings.filter(
+            (meaning) => meaning.trim() !== targetEntry.japanese.trim(),
+          )),
+        }
+      : {}),
     targetNumber: targetEntry.targetNumber,
   });
 });
