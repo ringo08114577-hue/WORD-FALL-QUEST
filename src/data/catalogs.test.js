@@ -114,13 +114,15 @@ test("全スキル・全レベルに文字数と難易度が合う単語候補�
     }
   }
 });
-test("轟剣士の全技と他キャラの仮技は所属キャラクターに正しく登録される", () => {
+test("轟剣士と再生騎士の専用技は所属キャラクターに正しく登録される", () => {
   const gouSkills = Object.values(SKILL_DEFINITIONS).filter((skill) => skill.characterId === "gou-swordsman");
   assert.ok(gouSkills.length >= 15);
   assert.ok(gouSkills.some((skill) => skill.effect?.type === "gouki-charge"));
   assert.ok(gouSkills.some((skill) => skill.effect?.type === "gouki-consume-all"));
   assert.ok(gouSkills.some((skill) => skill.passive));
-  assert.equal(SKILL_DEFINITIONS["regen-basic"].characterId, "regen-knight");
+  assert.equal(SKILL_DEFINITIONS["regen-drain-slash"].characterId, "regen-knight");
+  assert.equal(SKILL_DEFINITIONS["regen-life-breaker"].characterId, "regen-knight");
+  assert.equal(SKILL_DEFINITIONS["regen-eternal-vessel"].passive, true);
   assert.equal(SKILL_DEFINITIONS["shadow-basic"].characterId, "shadow-blade");
   assert.equal(SKILL_DEFINITIONS["elemental-basic"].characterId, "elemental-mage");
   for (const [skillId, skill] of Object.entries(SKILL_DEFINITIONS)) {
