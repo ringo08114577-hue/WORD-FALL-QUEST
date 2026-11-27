@@ -67,6 +67,9 @@
     .bar { height:8px; background:#26354b; overflow:hidden; border-radius:99px; }
     .bar-fill { height:100%; width:100%; border-radius:99px; background:linear-gradient(90deg,#34d399,#86efac); transition:width .18s ease; }
     .bar-fill.enemy { background:linear-gradient(90deg,#f97316,#fbbf24); }
+    .overhp-bar { height:5px; margin-top:5px; background:#203f46; }
+    .bar-fill.overhp { background:linear-gradient(90deg,#2dd4bf,#a7f3d0); }
+    .regen-overhp-label { color:#75d8c3; margin-top:3px; font-size:.66rem; font-weight:800; }
     @keyframes hpHit {
       0%, 100% { filter:brightness(1); }
       35% { filter:brightness(2.2) saturate(1.7); }
@@ -517,6 +520,8 @@
         <div class="vital">
           <div class="vital-head"><span>🧙 プレイヤー</span><span class="hp-text" id="playerHp">HP 100 / 100</span></div>
           <div class="bar" id="playerHpBar" role="progressbar" aria-label="プレイヤーHP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><div class="bar-fill" id="playerHpFill"></div></div>
+          <div class="bar overhp-bar" id="playerOverHpBar" role="progressbar" aria-label="再生騎士のオーバーHP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div class="bar-fill overhp" id="playerOverHpFill"></div></div>
+          <div class="progression regen-overhp-label" id="playerOverHpLabel" hidden>オーバーHP 0 / 100</div>
           <div class="progression" id="playerProgression">LV.1 · EXP 0 / 100</div>
         </div>
         <div class="vital enemy-vital">
@@ -588,6 +593,7 @@
       normalizeCharacterSkillLoadouts, normalizeEquippedSkillIds, isSkillAvailableForCharacter,
     } from "./src/skills.js";
     import { createInitialGoukiState, isValidGoukiState, normalizeGoukiState, getGoukiAbilityMultiplier } from "./src/gouki.js";
+    import { createInitialRegenState, isValidRegenState, normalizeRegenState, getRegenOverHpCap } from "./src/regen.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
     import { getElementLabel } from "./src/elements.js";
     import {
@@ -642,10 +648,13 @@
     let selectedCharacterId = DEFAULT_CHARACTER_ID;
     let characterSkillLoadouts = createInitialCharacterSkillLoadouts();
     let goukiState = createInitialGoukiState();
+    let regenState = createInitialRegenState();
     const combat = createCombatController(store, {
       getCharacterId: () => selectedCharacterId,
       getGoukiState: () => goukiState,
       setGoukiState: (nextState) => { goukiState = normalizeGoukiState(nextState); },
+      getRegenState: () => regenState,
+      setRegenState: (nextState) => { regenState = normalizeRegenState(nextState); },
     });
     const saveController = createSaveController({
       store,
@@ -658,6 +667,7 @@
           [selectedCharacterId]: normalizeEquippedSkillIds(store.getState().equippedSkillIds, selectedCharacterId),
         },
         goukiState,
+        regenState,
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -674,7 +684,8 @@
         (extra.weakWords === undefined || isValidWeakWordEntries(extra.weakWords)) &&
         (extra.characterId === undefined || isValidCharacterId(extra.characterId)) &&
         (extra.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(extra.characterSkillLoadouts)) &&
-        (extra.goukiState === undefined || isValidGoukiState(extra.goukiState)),
+        (extra.goukiState === undefined || isValidGoukiState(extra.goukiState)) &&
+        (extra.regenState === undefined || isValidRegenState(extra.regenState)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
@@ -684,6 +695,7 @@
         selectedCharacterId = normalizeCharacterId(extra.characterId);
         characterSkillLoadouts = normalizeCharacterSkillLoadouts(extra.characterSkillLoadouts);
         goukiState = normalizeGoukiState(extra.goukiState);
+        regenState = normalizeRegenState(extra.regenState);
         const restoredSkillId = extra.selectedSkillId;
         const restoredSkillIsUsable = isSkillAvailableForCharacter(restoredSkillId, selectedCharacterId);
         selectedSkillId = restoredSkillIsUsable ? restoredSkillId : null;
@@ -877,6 +889,12 @@
       $("phaseBadge").dataset.phase = state.phase;
       $("playerHp").textContent = "HP " + state.player.hp + " / " + state.player.maxHp;
       setBar("playerHpBar", "playerHpFill", state.player.hp, state.player.maxHp);
+      const showRegenOverHp = selectedCharacterId === "regen-knight";
+      const regenOverHpCap = getRegenOverHpCap(state);
+      $("playerOverHpBar").hidden = !showRegenOverHp;
+      $("playerOverHpLabel").hidden = !showRegenOverHp;
+      $("playerOverHpLabel").textContent = "オーバーHP +" + regenState.overHp + " / " + regenOverHpCap;
+      setBar("playerOverHpBar", "playerOverHpFill", regenState.overHp, regenOverHpCap);
       const activeBuffs = [];
       if (state.battleEffects?.attackUsesRemaining > 0) {
         activeBuffs.push("攻撃×" + state.battleEffects.attackMultiplier +
@@ -1130,6 +1148,7 @@
         (phase === GAME_PHASE.VICTORY && progress.floorCleared);
       if (!canReturnHome) return;
       goukiState = createInitialGoukiState();
+      regenState = createInitialRegenState();
 
       // If the player returns home immediately after clearing a floor,
       // award the chest reward first so it is never lost.
@@ -1165,6 +1184,7 @@
         ? dungeon.advance()
         : dungeon.start();
       if (!result.started) return;
+      regenState = createInitialRegenState();
       wordState = createWordBattleState();
       spawnElapsed = 0;
       attackElapsed = 0;
