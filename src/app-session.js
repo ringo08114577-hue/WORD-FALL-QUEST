@@ -6,6 +6,7 @@ import { createGameStore, GAME_ACTION, GAME_PHASE } from "./game-state.js";
 import { createDungeonController } from "./dungeon.js";
 import { createSaveController } from "./save-system.js";
 import { createTownController } from "./town.js";
+import { createInitialGoukiState, isValidGoukiState, normalizeGoukiState } from "./gouki.js";
 import { createWordBattleState, isValidSavedWordBattleState } from "./word-battle.js";
 import { SKILL_DEFINITIONS, createInitialCharacterSkillLoadouts, isValidCharacterSkillLoadouts, normalizeCharacterSkillLoadouts, normalizeEquippedSkillIds } from "./skills.js";
 import { DEFAULT_CHARACTER_ID, getCharacterDefinition, isValidCharacterId, normalizeCharacterId } from "./characters.js";
@@ -28,6 +29,7 @@ function createDefaultExtraData() {
     characterId: DEFAULT_CHARACTER_ID,
     jobId: null,
     characterSkillLoadouts: createInitialCharacterSkillLoadouts(),
+    goukiState: createInitialGoukiState(),
   };
 }
 
@@ -47,7 +49,8 @@ function isValidExtraData(value) {
     (value.weakWords === undefined || isValidWeakWordEntries(value.weakWords)) &&
     (value.characterId === undefined || isValidCharacterId(value.characterId)) &&
     (value.jobId === undefined || value.jobId === null || isValidJobId(value.jobId)) &&
-    (value.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(value.characterSkillLoadouts))
+    (value.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(value.characterSkillLoadouts)) &&
+    (value.goukiState === undefined || isValidGoukiState(value.goukiState))
   );
 }
 
@@ -84,6 +87,7 @@ export function createAppSession({ storage } = {}) {
           // assigning their current starting style to the first profession.
           jobId: value.jobId === undefined ? DEFAULT_JOB_ID : value.jobId,
           characterSkillLoadouts: normalizeCharacterSkillLoadouts(value.characterSkillLoadouts),
+          goukiState: normalizeGoukiState(value.goukiState),
         };
       if (store.getState().phase === GAME_PHASE.TITLE) {
         const activeId = normalizeCharacterId(value.characterId);
@@ -112,6 +116,8 @@ export function createAppSession({ storage } = {}) {
     initialLoad,
     returnToTown() {
       const result = town.returnToTown();
+      // 轟気は階層をまたいで持ち越さない。ホームへ戻った時点で必ず初期化する。
+      extraData = { ...extraData, goukiState: createInitialGoukiState() };
       if (result.returned || store.getState().phase === "title") saves.save();
       return result;
     },
