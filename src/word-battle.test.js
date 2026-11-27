@@ -259,7 +259,7 @@ test("セーブした英単語進行を検証して正しく復元できる", ()
 
 test("各キャラクターの基本技は3〜4文字の英単語を出題する", () => {
   const skills = [
-    "gou-slash", "regen-basic", "shadow-basic", "elemental-basic",
+    "gou-slash", "regen-drain-slash", "shadow-basic", "elemental-basic",
   ];
   for (const skillId of skills) {
     const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
@@ -273,7 +273,7 @@ test("各キャラクターの基本技は3〜4文字の英単語を出題する
 });
 
 test("スキル強化レベルを変えても出題単語の難易度は変わらない", () => {
-  for (const skillId of ["gou-slash", "regen-basic", "shadow-basic", "elemental-basic"]) {
+  for (const skillId of ["gou-slash", "regen-drain-slash", "shadow-basic", "elemental-basic"]) {
     for (const skillLevel of [1, 3, 5]) {
       const selected = selectChallengeForSkill(createWordBattleState(), skillId, {
         skillLevel, random: () => 0.99,
