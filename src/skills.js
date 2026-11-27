@@ -20,13 +20,18 @@ export function isSkillAvailableForCharacter(skillId, characterId) {
 }
 export function createInitialEquippedSkillIds(characterId = DEFAULT_CHARACTER_ID) {
   const selectedId = isValidCharacterId(characterId) ? characterId : DEFAULT_CHARACTER_ID;
-  const equipped = getSkillsForCharacter(selectedId)
+  const characterSkills = getSkillsForCharacter(selectedId);
+  const equipped = characterSkills
     .filter(([, skill]) => skill.passive !== true && skill.initiallyEquipped === true)
     .map(([id]) => id).slice(0, SKILL_EQUIP_SLOT_COUNT);
+  const equippedPassives = characterSkills
+    .filter(([, skill]) => skill.passive === true && skill.initiallyEquipped === true)
+    .map(([id]) => id).slice(0, PASSIVE_SKILL_EQUIP_SLOT_COUNT);
   return [
     ...equipped,
     ...Array(SKILL_EQUIP_SLOT_COUNT - equipped.length).fill(null),
-    ...Array(PASSIVE_SKILL_EQUIP_SLOT_COUNT).fill(null),
+    ...equippedPassives,
+    ...Array(PASSIVE_SKILL_EQUIP_SLOT_COUNT - equippedPassives.length).fill(null),
   ];
 }
 export function isValidEquippedSkillIds(skillIds, characterId = null) {
@@ -222,6 +227,28 @@ export function getSkillEffectForLevel(skillId, currentLevel, evolved = false) {
     highThreshold: effect.highThreshold,
     highDamageMultiplier: levelValue(effect.highMultiplierByLevel, index, 1.5),
   };
+  else if (effect.type === "regen-drain-attack") result = {
+    type: "regen-drain-attack",
+    damageMultiplier: levelValue(effect.damageMultiplierByLevel, index, 1),
+    drainRatio: levelValue(effect.drainRatioByLevel, index, 0.5),
+  };
+  else if (effect.type === "regen-overhp-attack") result = {
+    type: "regen-overhp-attack",
+    damageMultiplier: levelValue(effect.damageMultiplierByLevel, index, 1),
+    bonusAtFullOverHp: levelValue(effect.bonusAtFullOverHpByLevel, index, 0.5),
+  };
+  else if (effect.type === "regen-overhp-gain") result = {
+    type: "regen-overhp-gain",
+    amount: levelValue(effect.amountByLevel, index),
+  };
+  else if (effect.type === "regen-overhp-cap") result = {
+    type: "regen-overhp-cap",
+    capMultiplier: levelValue(effect.capMultiplierByLevel, index, 1),
+  };
+  else if (effect.type === "regen-drain-boost") result = {
+    type: "regen-drain-boost",
+    drainRatioBonus: levelValue(effect.drainRatioBonusByLevel, index),
+  };
   else return null;
 
   if (!evolved) return result;
@@ -272,6 +299,11 @@ export function getSkillEffectLabel(effect) {
   if (effect.type === "gouki-limit-break") return "次の轟気獲得量 ×" + effect.multiplier;
   if (effect.type === "gouki-passive" && effect.passiveKind === "breaker") return "轟気 " + effect.threshold + "個以上でボス防御ギミックを破壊";
   if (effect.type === "gouki-passive" && effect.passiveKind === "resonance") return "轟気 " + effect.threshold + "個以上で攻撃 ×" + effect.damageMultiplier + " · 50個以上でさらに強化";
+  if (effect.type === "regen-drain-attack") return "攻撃 ×" + effect.damageMultiplier + " · 与ダメージの " + Math.round(effect.drainRatio * 100) + "% を吸収";
+  if (effect.type === "regen-overhp-attack") return "攻撃 ×" + effect.damageMultiplier + " · オーバーHP量でさらに威力上昇";
+  if (effect.type === "regen-overhp-gain") return "オーバーHP +" + effect.amount;
+  if (effect.type === "regen-overhp-cap") return "オーバーHP上限 ×" + effect.capMultiplier;
+  if (effect.type === "regen-drain-boost") return "ドレイン吸収率 +" + Math.round(effect.drainRatioBonus * 100) + "%";
   return "効果あり";
 }
 export function createInitialSkillLevels() {
