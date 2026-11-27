@@ -70,6 +70,7 @@
     .overhp-bar { height:5px; margin-top:5px; background:#203f46; }
     .bar-fill.overhp { background:linear-gradient(90deg,#2dd4bf,#a7f3d0); }
     .regen-overhp-label { color:#75d8c3; margin-top:3px; font-size:.66rem; font-weight:800; }
+    .shadow-status { color:#c4b5fd; margin-top:3px; font-size:.66rem; font-weight:850; }
     @keyframes hpHit {
       0%, 100% { filter:brightness(1); }
       35% { filter:brightness(2.2) saturate(1.7); }
@@ -382,6 +383,7 @@
       .enemy-image { width:58px; height:68px; }
       .enemy-traits { max-height:1em; overflow:hidden; font-size:.58rem; margin-top:2px; }
       .enemy-attack-timer { margin-top:2px; font-size:.6rem; }
+      .shadow-status { font-size:.58rem; }
       .panel-title h2 { font-size:.82rem; }
       .phase { padding:3px 7px; font-size:.66rem; }
       .message { margin:4px 0 6px; font-size:.72rem; line-height:1.3; }
@@ -523,6 +525,7 @@
           <div class="bar overhp-bar" id="playerOverHpBar" role="progressbar" aria-label="再生騎士のオーバーHP" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" hidden><div class="bar-fill overhp" id="playerOverHpFill"></div></div>
           <div class="progression regen-overhp-label" id="playerOverHpLabel" hidden>オーバーHP 0 / 100</div>
           <div class="progression" id="playerProgression">LV.1 · EXP 0 / 100</div>
+          <div class="progression shadow-status" id="shadowStatus" hidden>会心率 5% · 連続正解 0問</div>
         </div>
         <div class="vital enemy-vital">
           <div class="enemy-vital-content">
@@ -594,6 +597,10 @@
     } from "./src/skills.js";
     import { createInitialGoukiState, isValidGoukiState, normalizeGoukiState, getGoukiAbilityMultiplier } from "./src/gouki.js";
     import { createInitialRegenState, isValidRegenState, normalizeRegenState, getRegenOverHpCap } from "./src/regen.js";
+    import {
+      createInitialShadowState, isValidShadowState, normalizeShadowState,
+      getShadowCriticalRate, getShadowHeavyRate,
+    } from "./src/shadow.js";
     import { getEnemyAttackWarningState } from "./src/attack-warning.js";
     import { getElementLabel } from "./src/elements.js";
     import {
@@ -649,12 +656,15 @@
     let characterSkillLoadouts = createInitialCharacterSkillLoadouts();
     let goukiState = createInitialGoukiState();
     let regenState = createInitialRegenState();
+    let shadowState = createInitialShadowState();
     const combat = createCombatController(store, {
       getCharacterId: () => selectedCharacterId,
       getGoukiState: () => goukiState,
       setGoukiState: (nextState) => { goukiState = normalizeGoukiState(nextState); },
       getRegenState: () => regenState,
       setRegenState: (nextState) => { regenState = normalizeRegenState(nextState); },
+      getShadowState: () => shadowState,
+      setShadowState: (nextState) => { shadowState = normalizeShadowState(nextState); },
     });
     const saveController = createSaveController({
       store,
@@ -668,6 +678,7 @@
         },
         goukiState,
         regenState,
+        shadowState,
       }),
       validateExtraData: (extra) =>
         Boolean(extra) &&
@@ -685,7 +696,8 @@
         (extra.characterId === undefined || isValidCharacterId(extra.characterId)) &&
         (extra.characterSkillLoadouts === undefined || isValidCharacterSkillLoadouts(extra.characterSkillLoadouts)) &&
         (extra.goukiState === undefined || isValidGoukiState(extra.goukiState)) &&
-        (extra.regenState === undefined || isValidRegenState(extra.regenState)),
+        (extra.regenState === undefined || isValidRegenState(extra.regenState)) &&
+        (extra.shadowState === undefined || isValidShadowState(extra.shadowState)),
       restoreExtraData: (extra) => {
         wordState = restoreWordBattleState(extra.wordState);
         spawnElapsed = extra.spawnElapsed;
@@ -696,6 +708,7 @@
         characterSkillLoadouts = normalizeCharacterSkillLoadouts(extra.characterSkillLoadouts);
         goukiState = normalizeGoukiState(extra.goukiState);
         regenState = normalizeRegenState(extra.regenState);
+        shadowState = normalizeShadowState(extra.shadowState);
         const restoredSkillId = extra.selectedSkillId;
         const restoredSkillIsUsable = isSkillAvailableForCharacter(restoredSkillId, selectedCharacterId);
         selectedSkillId = restoredSkillIsUsable ? restoredSkillId : null;
@@ -914,6 +927,47 @@
         " · MAG " + state.player.magicPower +
         " · DEF " + state.player.defensePower + goukiLabel +
         (activeBuffs.length > 0 ? " · " + activeBuffs.join(" / ") : "");
+
+      const shadowStatus = $("shadowStatus");
+      shadowStatus.hidden = selectedCharacterId !== "shadow-blade";
+      if (selectedCharacterId === "shadow-blade") {
+        const baseCriticalRate = getShadowCriticalRate(shadowState);
+        const effectiveCriticalRate = Math.min(
+          80, baseCriticalRate + shadowState.nextAttackCriticalBonus,
+        );
+        const selectedSkill = selectedSkillId ? SKILL_DEFINITIONS[selectedSkillId] : null;
+        const selectedEffect = selectedSkill
+          ? getSkillEffectForLevel(
+            selectedSkillId,
+            state.skillLevels[selectedSkillId] ?? selectedSkill.startingLevel ?? 1,
+            state.evolvedSkillIds?.includes(selectedSkillId) === true,
+          )
+          : null;
+        const passiveId = state.equippedSkillIds.find((id) =>
+          SKILL_DEFINITIONS[id]?.effect?.type === "shadow-passive"
+        );
+        const passiveEffect = passiveId
+          ? getSkillEffectForLevel(
+            passiveId,
+            state.skillLevels[passiveId] ?? 1,
+            state.evolvedSkillIds?.includes(passiveId) === true,
+          )
+          : null;
+        const heavyRate = selectedEffect?.type === "shadow-attack"
+          ? getShadowHeavyRate(
+            effectiveCriticalRate,
+            selectedEffect.baseHeavyRate,
+            passiveEffect?.heavyRateBonus ?? 0,
+          )
+          : null;
+        shadowStatus.textContent =
+          "会心率 " + effectiveCriticalRate + "% · 連続正解 " +
+          shadowState.consecutiveCorrectWords + "問" +
+          (shadowState.mistakeInCurrentWord ? " · 今の問題はミスあり" : "") +
+          (heavyRate === null
+            ? " · 重撃率は攻撃技ごとに変化"
+            : " · 重撃率 " + Math.round(heavyRate * 100) + "%（会心時）");
+      }
 
       renderInventory(state);
 
@@ -1149,6 +1203,7 @@
       if (!canReturnHome) return;
       goukiState = createInitialGoukiState();
       regenState = createInitialRegenState();
+      shadowState = createInitialShadowState();
 
       // If the player returns home immediately after clearing a floor,
       // award the chest reward first so it is never lost.
@@ -1179,7 +1234,10 @@
         store.dispatch({ type: GAME_ACTION.RETURN_TO_TOWN });
         dungeon.reset();
       }
-      if (previousPhase === GAME_PHASE.DEFEAT) goukiState = createInitialGoukiState();
+      if (previousPhase === GAME_PHASE.DEFEAT) {
+        goukiState = createInitialGoukiState();
+        shadowState = createInitialShadowState();
+      }
       const result = previousPhase === GAME_PHASE.VICTORY
         ? dungeon.advance()
         : dungeon.start();
