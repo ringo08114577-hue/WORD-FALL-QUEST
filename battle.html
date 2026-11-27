@@ -426,6 +426,10 @@
       .topline { gap:6px; }
       .eyebrow { font-size:.58rem; letter-spacing:.1em; }
       .back-link { font-size:.66rem; }
+      .battle-nav-links { gap:7px; }
+      .sound-toggle { width:30px; padding:4px; font-size:0; }
+      .sound-toggle[aria-pressed="true"]::before { content:"🔊"; font-size:.78rem; }
+      .sound-toggle[aria-pressed="false"]::before { content:"🔇"; font-size:.78rem; }
       h1 { margin:2px 0 0; font-size:1.35rem; }
       .subtitle { margin:0 0 5px; font-size:.72rem; line-height:1.25; }
       .panel { padding:7px 8px; margin:5px 0; border-radius:12px; }
@@ -584,7 +588,7 @@
           <div class="progression" id="playerProgression">LV.1 · EXP 0 / 100</div>
           <div class="progression shadow-status" id="shadowStatus" hidden>会心率 5% · 連続正解 0問</div>
         </div>
-        <div class="vital enemy-vital">
+        <div class="vital enemy-vital" id="enemyVital">
           <div class="enemy-vital-content">
             <img class="enemy-image" id="enemyImage" alt="" hidden>
             <div class="enemy-info">
