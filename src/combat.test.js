@@ -58,7 +58,7 @@ test("各キャラクターの専用技は、そのキャラクターでのみ�
     const store = createTestStore();
     store.dispatch({
       type: GAME_ACTION.SET_EQUIPPED_SKILLS,
-      skillIds: [skillId, null, null, null, null, null],
+      skillIds: [skillId, null, null, null, null],
       characterId,
     });
     store.dispatch({ type: GAME_ACTION.START_BATTLE, enemy: { ...testSlime, maxHp: 100 } });
@@ -487,7 +487,7 @@ function createGoukiTestBattle({ skillIds, stacks = 0, nextGainMultiplier = 1, e
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
     skillIds: [
       ...activeSkillIds, ...Array(4 - activeSkillIds.length).fill(null),
-      ...passiveSkillIds, ...Array(2 - passiveSkillIds.length).fill(null),
+      ...passiveSkillIds.slice(0, 1), ...Array(1 - Math.min(1, passiveSkillIds.length)).fill(null),
     ],
     characterId: "gou-swordsman",
   });
@@ -703,7 +703,7 @@ function createRegenTestBattle({
     type: GAME_ACTION.SET_EQUIPPED_SKILLS,
     skillIds: [
       ...activeSkills, ...Array(4 - activeSkills.length).fill(null),
-      ...passiveSkills, ...Array(2 - passiveSkills.length).fill(null),
+      ...passiveSkills.slice(0, 1), ...Array(1 - Math.min(1, passiveSkills.length)).fill(null),
     ],
     characterId: "regen-knight",
   });
