@@ -14,6 +14,7 @@ if (session.getSelectedJobId()) {
   for (const job of JOBS) {
     const card = document.createElement("article");
     card.className = "job-card";
+
     const icon = document.createElement("div");
     icon.className = "job-icon";
     icon.setAttribute("aria-hidden", "true");
@@ -21,14 +22,18 @@ if (session.getSelectedJobId()) {
 
     const copy = document.createElement("div");
     copy.className = "job-copy";
+
     const name = document.createElement("h2");
     name.textContent = job.name;
+
     const title = document.createElement("div");
     title.className = "job-title";
     title.textContent = job.title;
+
     const description = document.createElement("p");
     description.className = "job-description";
     description.textContent = job.description;
+
     const strength = document.createElement("p");
     strength.className = "job-strength";
     strength.textContent = "得意：" + job.strength;
@@ -40,21 +45,24 @@ if (session.getSelectedJobId()) {
 
     const choose = document.createElement("button");
     choose.type = "button";
-    choose.className = "confirm";
+    choose.className = "choose-job";
     choose.textContent = "この職業を選ぶ";
+    choose.setAttribute("aria-pressed", "false");
     choose.addEventListener("click", () => {
       selectedJobId = job.id;
-      for (const button of options.querySelectorAll("button")) {
-        button.textContent = button === choose ? "選択中 ✓" : "この職業を選ぶ";
-        button.setAttribute("aria-pressed", String(button === choose));
+      for (const button of options.querySelectorAll(".choose-job")) {
+        const active = button === choose;
+        button.textContent = active ? "選択中 ✓" : "この職業を選ぶ";
+        button.setAttribute("aria-pressed", String(active));
+        button.closest(".job-card")?.classList.toggle("selected", active);
       }
       confirmButton.disabled = false;
       confirmButton.textContent = job.name + "で冒険を始める";
       status.textContent = job.name + "を選択中。下のボタンで確定しよう。";
     });
 
-    card.append(icon, copy, badge);
-    options.append(card, choose);
+    card.append(icon, copy, badge, choose);
+    options.append(card);
   }
 
   confirmButton.addEventListener("click", () => {
