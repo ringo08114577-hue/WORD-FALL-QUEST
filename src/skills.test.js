@@ -9,7 +9,7 @@ import {
   PASSIVE_SKILL_EQUIP_SLOT_COUNT,
   isValidSkillLevels, normalizeSkillLevels, getSkillUpgradeCost,
   getSkillWordDifficultyRange, getSkillEffectForLevel,
-  getSkillEvolutionRecipe, getSkillDisplayName,
+  getSkillEvolutionRecipe, getSkillDisplayName, getSkillCalculationText,
   isValidEvolvedSkillIds, normalizeEvolvedSkillIds,
 } from "./skills.js";
 
@@ -161,6 +161,23 @@ test("技ごとの単語レベルは固定され、スキル強化では変化�
   assert.equal(getSkillEffectForLevel("shadow-focus", 1).criticalRateBonus, 15);
   assert.equal(getSkillEffectForLevel("shadow-mastery", 1).heavyRateBonus, 0.02);
   assert.equal(getSkillEffectForLevel("shadow-finisher", 1).baseHeavyRate, 0.35);
+});
+
+test("すべての技に現在レベル・進化状態に対応した計算式が表示される", () => {
+  for (const [skillId] of Object.entries(SKILL_DEFINITIONS)) {
+    const formula = getSkillCalculationText(skillId, 1, false);
+    const evolvedFormula = getSkillCalculationText(skillId, 5, true);
+    assert.equal(typeof formula, "string", skillId);
+    assert.ok(formula.length > 8, skillId + " の計算式が短すぎます");
+    assert.ok(evolvedFormula.length > 8, skillId + " の進化後計算式がありません");
+    assert.notEqual(formula, "計算式を表示できません。", skillId);
+    assert.notEqual(evolvedFormula, "計算式を表示できません。", skillId);
+  }
+  assert.match(getSkillCalculationText("gou-focus", 1), /轟気獲得/);
+  assert.match(getSkillCalculationText("regen-prayer", 1), /回復量/);
+  assert.match(getSkillCalculationText("shadow-flurry", 1), /全ヒットのダメージを合計/);
+  assert.match(getSkillCalculationText("shadow-mastery", 1), /重撃率/);
+  assert.match(getSkillCalculationText("shadow-basic", 5, true), /会心倍率と重複しない/);
 });
 
 test("スキルレベルの初期化・検証・旧データ補完が正しく動作する", () => {
