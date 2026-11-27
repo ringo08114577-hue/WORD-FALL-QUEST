@@ -19,6 +19,11 @@ import {
   createInitialRegenState, normalizeRegenState, getRegenOverHpCap,
   getRegenDrainRatio, gainRegenOverHp, absorbRegenOverHp,
 } from "./regen.js";
+import {
+  createInitialShadowState, normalizeShadowState, getShadowCriticalRate,
+  getShadowHeavyRate, registerShadowMistake, registerShadowWordComplete,
+  setShadowNextAttackBonus, consumeShadowNextAttackBonus,
+} from "./shadow.js";
 
 export const COMBAT_EVENT = Object.freeze({
   CORRECT: "correct",
@@ -45,7 +50,22 @@ function positivePower(value, fallback = 1) {
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
-export function resolveCombatEvent(gameState, event) {
+function hitCountLabel(count) {
+  return count + "連撃";
+}
+
+function rollChance(random, chance) {
+  if (typeof random !== "function") {
+    throw new TypeError("会心判定には乱数関数が必要です。");
+  }
+  const value = random();
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value >= 1) {
+    throw new RangeError("乱数関数は0以上1未満の数値を返してください。");
+  }
+  return value < Math.max(0, Math.min(1, chance));
+}
+
+export function resolveCombatEvent(gameState, event, { random = Math.random } = {}) {
   if (!gameState || gameState.phase !== GAME_PHASE.BATTLE) {
     return { ignored: true, reason: "battle-not-active" };
   }
@@ -157,8 +177,12 @@ export function resolveCombatEvent(gameState, event) {
   const activeCharacterId = event.characterId ?? skill.characterId;
   const isGouSwordsman = activeCharacterId === "gou-swordsman";
   const isRegenKnight = activeCharacterId === "regen-knight";
+  const isShadowBlade = activeCharacterId === "shadow-blade";
   const goukiState = isGouSwordsman ? normalizeGoukiState(event.goukiState) : createInitialGoukiState();
   const regenState = isRegenKnight ? normalizeRegenState(event.regenState) : createInitialRegenState();
+  const shadowState = isShadowBlade
+    ? normalizeShadowState(event.shadowState)
+    : createInitialShadowState();
 
   if (isRegenKnight && skillEffect?.type === "regen-overhp-gain") {
     const gained = gainRegenOverHp(regenState, skillEffect.amount, getRegenOverHpCap(gameState));
@@ -260,6 +284,23 @@ export function resolveCombatEvent(gameState, event) {
       tone: "good",
     };
   }
+  if (isShadowBlade && skillEffect?.type === "shadow-focus") {
+    const focusedState = setShadowNextAttackBonus(
+      shadowState,
+      skillEffect.criticalRateBonus,
+    );
+    return {
+      ignored: false,
+      action: null,
+      damageTarget: null,
+      shadowState: focusedState,
+      shadowCriticalRate: Math.min(80,
+        getShadowCriticalRate(focusedState) + focusedState.nextAttackCriticalBonus),
+      message: skillNote + "次の攻撃の会心率が +" +
+        skillEffect.criticalRateBonus + "%！次の攻撃に集中する。",
+      tone: "good",
+    };
+  }
 
   const effects = getEnemyAbilityEffects(gameState.enemy);
   let goukiAfterAttack = null;
@@ -354,7 +395,49 @@ export function resolveCombatEvent(gameState, event) {
   const guardReduction = breaksBossGuard
     ? (ENEMY_ABILITY_DEFINITIONS.guard?.damageReduction ?? 0) : 0;
   const effectiveDamageReduction = Math.max(0, effects.damageReduction - guardReduction);
-  const amount = Math.max(1, baseDamage - effectiveDamageReduction);
+  let amount = Math.max(1, baseDamage - effectiveDamageReduction);
+  let shadowAfterAttack = null;
+  let shadowCriticalRate = null;
+  let shadowHeavyRate = null;
+  let shadowHitResults = null;
+  if (isShadowBlade && skillEffect?.type === "shadow-attack") {
+    const passiveId = gameState.equippedSkillIds.find((id) =>
+      SKILL_DEFINITIONS[id]?.effect?.type === "shadow-passive"
+    );
+    const passiveEffect = passiveId
+      ? getSkillEffectForLevel(
+        passiveId,
+        gameState.skillLevels?.[passiveId] ?? 1,
+        gameState.evolvedSkillIds?.includes(passiveId) === true,
+      )
+      : null;
+    shadowCriticalRate = Math.min(
+      80,
+      getShadowCriticalRate(shadowState) + shadowState.nextAttackCriticalBonus,
+    );
+    shadowHeavyRate = getShadowHeavyRate(
+      shadowCriticalRate,
+      skillEffect.baseHeavyRate,
+      passiveEffect?.heavyRateBonus ?? 0,
+    );
+    const hitCount = Math.max(1, Math.min(10, skillEffect.hitCount ?? 1));
+    shadowHitResults = [];
+    amount = 0;
+    for (let hitIndex = 0; hitIndex < hitCount; hitIndex += 1) {
+      const critical = rollChance(random, shadowCriticalRate / 100);
+      const heavy = critical && rollChance(random, shadowHeavyRate);
+      const multiplier = heavy
+        ? skillEffect.heavyMultiplier
+        : critical ? skillEffect.criticalMultiplier : 1;
+      const hitDamage = Math.max(
+        1,
+        Math.ceil(baseDamage * multiplier) - effectiveDamageReduction,
+      );
+      amount += hitDamage;
+      shadowHitResults.push({ damage: hitDamage, critical, heavy });
+    }
+    shadowAfterAttack = consumeShadowNextAttackBonus(shadowState);
+  }
   if (isRegenKnight && regenDrainRatio > 0) {
     regenDrained = Math.max(1, Math.floor(amount * regenDrainRatio));
     const missingHp = Math.max(0, gameState.player.maxHp - gameState.player.hp);
@@ -388,11 +471,26 @@ export function resolveCombatEvent(gameState, event) {
     regenDrained > 0 ? "ドレイン +" + regenHpHealed + " HP" : "",
     regenOverHpGained > 0 ? "オーバーHP +" + regenOverHpGained : "",
   ].filter(Boolean).join(" · ");
+  const shadowCriticalCount = shadowHitResults?.filter((hit) => hit.critical).length ?? 0;
+  const shadowHeavyCount = shadowHitResults?.filter((hit) => hit.heavy).length ?? 0;
+  const shadowNotes = shadowHitResults
+    ? [
+      shadowHeavyCount > 0 ? "会心の重撃 ×" + shadowHeavyCount + "！" : "",
+      shadowCriticalCount > 0 && shadowHeavyCount === 0
+        ? "会心の一撃 ×" + shadowCriticalCount + "！" : "",
+      shadowHitResults.length > 1 ? hitCountLabel(shadowHitResults.length) : "",
+      "会心率 " + shadowCriticalRate + "%",
+      "重撃率 " + Math.round(shadowHeavyRate * 100) + "%（会心時）",
+    ].filter(Boolean).join(" · ")
+    : "";
   return {
     ignored:false,
     ...(extraActions.length > 0 ? { extraActions } : {}),
     ...(goukiAfterAttack ? { goukiState: goukiAfterAttack, goukiSpent, goukiGained } : {}),
     ...(regenAfterAttack ? { regenState: regenAfterAttack, regenDrained, regenHpHealed, regenOverHpGained } : {}),
+    ...(shadowAfterAttack ? {
+      shadowState: shadowAfterAttack, shadowCriticalRate, shadowHeavyRate, shadowHitResults,
+    } : {}),
     action: {
       type: GAME_ACTION.DAMAGE_ENEMY,
       amount,
@@ -403,7 +501,8 @@ export function resolveCombatEvent(gameState, event) {
     message:skillNote + "単語完成！難易度Lv."+wordDifficulty+"。"+gameState.enemy.name+"に"+amount+"ダメージ！"+outgoingElementNote+
       (activeAttackMultiplier > 1 ? " 攻撃強化が発動！" : "") + abilityNote +
       (goukiNotes ? " [" + goukiNotes + "]" : "") +
-      (regenNotes ? " [" + regenNotes + "]" : ""),
+      (regenNotes ? " [" + regenNotes + "]" : "") +
+      (shadowNotes ? " [" + shadowNotes + "]" : ""),
     tone:"good",
   };
 }
@@ -419,6 +518,8 @@ export function createCombatController(store, {
   setGoukiState = null,
   getRegenState = null,
   setRegenState = null,
+  getShadowState = null,
+  setShadowState = null,
 } = {}) {
   if (
     !store ||
@@ -433,11 +534,14 @@ export function createCombatController(store, {
       (getGoukiState !== null && typeof getGoukiState !== "function") ||
       (setGoukiState !== null && typeof setGoukiState !== "function") ||
       (getRegenState !== null && typeof getRegenState !== "function") ||
-      (setRegenState !== null && typeof setRegenState !== "function")) {
+      (setRegenState !== null && typeof setRegenState !== "function") ||
+      (getShadowState !== null && typeof getShadowState !== "function") ||
+      (setShadowState !== null && typeof setShadowState !== "function")) {
     throw new TypeError("combat controllerには乱数関数が必要です。");
   }
 
   const processedEventIds = new Set();
+  let localShadowState = createInitialShadowState();
 
   return {
     handle(event) {
@@ -450,6 +554,16 @@ export function createCombatController(store, {
 
       const previousState = store.getState();
       const activeCharacterId = typeof getCharacterId === "function" ? getCharacterId() : null;
+      let nextShadowState = activeCharacterId === "shadow-blade"
+        ? normalizeShadowState(typeof getShadowState === "function"
+          ? getShadowState() : localShadowState)
+        : createInitialShadowState();
+      if (activeCharacterId === "shadow-blade" && event.type === COMBAT_EVENT.WRONG) {
+        nextShadowState = registerShadowMistake(nextShadowState);
+      } else if (activeCharacterId === "shadow-blade" &&
+          event.type === COMBAT_EVENT.WORD_COMPLETE) {
+        nextShadowState = registerShadowWordComplete(nextShadowState);
+      }
       const combatEvent = {
         ...event,
         ...(activeCharacterId ? { characterId: activeCharacterId } : {}),
@@ -457,8 +571,9 @@ export function createCombatController(store, {
           ? { goukiState: getGoukiState() } : {}),
         ...(activeCharacterId === "regen-knight" && typeof getRegenState === "function"
           ? { regenState: getRegenState() } : {}),
+        ...(activeCharacterId === "shadow-blade" ? { shadowState: nextShadowState } : {}),
       };
-      const resolution = resolveCombatEvent(previousState, combatEvent);
+      const resolution = resolveCombatEvent(previousState, combatEvent, { random });
       if (resolution.ignored) return resolution;
 
       processedEventIds.add(event.eventId);
@@ -467,6 +582,10 @@ export function createCombatController(store, {
       }
       if (resolution.regenState && typeof setRegenState === "function") {
         setRegenState(normalizeRegenState(resolution.regenState));
+      }
+      if (activeCharacterId === "shadow-blade") {
+        localShadowState = normalizeShadowState(resolution.shadowState ?? nextShadowState);
+        if (typeof setShadowState === "function") setShadowState(localShadowState);
       }
       for (const extraAction of resolution.extraActions ?? []) {
         store.dispatch(extraAction);
@@ -541,6 +660,10 @@ export function createCombatController(store, {
         }
         if (activeCharacterId === "regen-knight" && typeof setRegenState === "function") {
           setRegenState(createInitialRegenState());
+        }
+        if (activeCharacterId === "shadow-blade") {
+          localShadowState = createInitialShadowState();
+          if (typeof setShadowState === "function") setShadowState(localShadowState);
         }
         message = "HPがなくなった！冒険失敗……";
         tone = "bad";
