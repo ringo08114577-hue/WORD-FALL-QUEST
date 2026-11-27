@@ -28,7 +28,7 @@ button{font:inherit;color:#eef4ff;cursor:pointer}.change-button{width:100%;min-h
 <body>
 <main>
   <div class="topline"><div class="eyebrow">WORD FALL QUEST · ADVENTURER STATUS</div><a class="back" href="./index.html">← ホームへ戻る</a></div>
-  <h1>冒険者ステータス</h1><p class="subtitle">冒険者の能力を確認して、バトルで使うスキルを4枠まで装備しよう。</p>
+  <h1>冒険者ステータス</h1><p class="subtitle">冒険者の能力を確認して、通常スキル4枠とパッシブスキル1枠を装備しよう。</p>
   <section class="panel">
     <div class="hero"><div class="avatar"><img id="heroAvatar" alt="主人公" hidden></div><div><div class="hero-name">冒険者 <span id="levelValue">LV.1</span></div><div class="hero-note" id="hpValue">HP 100 / 100</div></div></div>
     <div class="panel-head" style="margin-top:14px;margin-bottom:4px"><strong>次のレベルまで</strong><span class="muted" id="expValue">EXP 0 / 100</span></div>
@@ -44,7 +44,7 @@ button{font:inherit;color:#eef4ff;cursor:pointer}.change-button{width:100%;min-h
     </div>
   </section>
   <section class="panel">
-    <div class="panel-head"><h2>装備中のスキル（4枠）</h2><span class="muted">重複装備不可</span></div>
+    <div class="panel-head"><h2>スキル装備（通常4枠・パッシブ1枠）</h2><span class="muted">重複装備不可</span></div>
     <div class="slot-grid" id="equippedSkillSlots"></div>
     <p class="muted">装備を変更すると自動保存されるよ。スキルのレベル強化はスキル工房で行えるよ。</p>
   </section>
