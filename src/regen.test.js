@@ -14,18 +14,22 @@ test("再生騎士のオーバーHPは0で始まり、安全な整数だけを�
   assert.deepEqual(normalizeRegenState({ overHp: "12" }), { overHp: 0 });
 });
 
-test("不滅の器はオーバーHP上限を最大HPの1.15倍から最大1.5倍まで広げる", () => {
+test("不滅の器は序盤からオーバーHP上限を最大HPの1.5倍にし、Lv.5で2倍にする", () => {
   const state = {
     player: { maxHp: 100 },
     equippedSkillIds: ["regen-eternal-vessel"],
     skillLevels: { "regen-eternal-vessel": 1 },
     evolvedSkillIds: [],
   };
-  assert.equal(getRegenOverHpCap(state), 115);
+  assert.equal(getRegenOverHpCap(state), 150);
   assert.equal(getRegenOverHpCap({
     ...state,
     skillLevels: { "regen-eternal-vessel": 5 },
-  }), 150);
+  }), 200);
+  assert.equal(getRegenOverHpCap({
+    ...state,
+    skillLevels: { "regen-eternal-vessel": 3 },
+  }), 175);
   assert.equal(getRegenOverHpCap({ player: { maxHp: 100 }, equippedSkillIds: [] }), 100);
 });
 
