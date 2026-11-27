@@ -43,13 +43,23 @@ test("轟剣士に蓄積・攻撃・消費・補助・パッシブ技がまと�
   for (const skill of Object.values(SKILL_DEFINITIONS)) assert.equal(Object.isFrozen(skill), true);
 });
 
-test("再生騎士・影刃・元素術師は自分専用の仮技だけを取得する", () => {
-  assert.deepEqual(getSkillsForCharacter("regen-knight").map(([id]) => id), ["regen-basic"]);
+test("再生騎士のドレイン・回復・オーバーHP技が専用スキルとして登録されている", () => {
+  assert.deepEqual(getSkillsForCharacter("regen-knight").map(([id]) => id), [
+    "regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis",
+    "regen-holy-drain", "regen-overflow", "regen-immortal-strike",
+    "regen-eternal-vessel", "regen-vampiric-will",
+  ]);
+  assert.equal(SKILL_DEFINITIONS["regen-drain-slash"].effect.type, "regen-drain-attack");
+  assert.equal(SKILL_DEFINITIONS["regen-life-breaker"].effect.type, "regen-overhp-attack");
+  assert.equal(SKILL_DEFINITIONS["regen-eternal-vessel"].passive, true);
+  assert.equal(SKILL_DEFINITIONS["regen-vampiric-will"].passive, true);
   assert.deepEqual(getSkillsForCharacter("shadow-blade").map(([id]) => id), ["shadow-basic"]);
   assert.deepEqual(getSkillsForCharacter("elemental-mage").map(([id]) => id), ["elemental-basic"]);
   assert.deepEqual(getSkillsForCharacter("unknown"), []);
   assert.equal(isSkillAvailableForCharacter("gou-focus", "gou-swordsman"), true);
   assert.equal(isSkillAvailableForCharacter("gou-focus", "regen-knight"), false);
+  assert.equal(isSkillAvailableForCharacter("regen-drain-slash", "regen-knight"), true);
+  assert.equal(isSkillAvailableForCharacter("regen-drain-slash", "gou-swordsman"), false);
   assert.equal(isSkillAvailableForCharacter("unknown", "gou-swordsman"), false);
   assert.equal(getSkillDefinition("unknown"), null);
 });
@@ -59,7 +69,10 @@ test("通常技4枠とパッシブ専用2枠をキャラクターごとに持つ
   assert.deepEqual(createInitialEquippedSkillIds(), [
     "gou-focus", "gou-advance-cut", "gou-slash", "gou-roaring-blade", null, null,
   ]);
-  assert.deepEqual(createInitialEquippedSkillIds("regen-knight"), ["regen-basic", null, null, null, null, null]);
+  assert.deepEqual(createInitialEquippedSkillIds("regen-knight"), [
+    "regen-drain-slash", "regen-life-breaker", "regen-prayer", "regen-aegis",
+    "regen-eternal-vessel", null,
+  ]);
   assert.deepEqual(createInitialEquippedSkillIds("shadow-blade"), ["shadow-basic", null, null, null, null, null]);
   assert.deepEqual(createInitialEquippedSkillIds("elemental-mage"), ["elemental-basic", null, null, null, null, null]);
 
@@ -103,6 +116,15 @@ test("技ごとの単語レベルは固定され、スキル強化では変化�
   });
   assert.deepEqual(getSkillEffectForLevel("gou-heaven-one-flash", 1), {
     type: "gouki-consume-all", bonusPerStack: 0.4, breakGuard: true,
+  });
+  assert.deepEqual(getSkillEffectForLevel("regen-drain-slash", 1), {
+    type: "regen-drain-attack", damageMultiplier: 0.9, drainRatio: 0.6,
+  });
+  assert.deepEqual(getSkillEffectForLevel("regen-life-breaker", 1), {
+    type: "regen-overhp-attack", damageMultiplier: 1.05, bonusAtFullOverHp: 0.35,
+  });
+  assert.deepEqual(getSkillEffectForLevel("regen-eternal-vessel", 5), {
+    type: "regen-overhp-cap", capMultiplier: 1.5,
   });
 });
 
