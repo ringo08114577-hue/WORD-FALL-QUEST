@@ -6,6 +6,10 @@ import { createCombatController, resolveCombatEvent } from "./combat.js";
 import { createEnemy } from "./enemies.js";
 import { ITEM_DEFINITIONS } from "./items.js";
 import { SKILL_DEFINITIONS } from "./skills.js";
+import {
+  createInitialShadowState, getShadowCriticalRate,
+  registerShadowWordComplete,
+} from "./shadow.js";
 
 function createTestStore(options = {}) {
   return createGameStore({ playerMaxHp: 3, playerAttackPower: 1, ...options });
@@ -838,4 +842,158 @@ test("生命蓄積はオーバーHPを直接増やすが、専用上限を超え
   assert.equal(result.ignored, false);
   assert.equal(result.regenOverHpGained, 25);
   assert.equal(resource.value.overHp, 135);
+});
+
+
+function createShadowTestBattle({
+  skillIds = ["shadow-basic", "shadow-pierce", "shadow-flurry", "shadow-focus", "shadow-mastery"],
+  playerAttackPower = 20,
+  streak = 0,
+  random = () => 0.99,
+} = {}) {
+  const store = createTestStore({ playerMaxHp: 100, playerAttackPower });
+  const activeSkills = skillIds.filter((id) => SKILL_DEFINITIONS[id]?.passive !== true);
+  const passiveSkills = skillIds.filter((id) => SKILL_DEFINITIONS[id]?.passive === true);
+  store.dispatch({
+    type: GAME_ACTION.SET_EQUIPPED_SKILLS,
+    skillIds: [
+      ...activeSkills, ...Array(4 - activeSkills.length).fill(null),
+      ...passiveSkills.slice(0, 1), ...Array(1 - Math.min(1, passiveSkills.length)).fill(null),
+    ],
+    characterId: "shadow-blade",
+  });
+  store.dispatch({
+    type: GAME_ACTION.START_BATTLE,
+    enemy: { ...testSlime, maxHp: 100000, attackPower: 1 },
+  });
+  const resource = { value: createInitialShadowState() };
+  for (let index = 0; index < streak; index += 1) {
+    resource.value = registerShadowWordComplete(resource.value);
+  }
+  const controller = createCombatController(store, {
+    random,
+    getCharacterId: () => "shadow-blade",
+    getShadowState: () => resource.value,
+    setShadowState: (next) => { resource.value = next; },
+  });
+  return { store, controller, resource };
+}
+
+test("影刃はミスせず単語を完成させるたびに会心率が5%ずつ上がる", () => {
+  const { controller, resource } = createShadowTestBattle();
+  for (let index = 0; index < 3; index += 1) {
+    const result = controller.handle({
+      eventId: "shadow-clean-word-" + index,
+      type: "word-complete",
+      skillId: "shadow-basic",
+      wordDifficulty: 1,
+    });
+    assert.equal(result.ignored, false);
+  }
+  assert.equal(resource.value.consecutiveCorrectWords, 3);
+  assert.equal(getShadowCriticalRate(resource.value), 20);
+});
+
+test("影刃は問題中のミスで会心率を初期値へ戻し、その問題を連続正解に数えない", () => {
+  const { controller, resource } = createShadowTestBattle();
+  controller.handle({ eventId: "shadow-streak-one", type: "word-complete", skillId: "shadow-basic", wordDifficulty: 1 });
+  controller.handle({ eventId: "shadow-streak-two", type: "word-complete", skillId: "shadow-basic", wordDifficulty: 1 });
+  assert.equal(getShadowCriticalRate(resource.value), 15);
+
+  controller.handle({ eventId: "shadow-mistake", type: "wrong", letter: "Z" });
+  assert.equal(getShadowCriticalRate(resource.value), 5);
+  assert.equal(resource.value.mistakeInCurrentWord, true);
+
+  controller.handle({ eventId: "shadow-word-after-mistake", type: "word-complete", skillId: "shadow-basic", wordDifficulty: 1 });
+  assert.equal(getShadowCriticalRate(resource.value), 5);
+  controller.handle({ eventId: "shadow-next-clean-word", type: "word-complete", skillId: "shadow-basic", wordDifficulty: 1 });
+  assert.equal(getShadowCriticalRate(resource.value), 10);
+});
+
+test("会心の重撃は会心成功後だけ抽選し、技の倍率を適用する", () => {
+  const { controller } = createShadowTestBattle({
+    skillIds: ["shadow-pierce", "shadow-basic", null, null, "shadow-mastery"],
+    streak: 11,
+    random: () => 0,
+  });
+  const result = controller.handle({
+    eventId: "shadow-heavy-critical",
+    type: "word-complete",
+    skillId: "shadow-pierce",
+    wordDifficulty: 2,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(result.shadowCriticalRate, 60);
+  assert.equal(result.shadowHitResults[0].critical, true);
+  assert.equal(result.shadowHitResults[0].heavy, true);
+  assert.equal(result.shadowHitResults[0].damage, 69);
+  assert.equal(result.damage, 69);
+  assert.match(result.message, /会心の重撃/);
+});
+
+test("会心に失敗した攻撃では重撃抽選を行わない", () => {
+  let calls = 0;
+  const { controller } = createShadowTestBattle({
+    skillIds: ["shadow-basic", null, null, null, "shadow-mastery"],
+    random: () => { calls += 1; return 0.99; },
+  });
+  const result = controller.handle({
+    eventId: "shadow-no-critical-no-heavy",
+    type: "word-complete",
+    skillId: "shadow-basic",
+    wordDifficulty: 1,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(result.shadowHitResults[0].critical, false);
+  assert.equal(result.shadowHitResults[0].heavy, false);
+  assert.equal(calls, 1);
+  assert.equal(result.damage, 20);
+});
+
+test("影連斬は3発それぞれで会心を判定し、合計ダメージを与える", () => {
+  const rolls = [0.05, 0.99, 0.99, 0.05, 0.99];
+  let index = 0;
+  const { controller } = createShadowTestBattle({
+    skillIds: ["shadow-flurry", "shadow-basic", null, null, "shadow-mastery"],
+    random: () => rolls[index++] ?? 0.99,
+  });
+  const result = controller.handle({
+    eventId: "shadow-three-hit",
+    type: "word-complete",
+    skillId: "shadow-flurry",
+    wordDifficulty: 1,
+  });
+  assert.equal(result.ignored, false);
+  assert.equal(result.shadowHitResults.length, 3);
+  assert.deepEqual(result.shadowHitResults.map((hit) => hit.critical), [true, false, true]);
+  assert.deepEqual(result.shadowHitResults.map((hit) => hit.heavy), [false, false, false]);
+  assert.equal(result.damage, 45);
+});
+
+test("会心の構えは次の攻撃だけ会心率を上げ、使用後にボーナスを消費する", () => {
+  const rolls = [0.29, 0.99];
+  let index = 0;
+  const { controller, resource } = createShadowTestBattle({
+    skillIds: ["shadow-focus", "shadow-basic", null, null, "shadow-mastery"],
+    random: () => rolls[index++] ?? 0.99,
+  });
+  const focus = controller.handle({
+    eventId: "shadow-focus-event",
+    type: "word-complete",
+    skillId: "shadow-focus",
+    wordDifficulty: 2,
+  });
+  assert.equal(focus.ignored, false);
+  assert.equal(resource.value.nextAttackCriticalBonus, 15);
+
+  const attack = controller.handle({
+    eventId: "shadow-focused-attack",
+    type: "word-complete",
+    skillId: "shadow-basic",
+    wordDifficulty: 1,
+  });
+  assert.equal(attack.ignored, false);
+  assert.equal(attack.shadowCriticalRate, 30);
+  assert.equal(attack.shadowHitResults[0].critical, true);
+  assert.equal(resource.value.nextAttackCriticalBonus, 0);
 });
