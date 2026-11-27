@@ -133,8 +133,13 @@ export function createAppSession({ storage } = {}) {
         }
         return { selected: true, changed: false, job: getJobDefinition(jobId), ...saves.save() };
       }
+      const job = getJobDefinition(jobId);
+      const characterResult = this.selectCharacter(job.characterId);
+      if (!characterResult.selected) {
+        return { selected: false, changed: false, reason: characterResult.reason ?? "character-selection-failed" };
+      }
       extraData = { ...extraData, jobId };
-      return { selected: true, changed: true, job: getJobDefinition(jobId), ...saves.save() };
+      return { selected: true, changed: true, job, ...saves.save() };
     },
     getSelectedCharacterId() {
       return normalizeCharacterId(extraData.characterId);
