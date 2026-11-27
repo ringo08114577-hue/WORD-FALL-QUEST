@@ -16,6 +16,7 @@ export const WORD_PARTS_OF_SPEECH = Object.freeze([
   "determiner",
   "interjection",
   "other",
+  "unknown",
 ]);
 
 const ALLOWED_FIELDS = new Set([
@@ -25,6 +26,7 @@ const ALLOWED_FIELDS = new Set([
   "difficulty",
   "partOfSpeech",
   "alternateMeanings",
+  "targetNumber",
 ]);
 
 function isRecord(value) {
@@ -48,6 +50,7 @@ export function validateWordCatalog(catalog) {
   const byLength = {};
   const ids = new Map();
   const wordParts = new Map();
+  const targetNumbers = new Map();
 
   if (!Array.isArray(catalog)) {
     return {
@@ -105,6 +108,17 @@ export function validateWordCatalog(catalog) {
       errors.push(`${prefix} 品詞「${entry.partOfSpeech ?? ""}」は登録されていません。`);
     } else {
       byPartOfSpeech[entry.partOfSpeech] += 1;
+    }
+
+    if (entry.targetNumber !== undefined) {
+      if (!Number.isInteger(entry.targetNumber) ||
+          entry.targetNumber < 1 || entry.targetNumber > 1400) {
+        errors.push(`${prefix} targetNumberは1〜1400の整数で指定してください。`);
+      } else if (targetNumbers.has(entry.targetNumber)) {
+        errors.push(`${prefix} ターゲット番号「${entry.targetNumber}」が重複しています。`);
+      } else {
+        targetNumbers.set(entry.targetNumber, index);
+      }
     }
 
     if (entry.alternateMeanings !== undefined) {
