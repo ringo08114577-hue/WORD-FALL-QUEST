@@ -109,7 +109,7 @@ export function resolveCombatEvent(gameState, event) {
     const regenNote = absorbed.absorbed > 0
       ? " オーバーHPで " + absorbed.absorbed + " ダメージを吸収！"
       : "";
-    const damageAction = hpDamage > 0 ? {
+    const damageAction = hpDamage > 0 || battleDefenseBonus > 0 ? {
       type:GAME_ACTION.DAMAGE_PLAYER,
       amount:hpDamage,
       consumeDefenseBuff: battleDefenseBonus > 0,
