@@ -199,6 +199,10 @@ test("バトルのスキル選択ボタンは4キャラクターの専用技を�
   assert.doesNotMatch(html, /getSkillLevelDifficultyRange\(level\)/);
 });
 
+test("冒険者ステータスは通常4枠とパッシブ1枠を案内する", () => {
+  assert.match(html, /通常スキル4枠とパッシブスキル1枠/);
+});
+
 test("battle status displays the selected dungeon name from the saved controller state", () => {
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ dungeonProgress\.floor/);
   assert.match(html, /dungeon\.getDungeonInfo\(\)\.name \+ " · " \+ progress\.floor/);
